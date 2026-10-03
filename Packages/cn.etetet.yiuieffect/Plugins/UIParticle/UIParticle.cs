@@ -357,7 +357,7 @@ namespace Coffee.UIExtensions
 
             _isScaleStored = false;
             UIParticleUpdater.Unregister(this);
-            _renderers.ForEach(r => r.Reset());
+            _renderers.ForEach(r => r.ResetState());
             UnregisterDirtyMaterialCallback(UpdateRendererMaterial);
 
             base.OnDisable();
@@ -582,7 +582,7 @@ namespace Coffee.UIExtensions
             // Reset the UIParticleRenderer components.
             for (var i = 0; i < _renderers.Count; i++)
             {
-                _renderers[i].Reset(i);
+                _renderers[i].ResetState(i);
             }
 
             // Set the ParticleSystem to the UIParticleRenderer. If the trail is enabled, set it additionally.

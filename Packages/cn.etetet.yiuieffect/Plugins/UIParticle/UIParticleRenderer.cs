@@ -104,7 +104,7 @@ namespace Coffee.UIExtensions
             }
         }
 
-        public void Reset(int index = -1)
+        public void ResetState(int index = -1)
         {
             if (_renderer)
             {

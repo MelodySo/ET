@@ -5,6 +5,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- 全局警告抑制，会与项目级设置合并 -->
     <NoWarn>$(NoWarn)</NoWarn>
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);</WarningsNotAsErrors>
+    <!-- JSON/Unity 序列化字段会在运行时赋值；保留 CS0649 警告但不阻断构建。 -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0649</WarningsNotAsErrors>
   </PropertyGroup>
 </Project>

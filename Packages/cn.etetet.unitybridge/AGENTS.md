@@ -28,6 +28,9 @@ Unity 本地文件桥接包，提供：
 
 ## 核心目录
 
+- 直接依赖 `ET.Test` 的编辑器处理器放在 `Scripts/Editor/Test`，与测试框架一起仅在 `ClientServer` 模式启用；不要放在所有模式都编译的 `Scripts/Editor/Share`。
+- 切换模式验证：`Client` 下不应编译 `UnityBridgeUnityTestRunHandler`；`ClientServer` 下该处理器应与 `TestDispatcher` 一同编译。
+
 | 路径 | 说明 |
 |------|------|
 | `DotNet~` | `ET.UnityBridge.csproj` 与命令行入口 |

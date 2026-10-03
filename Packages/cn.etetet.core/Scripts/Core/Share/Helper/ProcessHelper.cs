@@ -53,8 +53,8 @@ namespace ET
                     WorkingDirectory = workingDirectory,
                     RedirectStandardOutput = redirectStandardOutput,
                     RedirectStandardError = redirectStandardError,
-                    StandardErrorEncoding = Encoding.UTF8,
-                    StandardOutputEncoding = Encoding.UTF8
+                    StandardErrorEncoding = redirectStandardError ? Encoding.UTF8 : null,
+                    StandardOutputEncoding = redirectStandardOutput ? Encoding.UTF8 : null
                 };
 
                 Process process = Process.Start(info);
