@@ -41,6 +41,11 @@ namespace ET.Client
         public static async ETTask<long> LoginAsync(this ClientSenderComponent self, string address, string account, string password)
         {
             EntityRef<ClientSenderComponent> selfRef = self;
+            account = LoginAccountInputHelper.Normalize(account);
+            if (!LoginAccountInputHelper.IsValid(account, password))
+            {
+                throw new RpcException(ErrorCode.ERR_LoginInvalidInput, LoginAccountInputHelper.ErrorMessage(ErrorCode.ERR_LoginInvalidInput));
+            }
             if (string.IsNullOrWhiteSpace(address))
             {
                 throw new Exception("router manager address is empty.");
@@ -57,6 +62,11 @@ namespace ET.Client
             main2NetClientLogin.Address = address;
             
             NetClient2Main_Login response = await self.Root().GetComponent<ProcessInnerSender>().Call(self.FiberInstanceId, main2NetClientLogin) as NetClient2Main_Login;
+
+            if (response.Error != ErrorCode.ERR_Success)
+            {
+                throw new RpcException(response.Error, LoginAccountInputHelper.ErrorMessage(response.Error));
+            }
             
             return response.PlayerId;
         }

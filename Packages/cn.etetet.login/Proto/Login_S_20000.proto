@@ -7,6 +7,7 @@ message R2G_GetLoginKey // IRequest
 {
 	int32 RpcId = 1;
 	string Account = 2;
+	int64 AccountId = 3; // Realm 认证得到的持久化账号 ID，不能由客户端指定
 }
 
 message G2R_GetLoginKey // IResponse

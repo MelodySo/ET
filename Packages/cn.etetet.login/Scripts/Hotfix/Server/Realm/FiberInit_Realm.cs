@@ -15,6 +15,10 @@ namespace ET.Server
             root.AddComponent<CoroutineLockComponent>();
             root.AddComponent<ProcessInnerSender>();
             root.AddComponent<MessageSender>();
+            root.AddComponent<DBManagerComponent>();
+            EntityRef<Scene> rootRef = root;
+            await LoginAccountHelper.InitializeAsync(root.GetComponent<DBManagerComponent>().GetZoneDB(root.Fiber().Zone).database);
+            root = rootRef;
 
             AddressSingleton addressSingleton = root.GetSingleton<AddressSingleton>();
             int outerPort = AddressHelper.GetSceneOuterPort(root.Fiber(), root.Name.GetSceneConfigName());

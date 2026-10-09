@@ -9,8 +9,14 @@ namespace ET.Server
         protected override async ETTask Run(Session session, C2G_LoginGate request, G2C_LoginGate response)
         {
             Scene root = session.Root();
-            string account = root.GetComponent<GateSessionKeyComponent>().Get(request.Key);
-            if (account == null)
+            if (request.GateId != root.Id || session.GetComponent<SessionPlayerComponent>() != null)
+            {
+                response.Error = ErrorCode.ERR_ConnectGateKeyError;
+                return;
+            }
+            var ticket = root.GetComponent<GateSessionKeyComponent>().Consume(request.Key);
+            string account = ticket.Account;
+            if (account == null || ticket.AccountId <= 0)
             {
                 response.Error = ErrorCode.ERR_ConnectGateKeyError;
                 response.Message = "Gate key验证失败!";
@@ -25,7 +31,7 @@ namespace ET.Server
             
             if (player == null)
             {
-                player = playerComponent.AddChild<Player, string>(account);
+                player = playerComponent.AddChildWithId<Player, string>(ticket.AccountId, account);
                 EntityRef<Player> playerRef = player;
                 playerComponent.Add(player);
                 PlayerSessionComponent playerSessionComponent = player.AddComponent<PlayerSessionComponent>();
@@ -38,6 +44,13 @@ namespace ET.Server
             }
             else
             {
+                // 先解除旧连接关联，避免其关闭回调将新连接对应的 Player 标记为下线。
+                Session previousSession = player.GetComponent<PlayerSessionComponent>().Session;
+                if (previousSession != null && previousSession != session)
+                {
+                    previousSession.GetComponent<SessionPlayerComponent>().Player = null;
+                    previousSession.Dispose();
+                }
                 player.RemoveComponent<WaitLogoutComponent>();
                 session.AddComponent<SessionPlayerComponent>().Player = player;
                 player.GetComponent<PlayerSessionComponent>().Session = session;

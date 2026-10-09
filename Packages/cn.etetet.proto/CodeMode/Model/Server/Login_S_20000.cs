@@ -17,6 +17,11 @@ namespace ET
         public int RpcId { get; set; }
         [MemoryPackOrder(1)]
         public string Account { get; set; }
+        /// <summary>
+        /// Realm 认证得到的持久化账号 ID，不能由客户端指定
+        /// </summary>
+        [MemoryPackOrder(2)]
+        public long AccountId { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);

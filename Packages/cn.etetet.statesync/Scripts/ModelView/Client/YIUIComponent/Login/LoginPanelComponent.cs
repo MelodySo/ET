@@ -7,5 +7,6 @@ namespace ET.Client
 {
     public partial class LoginPanelComponent : Entity
     {
+        public bool LoginInProgress;
     }
 }

@@ -29,9 +29,31 @@ namespace ET.Client
         [YIUIInvoke(LoginPanelComponent.OnEventLoginInvoke)]
         private static async ETTask OnEventLoginInvoke(this LoginPanelComponent self)
         {
-            Log.Info($"登录");
-            GlobalComponent globalComponent = self.Root().GetComponent<GlobalComponent>();
-            await LoginHelper.Login(self.Root(), globalComponent.GlobalConfig.Address, self.u_ComAccount.text, self.u_ComPassword.text);
+            if (self.LoginInProgress) return;
+            self.LoginInProgress = true;
+            EntityRef<LoginPanelComponent> selfRef = self;
+            EntityRef<Scene> rootRef = self.Root();
+            try
+            {
+                GlobalComponent globalComponent = self.Root().GetComponent<GlobalComponent>();
+                await LoginHelper.Login(self.Root(), globalComponent.GlobalConfig.Address, self.u_ComAccount.text, self.u_ComPassword.text);
+            }
+            catch (RpcException e)
+            {
+                Scene root = rootRef;
+                if (root != null) TipsHelper.OpenSync<TipsMessageViewComponent>(root, LoginAccountInputHelper.ErrorMessage(e.Error));
+            }
+            catch (Exception)
+            {
+                Scene root = rootRef;
+                if (root != null) TipsHelper.OpenSync<TipsMessageViewComponent>(root, "无法连接登录服务，请确认服务器和数据库已启动。");
+                Log.Warning("Login failed because the service could not be reached.");
+            }
+            finally
+            {
+                self = selfRef;
+                if (self != null) self.LoginInProgress = false;
+            }
         }
 
         #endregion YIUIEvent结束

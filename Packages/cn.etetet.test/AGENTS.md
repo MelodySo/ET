@@ -47,3 +47,8 @@
 | `FiberInit_TestCase.cs` | `TestCase` 场景初始化，每个用例均为全新服务器环境 |
 | `TestArgs.cs` | 命令行参数定义 |
 | `ITestHandler.cs` | 测试处理器接口 |
+
+## 登录回归兼容
+
+- TestHelper.CreateRobot 使用确定的合法账号名与测试专用密码，不再用空密码绕过正式认证。
+- 账号功能测试归属 login 包；其中网络用例使用临时数据库配置，不能让测试账号写入正常游戏数据库。

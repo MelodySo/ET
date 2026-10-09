@@ -219,6 +219,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
+        "cn.etetet.db": "4.0.0",
+        "cn.etetet.startconfig": "2.0.1",
         "cn.etetet.actorlocation": "2.0.1",
         "cn.etetet.loader": "2.0.7",
         "cn.etetet.netinner": "2.0.1",

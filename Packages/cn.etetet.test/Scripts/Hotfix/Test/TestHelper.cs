@@ -6,13 +6,15 @@ namespace ET.Test
 {
     public static class TestHelper
     {
+        private const string RobotTestPassword = "RobotTest-Password1";
         public static async ETTask<Fiber> CreateRobot(Fiber fiber, string robotName)
         {
             string routerManagerAddress = GetRouterManagerAddress(fiber);
             Fiber robot = await fiber.CreateFiber(IdGenerater.Instance.GenerateId(), SceneType.Client, robotName);
             Scene root = robot.Root;
             EntityRef<Scene> rootRef = root;
-            await LoginHelper.Login(root, routerManagerAddress, robotName, "");
+            string account = $"test_{unchecked((ulong)robotName.GetLongHashCode()):x16}";
+            await LoginHelper.Login(root, routerManagerAddress, account, RobotTestPassword);
             root = rootRef;
             await EnterMapHelper.EnterMapAsync(root);
             return robot;
