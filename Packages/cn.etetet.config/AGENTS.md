@@ -16,3 +16,6 @@
 - 对外包身份使用 `cn.etetet.config`，但内部工具名暂时保留 `Excel` 语义
 - 修改 Luban、导出器或 MCP 路径时，优先检查包名和目录引用，不要顺手改内部工具程序集名
 - `PackageType` 与 `packagegit.json` 的编号必须保持一致，当前固定为 `13`
+- LubanGen.ps1 平台检测使用 `$IsMacOS` 的布尔值；Windows PowerShell 7 也存在该变量，不能检查它是否为 null。
+- 每组 Luban 导出允许 60 秒，超时终止整个子进程树，避免遗留生成器继续写文件。
+- brawl 关卡表通过自身 `Luban/Config/Defines/BrawlLevel.xml` 注册，只有一个业务 xlsx，无需另建 Base 表。

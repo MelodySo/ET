@@ -18,6 +18,7 @@
   },
   "description": "WOW",
   "dependencies": {
+    "cn.etetet.brawl": "1.0.0",
     "cn.etetet.core": "4.0.0",
     "cn.etetet.config": "4.0.0",
     "cn.etetet.proto": "4.0.0",

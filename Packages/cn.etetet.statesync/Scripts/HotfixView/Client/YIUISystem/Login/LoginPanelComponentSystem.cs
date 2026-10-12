@@ -7,6 +7,9 @@ namespace ET.Client
 {
     public static partial class LoginPanelComponentSystem
     {
+        private const string AccountPrefsKey = "Brawl.Login.Account";
+        private const string PasswordPrefsKey = "Brawl.Login.Password";
+
         [EntitySystem]
         private static void YIUIInitialize(this LoginPanelComponent self)
         {
@@ -20,6 +23,8 @@ namespace ET.Client
         [EntitySystem]
         private static async ETTask<bool> YIUIOpen(this LoginPanelComponent self)
         {
+            self.u_ComAccount.text = PlayerPrefs.GetString(AccountPrefsKey, self.u_ComAccount.text);
+            self.u_ComPassword.text = PlayerPrefs.GetString(PasswordPrefsKey, self.u_ComPassword.text);
             await ETTask.CompletedTask;
             return true;
         }
@@ -35,6 +40,10 @@ namespace ET.Client
             EntityRef<Scene> rootRef = self.Root();
             try
             {
+                // 仅用于本地 Demo：PlayerPrefs 不加密，不适合保存正式账号密码。
+                PlayerPrefs.SetString(AccountPrefsKey, self.u_ComAccount.text);
+                PlayerPrefs.SetString(PasswordPrefsKey, self.u_ComPassword.text);
+                PlayerPrefs.Save();
                 GlobalComponent globalComponent = self.Root().GetComponent<GlobalComponent>();
                 await LoginHelper.Login(self.Root(), globalComponent.GlobalConfig.Address, self.u_ComAccount.text, self.u_ComPassword.text);
             }

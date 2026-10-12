@@ -1,0 +1,5 @@
+<module name="ET">
+  <table name="BrawlLevelConfigCategory" value="BrawlLevelConfig" index="Id" mode="map"
+         input="Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlLevel.xlsx"
+         readSchemaFromFile="true" comment="荒野对战关卡" />
+</module>

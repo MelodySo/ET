@@ -53,6 +53,17 @@
         "cn.etetet.proto": "4.0.0"
       }
     },
+    "cn.etetet.brawl": {
+      "version": "file:cn.etetet.brawl",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "cn.etetet.core": "4.0.0",
+        "cn.etetet.config": "2.0.0",
+        "cn.etetet.sourcegenerator": "0.0.7",
+        "cn.etetet.memorypack": "1.10.0"
+      }
+    },
     "cn.etetet.btnode": {
       "version": "file:cn.etetet.btnode",
       "depth": 0,

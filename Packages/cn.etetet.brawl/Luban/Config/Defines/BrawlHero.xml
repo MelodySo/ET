@@ -1,0 +1,5 @@
+<module name="ET">
+  <table name="BrawlHeroConfigCategory" value="BrawlHeroConfig" index="Id" mode="map"
+         input="Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlHero.xlsx"
+         readSchemaFromFile="true" comment="荒野对战英雄" />
+</module>

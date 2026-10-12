@@ -1,0 +1,13 @@
+{
+  "name": "cn.etetet.brawl",
+  "displayName": "ET.Brawl",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "荒野对战 Demo：关卡配置与编辑器",
+  "dependencies": {
+    "cn.etetet.core": "4.0.0",
+    "cn.etetet.config": "2.0.0",
+    "cn.etetet.sourcegenerator": "0.0.7",
+    "cn.etetet.memorypack": "1.10.0"
+  }
+}

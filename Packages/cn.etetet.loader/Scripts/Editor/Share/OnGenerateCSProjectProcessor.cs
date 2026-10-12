@@ -9,6 +9,9 @@ namespace ET
 {
     public class OnGenerateCSProjectProcessor: AssetPostprocessor
     {
+        // VS 2026 默认的 SDK 生成器会删除 ET.sln；ET 的工具链仍使用传统解决方案。
+        public static string OnSelectingCSProjectStyle() => "Legacy";
+
         /// <summary>
         /// 对生成的C#项目文件(.csproj)进行处理
         /// 文档:https://learn.microsoft.com/zh-cn/visualstudio/gamedev/unity/extensibility/customize-project-files-created-by-vstu#%E6%A6%82%E8%A7%88
@@ -61,7 +64,20 @@ namespace ET
             {
                 File.Delete(file);
             }
-            return content;
+            string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string mainPackageFile = Path.Combine(projectRoot, "MainPackage.txt");
+            string mainPackage = null;
+            foreach (string line in File.ReadLines(mainPackageFile))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                mainPackage = line.Trim();
+                break;
+            }
+            if (mainPackage == null || !Regex.IsMatch(mainPackage, @"^cn\.etetet\.[a-zA-Z0-9_.-]+$"))
+                throw new InvalidDataException("MainPackage.txt 缺少有效主包名称，拒绝覆盖 ET.sln。");
+            string solution = Path.Combine(projectRoot, "Packages", mainPackage, "ET.sln");
+            // 根 ET.sln 可能是该文件的硬链接，必须在生成器写入之前返回主包原始内容。
+            return File.ReadAllText(solution);
         }
 
         /// <summary>

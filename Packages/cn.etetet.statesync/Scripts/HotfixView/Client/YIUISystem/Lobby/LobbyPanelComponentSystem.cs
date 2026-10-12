@@ -10,11 +10,13 @@ namespace ET.Client
         [EntitySystem]
         private static void YIUIInitialize(this LobbyPanelComponent self)
         {
+            BrawlHeroMenuHelper.Create(self);
         }
 
         [EntitySystem]
         private static void Destroy(this LobbyPanelComponent self)
         {
+            BrawlHeroMenuHelper.Destroy(self);
         }
 
         [EntitySystem]
@@ -29,6 +31,7 @@ namespace ET.Client
         [YIUIInvoke(LobbyPanelComponent.OnEventEnterMapInvoke)]
         private static async ETTask OnEventEnterMapInvoke(this LobbyPanelComponent self)
         {
+            if (self.TrainingSession != null) return;
             EntityRef<LobbyPanelComponent> selfRef = self;
             await EnterMapHelper.EnterMapAsync(self.Root());
             self = selfRef;

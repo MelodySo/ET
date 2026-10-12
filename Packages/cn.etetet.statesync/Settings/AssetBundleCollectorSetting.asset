@@ -63,6 +63,14 @@ MonoBehaviour:
         FilterRuleName: CollectScene
         AssetTags: 
         UserData: 
+      - CollectPath: Packages/cn.etetet.brawl/Bundles/Scenes
+        CollectorGUID: 3195d7863e723b04c8259d990579e429
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackSeparately
+        FilterRuleName: CollectScene
+        AssetTags: 
+        UserData: 
     - GroupName: Units
       GroupDesc: 
       AssetTags: 

@@ -16,7 +16,7 @@ $CUSTOM = "Packages/cn.etetet.yiuiluban/.ToolsGen/Custom"
 
 # powershell判断是不是Mac平台
 $DotNet = "dotnet.exe"
-if ($null -ne $IsMacOS) {
+if ($IsMacOS) {
     $DotNet = "/usr/local/share/dotnet/dotnet"
 }
 

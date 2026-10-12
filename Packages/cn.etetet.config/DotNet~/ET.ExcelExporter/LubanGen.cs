@@ -228,9 +228,9 @@ namespace ET
                 importProcess.Start();
                 importProcess.BeginOutputReadLine();
                 importProcess.BeginErrorReadLine();
-                if (!importProcess.WaitForExit(20000))
+                if (!importProcess.WaitForExit(60000))
                 {
-                    importProcess.Kill();
+                    importProcess.Kill(entireProcessTree: true);
                     Console.WriteLine($"[LUBAN ERROR] 导出超时，已终止进程: {exe} {arguments}");
                     Console.Out.Flush();
                     return -1;
