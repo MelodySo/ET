@@ -1,0 +1,5 @@
+If you are going to use this shader in URP, you will find a URP version in .bytes inside shaders folder, remove .bytes from the file name and unity will automatcally read the shader
+
+select the URP hsader for all materials uses this shader and the data of the previews shader will be applied automatcally as well
+
+more details andd step by step in https://solo-player.gitbook.io/most-in-one/general/how-to-convert-renderer-from-srp-to-urp
