@@ -1,0 +1,5 @@
+<module name="ET">
+  <table name="BrawlGlobalConfigCategory" value="BrawlGlobalConfig" mode="one"
+         input="Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlGlobal.xlsx"
+         readSchemaFromFile="true" comment="荒野对战全局参数" />
+</module>

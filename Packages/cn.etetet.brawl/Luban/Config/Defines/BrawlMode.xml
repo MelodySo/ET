@@ -1,0 +1,5 @@
+<module name="ET">
+  <table name="BrawlModeConfigCategory" value="BrawlModeConfig" index="Id" mode="map"
+         input="Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlMode.xlsx"
+         readSchemaFromFile="true" comment="荒野对战玩法" />
+</module>

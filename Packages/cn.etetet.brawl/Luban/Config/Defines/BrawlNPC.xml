@@ -1,0 +1,5 @@
+<module name="ET">
+  <table name="BrawlNPCConfigCategory" value="BrawlNPCConfig" index="Id" mode="map"
+         input="Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlNPC.xlsx"
+         readSchemaFromFile="true" comment="荒野对战 NPC" />
+</module>
