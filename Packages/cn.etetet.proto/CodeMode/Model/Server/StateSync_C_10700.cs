@@ -245,6 +245,76 @@ namespace ET
         }
     }
 
+    [MemoryPackable]
+    [Message(Opcode.C2G_BrawlMoveInput)]
+    public partial class C2G_BrawlMoveInput : MessageObject, ISessionMessage
+    {
+        public static C2G_BrawlMoveInput Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<C2G_BrawlMoveInput>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long EntryId { get; set; }
+        [MemoryPackOrder(1)]
+        public long Sequence { get; set; }
+        [MemoryPackOrder(2)]
+        public float X { get; set; }
+        [MemoryPackOrder(3)]
+        public float Z { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.BrawlMoveState)]
+    public partial class BrawlMoveState : MessageObject
+    {
+        public static BrawlMoveState Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlMoveState>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long UnitId { get; set; }
+        [MemoryPackOrder(1)]
+        public float X { get; set; }
+        [MemoryPackOrder(2)]
+        public float Z { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.G2C_BrawlMoveSnapshot)]
+    public partial class G2C_BrawlMoveSnapshot : MessageObject, IMessage
+    {
+        public static G2C_BrawlMoveSnapshot Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2C_BrawlMoveSnapshot>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long EntryId { get; set; }
+        [MemoryPackOrder(1)]
+        public long RoomId { get; set; }
+        [MemoryPackOrder(2)]
+        public long Tick { get; set; }
+        [MemoryPackOrder(3)]
+        public long LastInputSequence { get; set; }
+        [MemoryPackOrder(4)]
+        public List<BrawlMoveState> Units { get; set; } = new();
+
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
     public static partial class Opcode
     {
         public const ushort RouterSync = 10701;
@@ -258,5 +328,8 @@ namespace ET
         public const ushort G2C_BrawlPracticeEnter = 10709;
         public const ushort C2G_BrawlPracticeExit = 10710;
         public const ushort G2C_BrawlPracticeExit = 10711;
+        public const ushort C2G_BrawlMoveInput = 10712;
+        public const ushort BrawlMoveState = 10713;
+        public const ushort G2C_BrawlMoveSnapshot = 10714;
     }
 }

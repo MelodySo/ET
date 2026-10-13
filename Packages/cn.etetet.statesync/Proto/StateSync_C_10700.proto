@@ -86,3 +86,27 @@ message G2C_BrawlPracticeExit // ISessionResponse
     int32 Error = 2;
     string Message = 3;
 }
+
+message C2G_BrawlMoveInput // ISessionMessage
+{
+    int64 EntryId = 1;
+    int64 Sequence = 2;
+    float X = 3;
+    float Z = 4;
+}
+
+message BrawlMoveState
+{
+    int64 UnitId = 1;
+    float X = 2;
+    float Z = 3;
+}
+
+message G2C_BrawlMoveSnapshot // IMessage
+{
+    int64 EntryId = 1;
+    int64 RoomId = 2;
+    int64 Tick = 3;
+    int64 LastInputSequence = 4;
+    repeated BrawlMoveState Units = 5;
+}

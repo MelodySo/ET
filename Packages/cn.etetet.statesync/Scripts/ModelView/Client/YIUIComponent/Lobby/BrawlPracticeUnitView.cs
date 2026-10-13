@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace ET.Client
 {
@@ -13,5 +14,6 @@ namespace ET.Client
         public Vector3 Position;
         public string ModelPath;
         public GameObject Model;
+        public readonly List<BrawlPositionSample> Samples = new();
     }
 }

@@ -18,7 +18,11 @@ namespace ET.Server
             Scene root = session.Root();
 
             MessageStatisticsComponent messageStatisticsComponent = session.GetComponent<MessageStatisticsComponent>();
-            if (!messageStatisticsComponent.Check(message.GetType(), 20))
+            BrawlPracticeSessionComponent practice = session.GetComponent<BrawlPracticeSessionComponent>();
+            bool allowed = message is C2G_BrawlMoveInput && practice != null
+                ? BrawlPracticeMovementHelper.CheckInputRate(practice)
+                : messageStatisticsComponent.Check(message.GetType(), 20);
+            if (!allowed)
             {
                 session.Error = ErrorCode.ERR_MessageCountTooMany;
                 session.Dispose();

@@ -30,12 +30,15 @@ namespace ET.Server
             if (mode == null || !mode.Enabled || mode.TeamSize != 1 || mode.TeamCount != 2 || mode.TimeLimitSeconds != 0)
                 throw new InvalidOperationException("玩法 102 必须启用，TeamSize=1、TeamCount=2、TimeLimitSeconds=0。");
             if (level == null || level.ModeId != mode.Id) throw new InvalidOperationException("练习赛关卡 10201 不存在或 ModeId 不为 102。");
-            if (fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(request.HeroId) == null ||
-                fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(BotHeroId) == null)
+            BrawlHeroConfig playerHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(request.HeroId);
+            BrawlHeroConfig botHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(BotHeroId);
+            if (playerHero == null || botHero == null)
                 throw new InvalidOperationException("玩家或 Bot 英雄配置不存在。");
             int cellSize = fiber.GetSingleton<BrawlGlobalConfigCategory>().CellSize;
             if (cellSize <= 0) throw new InvalidOperationException("CellSize 必须大于零。");
             ValidateLevel(level, mode.TeamSize * mode.TeamCount, fiber.GetSingleton<BrawlNPCConfigCategory>());
+            ValidateHeroSpawn(level, cellSize, level.SpawnPoints[0], playerHero);
+            ValidateHeroSpawn(level, cellSize, level.SpawnPoints[1], botHero);
 
             // 新的进入请求替换该连接尚未退出的旧房间，延迟退出按 EntryId 匹配，不会销毁新房间。
             session.RemoveComponent<BrawlPracticeSessionComponent>();
@@ -71,6 +74,15 @@ namespace ET.Server
             if (state == null || state.EntryId != entryId) return;
             Log.Info($"Brawl practice exit: entry={entryId}");
             session.RemoveComponent<BrawlPracticeSessionComponent>();
+        }
+
+        private static void ValidateHeroSpawn(BrawlLevelConfig level, int cellSize, int point, BrawlHeroConfig hero)
+        {
+            if (!math.isfinite(hero.CollisionRadius) || hero.CollisionRadius <= 0)
+                throw new InvalidOperationException($"英雄 {hero.Id} 的 CollisionRadius 必须为有限正数（米）。");
+            float2 position = new float2(point % level.ColumnCount, point / level.ColumnCount) * cellSize;
+            if (!BrawlTerrainMovementHelper.CanOccupy(level, cellSize, position, hero.CollisionRadius))
+                throw new InvalidOperationException($"出生格 {point} 容纳不下英雄 {hero.Id}，碰撞半径为 {hero.CollisionRadius} 米。");
         }
 
         private static void ValidateLevel(BrawlLevelConfig level, int playerCount, BrawlNPCConfigCategory npcs)
@@ -109,6 +121,14 @@ namespace ET.Server
             data.Kind = kind;
             data.TeamId = teamId;
             data.OwnerPlayerId = playerId;
+            if (kind != BrawlPracticeUnitKind.NPC)
+            {
+                BrawlHeroConfig hero = units.Fiber().GetSingleton<BrawlHeroConfigCategory>().Get(configId);
+                if (hero.MoveSpeedTier <= 0) throw new InvalidOperationException($"英雄 {configId} 的移动挡位必须大于零。");
+                BrawlMoveComponent move = unit.AddComponent<BrawlMoveComponent>();
+                move.Speed = hero.MoveSpeedTier;
+                move.Radius = hero.CollisionRadius;
+            }
             return unit;
         }
 

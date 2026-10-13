@@ -13,7 +13,7 @@ namespace ET
 {
     public sealed partial class BrawlHeroConfig : ET.Object
     {
-        public BrawlHeroConfig(int Id, int Rarity, int Role, int NormalAttackSkillId, int SuperSkillId, int SpecialSkillId, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int UnlockPrice) 
+        public BrawlHeroConfig(int Id, int Rarity, int Role, int NormalAttackSkillId, int SuperSkillId, int SpecialSkillId, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int UnlockPrice, float CollisionRadius, float CollisionHeight) 
         {
             this.Id = Id;
             this.Rarity = Rarity;
@@ -25,6 +25,8 @@ namespace ET
             this.HpGrowthPerLevel = HpGrowthPerLevel;
             this.MoveSpeedTier = MoveSpeedTier;
             this.UnlockPrice = UnlockPrice;
+            this.CollisionRadius = CollisionRadius;
+            this.CollisionHeight = CollisionHeight;
             EndInit();
         }
 
@@ -68,6 +70,14 @@ namespace ET
         /// 解锁价格
         /// </summary>
         public readonly int UnlockPrice;
+        /// <summary>
+        /// 碰撞半径
+        /// </summary>
+        public readonly float CollisionRadius;
+        /// <summary>
+        /// 碰撞高度
+        /// </summary>
+        public readonly float CollisionHeight;
 
         public  void ResolveRef()
         {

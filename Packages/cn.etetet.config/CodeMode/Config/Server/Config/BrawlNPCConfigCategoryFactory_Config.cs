@@ -21,8 +21,9 @@ public sealed class BrawlNPCConfigCategoryFactory_Config : IConfigFactory
     {
         return new BrawlNPCConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlNPCConfig>()
         {
-            [ 101 ] = new ET.BrawlNPCConfig(101, 1, 5000, 500, 0, new int[] { 1 }, new int[] { 1 }),
-            [ 201 ] = new ET.BrawlNPCConfig(201, 2, 5000, 500, 0, new int[] { 1 }, new int[] { 1 })
+            [ 101 ] = new ET.BrawlNPCConfig(101, 1, 5000, 500, 0, new int[] { 1 }, new int[] { 1 }, 0.6f, 1f, 0.3f, 0f, 0f),
+            [ 201 ] = new ET.BrawlNPCConfig(201, 2, 5000, 500, 0, new int[] { 1 }, new int[] { 1 }, 0.6f, 1f, 0f, 0f, 0f),
+            [ 301 ] = new ET.BrawlNPCConfig(301, 3, 5000, 500, 2, new int[] { 1 }, new int[] { 1 }, 0.6f, 1f, 0f, 0f, 0f)
         });
     }
 }

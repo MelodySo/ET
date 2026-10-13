@@ -22,6 +22,18 @@ namespace ET.Client
         public long PracticeRoomId;
         public long MyUnitId;
         public EntityRef<ClientSenderComponent> PracticeSender;
+        public EntityRef<BrawlPracticeClientComponent> MovementClient;
+        public long InputSequence;
+        public long LastAcknowledgedInput;
+        public long LastServerTick;
+        public double RenderTick;
+        public float NextInputTime;
+        public float LastRenderTime;
+        public Vector2 LastSentDirection;
+        public Vector2 JoystickDirection;
+        public int? JoystickPointer;
+        public RectTransform JoystickBase;
+        public RectTransform JoystickKnob;
         public readonly List<BrawlPracticeUnitView> PracticeUnits = new();
         public readonly Dictionary<string, AssetHandle> ModelHandles = new();
         public GameObject Overlay;

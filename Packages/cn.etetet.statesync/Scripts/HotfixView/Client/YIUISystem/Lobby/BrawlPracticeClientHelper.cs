@@ -52,6 +52,8 @@ namespace ET.Client
                 });
             }
             if (!foundPlayer) throw new InvalidOperationException("服务器单位清单中缺少当前玩家。");
+            session.MovementClient = self.Root().AddComponent<BrawlPracticeClientComponent, BrawlTrainingSession>(session);
+            BrawlJoystickHelper.Create(session);
             return response.LevelId;
         }
 

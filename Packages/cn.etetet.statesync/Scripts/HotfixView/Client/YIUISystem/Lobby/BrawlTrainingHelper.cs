@@ -83,7 +83,7 @@ namespace ET.Client
                     return;
                 }
                 session.StatusText.text = practice
-                    ? $"练习赛 · {hero.Name}\n服务器房间 {session.PracticeRoomId} / 暂无移动与战斗"
+                    ? $"练习赛 · {hero.Name}\nWASD / 左下摇杆移动 · 服务器权威 · 暂无战斗"
                     : $"训练场 · {hero.Name}\n本地试用 / 暂无移动与战斗";
                 session.LoadingBackground.enabled = false;
                 session.ExitButton.interactable = true;
@@ -371,6 +371,9 @@ namespace ET.Client
             {
                 if (session.ExitButton != null) session.ExitButton.interactable = false;
                 if (session.StatusText != null) session.StatusText.text = "正在返回大厅……";
+                BrawlPracticeClientComponent movement = session.MovementClient;
+                movement?.Dispose();
+                session.MovementClient = default;
                 if (session.IsPractice) await BrawlPracticeClientHelper.Exit(session);
                 if (session.PreviousScene.IsValid() && session.PreviousScene.isLoaded) SceneManager.SetActiveScene(session.PreviousScene);
                 if (session.RuntimeRoot != null)

@@ -13,7 +13,7 @@ namespace ET
 {
     public sealed partial class BrawlNPCConfig : ET.Object
     {
-        public BrawlNPCConfig(int Id, string Name, string Description, string ModelPath, int NPCType, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues) 
+        public BrawlNPCConfig(int Id, string Name, string Description, string ModelPath, int NPCType, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues, float CollisionLength, float CollisionHeight, float CollisionWidth, float PivotX, float PivotZ) 
         {
             this.Id = Id;
             this.Name = Name;
@@ -25,6 +25,11 @@ namespace ET
             this.MoveSpeedTier = MoveSpeedTier;
             this.ComponentTypes = ComponentTypes;
             this.ComponentValues = ComponentValues;
+            this.CollisionLength = CollisionLength;
+            this.CollisionHeight = CollisionHeight;
+            this.CollisionWidth = CollisionWidth;
+            this.PivotX = PivotX;
+            this.PivotZ = PivotZ;
             EndInit();
         }
 
@@ -68,6 +73,26 @@ namespace ET
         /// 组件值数组
         /// </summary>
         public readonly int[] ComponentValues;
+        /// <summary>
+        /// 碰撞长度
+        /// </summary>
+        public readonly float CollisionLength;
+        /// <summary>
+        /// 碰撞高度
+        /// </summary>
+        public readonly float CollisionHeight;
+        /// <summary>
+        /// 碰撞宽度<br/>等于0是圆柱<br/>大于0是长方体
+        /// </summary>
+        public readonly float CollisionWidth;
+        /// <summary>
+        /// 中心点X
+        /// </summary>
+        public readonly float PivotX;
+        /// <summary>
+        /// 中心点Z
+        /// </summary>
+        public readonly float PivotZ;
 
         public  void ResolveRef()
         {

@@ -21,8 +21,10 @@ public sealed class BrawlHeroConfigCategoryFactory_Config : IConfigFactory
     {
         return new BrawlHeroConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlHeroConfig>()
         {
-            [ 101 ] = new ET.BrawlHeroConfig(101, 1, 1, 10101, 10102, 10103, 3900, 390, 3, 0),
-            [ 201 ] = new ET.BrawlHeroConfig(201, 2, 2, 20101, 20102, 20103, 5000, 500, 3, 10)
+            [ 101 ] = new ET.BrawlHeroConfig(101, 1, 1, 10101, 10102, 10103, 3900, 390, 3, 0, 0.3f, 1.2f),
+            [ 201 ] = new ET.BrawlHeroConfig(201, 2, 2, 20101, 20102, 20103, 5000, 500, 3, 10, 0.3f, 1.2f),
+            [ 301 ] = new ET.BrawlHeroConfig(301, 3, 7, 30101, 30102, 30103, 3500, 400, 4, 20, 0.3f, 1.2f),
+            [ 401 ] = new ET.BrawlHeroConfig(401, 3, 4, 40101, 40102, 40103, 4000, 480, 3, 30, 0.3f, 1.2f)
         });
     }
 }
