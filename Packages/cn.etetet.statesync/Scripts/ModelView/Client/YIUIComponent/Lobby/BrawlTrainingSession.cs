@@ -6,13 +6,24 @@ using YooAsset;
 
 namespace ET.Client
 {
-    /// <summary>本地训练场的临时资源与恢复信息，由大厅持有，不是网络对局。</summary>
+    /// <summary>训练场/练习赛的客户端资源与恢复信息，由大厅持有；练习赛另关联服务器房间。</summary>
     [EnableClass]
     public sealed class BrawlTrainingSession
     {
         public SceneHandle SceneHandle;
         public UnityEngine.SceneManagement.Scene PreviousScene;
         public GameObject RuntimeRoot;
+        public GameObject TerrainRoot;
+        public GameObject Hero;
+        public GameObject NPCRoot;
+        public int CellSize;
+        public bool IsPractice;
+        public long PracticeEntryId;
+        public long PracticeRoomId;
+        public long MyUnitId;
+        public EntityRef<ClientSenderComponent> PracticeSender;
+        public readonly List<BrawlPracticeUnitView> PracticeUnits = new();
+        public readonly Dictionary<string, AssetHandle> ModelHandles = new();
         public GameObject Overlay;
         public Image LoadingBackground;
         public TextMeshProUGUI StatusText;

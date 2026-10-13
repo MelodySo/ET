@@ -4,9 +4,9 @@ namespace ET
     public enum BrawlTileType
     {
         Ground = 0,
-        IndestructibleWall = 1,
-        DestructibleWall = 2,
-        Grass = 3,
-        BulletPassableObstacle = 4,
+        Wall = 1,
+        Grass = 2,
+        BulletPassableObstacle = 3,
+        Water = 4,
     }
 }

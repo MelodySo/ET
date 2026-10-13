@@ -152,7 +152,7 @@ namespace ET.Client
 
         private static void OnPracticeClicked(LobbyPanelComponent self)
         {
-            // 后续入口：使用 self.SelectedHeroId 请求练习赛；本轮按要求留空。
+            BrawlTrainingHelper.Enter(self, practice: true).Coroutine();
         }
 
         private static void OnTrainingClicked(LobbyPanelComponent self)

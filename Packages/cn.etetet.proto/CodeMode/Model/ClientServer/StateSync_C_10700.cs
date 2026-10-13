@@ -121,6 +121,130 @@ namespace ET
         }
     }
 
+    [MemoryPackable]
+    [Message(Opcode.BrawlPracticeUnitInfo)]
+    public partial class BrawlPracticeUnitInfo : MessageObject
+    {
+        public static BrawlPracticeUnitInfo Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlPracticeUnitInfo>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long UnitId { get; set; }
+        [MemoryPackOrder(1)]
+        public int Kind { get; set; }
+        [MemoryPackOrder(2)]
+        public int ConfigId { get; set; }
+        [MemoryPackOrder(3)]
+        public int TeamId { get; set; }
+        [MemoryPackOrder(4)]
+        public float X { get; set; }
+        [MemoryPackOrder(5)]
+        public float Y { get; set; }
+        [MemoryPackOrder(6)]
+        public float Z { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.C2G_BrawlPracticeEnter)]
+    [ResponseType(nameof(G2C_BrawlPracticeEnter))]
+    public partial class C2G_BrawlPracticeEnter : MessageObject, ISessionRequest
+    {
+        public static C2G_BrawlPracticeEnter Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<C2G_BrawlPracticeEnter>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public int RpcId { get; set; }
+        [MemoryPackOrder(1)]
+        public int HeroId { get; set; }
+        [MemoryPackOrder(2)]
+        public long EntryId { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.G2C_BrawlPracticeEnter)]
+    public partial class G2C_BrawlPracticeEnter : MessageObject, ISessionResponse
+    {
+        public static G2C_BrawlPracticeEnter Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2C_BrawlPracticeEnter>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public int RpcId { get; set; }
+        [MemoryPackOrder(1)]
+        public int Error { get; set; }
+        [MemoryPackOrder(2)]
+        public string Message { get; set; }
+        [MemoryPackOrder(3)]
+        public long RoomId { get; set; }
+        [MemoryPackOrder(4)]
+        public int LevelId { get; set; }
+        [MemoryPackOrder(5)]
+        public long MyUnitId { get; set; }
+        [MemoryPackOrder(6)]
+        public int CellSize { get; set; }
+        [MemoryPackOrder(7)]
+        public List<BrawlPracticeUnitInfo> Units { get; set; } = new();
+
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.C2G_BrawlPracticeExit)]
+    [ResponseType(nameof(G2C_BrawlPracticeExit))]
+    public partial class C2G_BrawlPracticeExit : MessageObject, ISessionRequest
+    {
+        public static C2G_BrawlPracticeExit Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<C2G_BrawlPracticeExit>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public int RpcId { get; set; }
+        [MemoryPackOrder(1)]
+        public long EntryId { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.G2C_BrawlPracticeExit)]
+    public partial class G2C_BrawlPracticeExit : MessageObject, ISessionResponse
+    {
+        public static G2C_BrawlPracticeExit Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2C_BrawlPracticeExit>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public int RpcId { get; set; }
+        [MemoryPackOrder(1)]
+        public int Error { get; set; }
+        [MemoryPackOrder(2)]
+        public string Message { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
     public static partial class Opcode
     {
         public const ushort RouterSync = 10701;
@@ -129,5 +253,10 @@ namespace ET
         public const ushort G2C_TestHotfixMessage = 10704;
         public const ushort C2G_Benchmark = 10705;
         public const ushort G2C_Benchmark = 10706;
+        public const ushort BrawlPracticeUnitInfo = 10707;
+        public const ushort C2G_BrawlPracticeEnter = 10708;
+        public const ushort G2C_BrawlPracticeEnter = 10709;
+        public const ushort C2G_BrawlPracticeExit = 10710;
+        public const ushort G2C_BrawlPracticeExit = 10711;
     }
 }

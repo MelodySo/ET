@@ -13,7 +13,7 @@ namespace ET
 {
     public sealed partial class BrawlLevelConfig : ET.Object
     {
-        public BrawlLevelConfig(int Id, int ModeId, int RowCount, int ColumnCount, int[] MapGrid, int[] SpawnPoints, int[] ItemSpawnPoints) 
+        public BrawlLevelConfig(int Id, int ModeId, int RowCount, int ColumnCount, int[] MapGrid, int[] SpawnPoints, int[] NPCIds, int[] NPCPoints) 
         {
             this.Id = Id;
             this.ModeId = ModeId;
@@ -21,7 +21,8 @@ namespace ET
             this.ColumnCount = ColumnCount;
             this.MapGrid = MapGrid;
             this.SpawnPoints = SpawnPoints;
-            this.ItemSpawnPoints = ItemSpawnPoints;
+            this.NPCIds = NPCIds;
+            this.NPCPoints = NPCPoints;
             EndInit();
         }
 
@@ -50,9 +51,13 @@ namespace ET
         /// </summary>
         public readonly int[] SpawnPoints;
         /// <summary>
-        /// 道具刷新格索引
+        /// NPC 配置 ID（与 NPCPoints 一一对应）
         /// </summary>
-        public readonly int[] ItemSpawnPoints;
+        public readonly int[] NPCIds;
+        /// <summary>
+        /// NPC 所在格子索引（每格最多一个）
+        /// </summary>
+        public readonly int[] NPCPoints;
 
         public  void ResolveRef()
         {

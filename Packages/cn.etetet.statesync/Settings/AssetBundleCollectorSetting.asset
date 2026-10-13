@@ -84,6 +84,19 @@ MonoBehaviour:
         FilterRuleName: CollectPrefab
         AssetTags: 
         UserData: 
+    - GroupName: BrawlPrefabs
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Packages/cn.etetet.brawl/Bundles/Prefabs
+        CollectorGUID: 82cf34ffc012748c6a749745e7853d28
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectPrefab
+        AssetTags: 
+        UserData: 
     - GroupName: YIUI
       GroupDesc: 
       AssetTags: 

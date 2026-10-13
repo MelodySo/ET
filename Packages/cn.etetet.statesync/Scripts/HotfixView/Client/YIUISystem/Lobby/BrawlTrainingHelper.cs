@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
@@ -8,30 +9,51 @@ using YooAsset;
 
 namespace ET.Client
 {
-    /// <summary>第一版仅走本地场景展示，不调用原 MMO 的 EnterMap，不创建联网战斗单位。</summary>
+    /// <summary>本地训练场与服务器练习赛共用的显示流程，不调用原 MMO EnterMap。</summary>
     public static class BrawlTrainingHelper
     {
         // 当前入口按约定固定选用训练关卡，场景名称仍由配置决定。
         private const int TrainingLevelId = 10101;
 
-        public static async ETTask Enter(LobbyPanelComponent self)
+        public static async ETTask Enter(LobbyPanelComponent self, int levelId = TrainingLevelId, bool practice = false)
         {
             if (self.TrainingSession != null) return;
             EntityRef<LobbyPanelComponent> owner = self;
-            BrawlTrainingSession session = new() { Loading = true, PreviousScene = SceneManager.GetActiveScene() };
+            BrawlTrainingSession session = new() { Loading = true, IsPractice = practice, PreviousScene = SceneManager.GetActiveScene() };
             self.TrainingSession = session;
             try
             {
-                BrawlHeroConfig hero = self.Fiber().GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(self.SelectedHeroId);
-                BrawlLevelConfig level = self.Fiber().GetSingleton<BrawlLevelConfigCategory>().GetOrDefault(TrainingLevelId);
+                int heroId = self.SelectedHeroId;
+                CreateOverlay(self, session);
+                HideLobby(self, session);
+                if (practice)
+                {
+                    levelId = await BrawlPracticeClientHelper.Enter(self, session, heroId);
+                    self = owner;
+                    if (self == null || session.CancelRequested)
+                    {
+                        session.Loading = false;
+                        await Cleanup(session);
+                        return;
+                    }
+                }
+                else session.CellSize = self.Fiber().GetSingleton<BrawlGlobalConfigCategory>().CellSize;
+                // 分支中的 RPC / 取消清理均可能 await，公共路径重新取得存活大厅实体。
+                self = owner;
+                if (session.CellSize <= 0) throw new InvalidOperationException("BrawlGlobal.CellSize 必须大于 0，请修改并导出配置。");
+                BrawlHeroConfig hero = self.Fiber().GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(heroId);
+                BrawlLevelConfig level = self.Fiber().GetSingleton<BrawlLevelConfigCategory>().GetOrDefault(levelId);
                 if (hero == null) throw new InvalidOperationException("请先选择英雄。");
                 if (level == null || string.IsNullOrWhiteSpace(level.SceneAsset))
-                    throw new InvalidOperationException($"缺少关卡 {TrainingLevelId} 或 SceneAsset，请先导出配置。");
+                    throw new InvalidOperationException($"缺少关卡 {levelId} 或 SceneAsset，请先导出配置。");
+                BrawlLevelStyleConfig style = self.Fiber().GetSingleton<BrawlLevelStyleConfigCategory>().GetOrDefault(level.StyleId);
+                ValidateLevel(level, style);
+                if (string.IsNullOrWhiteSpace(hero.ModelPath))
+                    throw new InvalidOperationException($"英雄 {hero.Id} 缺少 ModelPath，请检查英雄表并导出。");
+                BrawlNPCConfig[] npcs = practice ? null : ResolveNPCs(level, self.Fiber().GetSingleton<BrawlNPCConfigCategory>());
 
                 // 资源收集使用 AddressByFileName，同时兼容表内的项目相对路径和短名称。
                 string address = Path.GetFileNameWithoutExtension(level.SceneAsset.Replace('\\', '/'));
-                CreateOverlay(self, session);
-                HideLobby(self, session);
                 session.SceneHandle = YooAssets.GetPackage("DefaultPackage").LoadSceneAsync(address, LoadSceneMode.Additive);
                 await session.SceneHandle.Task;
 
@@ -46,8 +68,23 @@ namespace ET.Client
                     throw new InvalidOperationException($"训练场加载失败：{address}\n{session.SceneHandle.LastError}");
                 if (!session.SceneHandle.ActivateScene()) throw new InvalidOperationException("无法激活训练场场景。");
 
-                CreatePreview(session, hero.Id);
-                session.StatusText.text = $"训练场 · {hero.Name}\n本地试用 / 暂无移动与战斗";
+                CreatePreview(session, level);
+                await LoadTerrain(session, level, style);
+                if (!session.CancelRequested)
+                {
+                    if (practice) await LoadPracticeUnits(session);
+                    else await LoadCharacters(session, hero, level, npcs);
+                }
+                self = owner;
+                if (self == null || session.CancelRequested)
+                {
+                    session.Loading = false;
+                    await Cleanup(session);
+                    return;
+                }
+                session.StatusText.text = practice
+                    ? $"练习赛 · {hero.Name}\n服务器房间 {session.PracticeRoomId} / 暂无移动与战斗"
+                    : $"训练场 · {hero.Name}\n本地试用 / 暂无移动与战斗";
                 session.LoadingBackground.enabled = false;
                 session.ExitButton.interactable = true;
                 session.Loading = false;
@@ -62,7 +99,7 @@ namespace ET.Client
                 {
                     self.TrainingSession = null;
                     self.HeroTrialView.SetActive(false);
-                    self.HeroDetailText.text += $"\n\n进入训练场失败：{exception.Message}";
+                    self.HeroDetailText.text += $"\n\n进入{(practice ? "练习赛" : "训练场")}失败：{exception.Message}";
                 }
             }
         }
@@ -103,7 +140,129 @@ namespace ET.Client
             session.LobbyGroup.blocksRaycasts = false;
         }
 
-        private static void CreatePreview(BrawlTrainingSession session, int heroId)
+        public static void ValidateLevel(BrawlLevelConfig level, BrawlLevelStyleConfig style)
+        {
+            if (style == null) throw new InvalidOperationException($"关卡 {level.Id} 的 StyleId={level.StyleId} 不存在，请检查风格表并导出。");
+            if (level.RowCount < 1 || level.RowCount > 100 || level.ColumnCount < 1 || level.ColumnCount > 100 ||
+                level.MapGrid == null || level.MapGrid.Length != level.RowCount * level.ColumnCount)
+                throw new InvalidOperationException($"关卡 {level.Id} 的行列数或 MapGrid 长度非法。");
+            foreach (int tile in level.MapGrid)
+                if (!Enum.IsDefined(typeof(BrawlTileType), tile)) throw new InvalidOperationException($"未知地形编号：{tile}");
+            if (level.SpawnPoints == null || level.SpawnPoints.Length == 0 || level.SpawnPoints[0] < 0 || level.SpawnPoints[0] >= level.MapGrid.Length)
+                throw new InvalidOperationException($"关卡 {level.Id} 缺少有效的玩家出生点。");
+            int spawnTile = level.MapGrid[level.SpawnPoints[0]];
+            if (spawnTile != (int)BrawlTileType.Ground && spawnTile != (int)BrawlTileType.Grass)
+                throw new InvalidOperationException("玩家出生点必须在平地或草丛上。");
+        }
+
+        public static Vector3 CellPosition(int index, int columns, int cellSize) => new(index % columns * cellSize, 0, index / columns * cellSize);
+
+        private static BrawlNPCConfig[] ResolveNPCs(BrawlLevelConfig level, BrawlNPCConfigCategory category)
+        {
+            int count = level.NPCIds?.Length ?? 0;
+            if (count != (level.NPCPoints?.Length ?? 0))
+                throw new InvalidOperationException($"关卡 {level.Id} 的 NPCIds 与 NPCPoints 必须等长。");
+            BrawlNPCConfig[] configs = new BrawlNPCConfig[count];
+            HashSet<int> occupied = new();
+            for (int i = 0; i < count; ++i)
+            {
+                int point = level.NPCPoints[i];
+                if (point < 0 || point >= level.MapGrid.Length || !occupied.Add(point) ||
+                    Array.IndexOf(level.SpawnPoints, point) >= 0)
+                    throw new InvalidOperationException($"关卡 {level.Id} 的 NPC 出生格 {point} 越界、重复或与玩家重叠。");
+                int tile = level.MapGrid[point];
+                if (tile != (int)BrawlTileType.Ground && tile != (int)BrawlTileType.Grass)
+                    throw new InvalidOperationException($"关卡 {level.Id} 的 NPC 出生格 {point} 必须在平地或草丛上。");
+                BrawlNPCConfig config = category.GetOrDefault(level.NPCIds[i]);
+                if (config == null || string.IsNullOrWhiteSpace(config.ModelPath))
+                    throw new InvalidOperationException($"NPC {level.NPCIds[i]} 不存在或缺少 ModelPath，请检查 NPC 表并导出。");
+                configs[i] = config;
+            }
+            return configs;
+        }
+
+        private static async ETTask<GameObject> InstantiateModel(BrawlTrainingSession session, string address, Transform parent,
+            string objectName, Vector3 position)
+        {
+            if (session.CancelRequested) return null;
+            if (!session.ModelHandles.TryGetValue(address, out AssetHandle handle))
+            {
+                handle = YooAssets.GetPackage("DefaultPackage").LoadAssetAsync<GameObject>(address);
+                // 先登记句柄，取消或加载失败时也由会话统一释放。
+                session.ModelHandles.Add(address, handle);
+                await handle.Task;
+            }
+            if (session.CancelRequested) return null;
+            if (handle.Status != EOperationStatus.Succeed || handle.AssetObject is not GameObject prefab)
+                throw new InvalidOperationException($"模型 {address} 加载失败：{handle.LastError}");
+            GameObject instance = UnityEngine.Object.Instantiate(prefab, parent, false);
+            instance.name = objectName;
+            instance.transform.localPosition = position;
+            return instance;
+        }
+
+        private static async ETTask LoadCharacters(BrawlTrainingSession session, BrawlHeroConfig hero, BrawlLevelConfig level,
+            BrawlNPCConfig[] npcs)
+        {
+            session.Hero = await InstantiateModel(session, hero.ModelPath, session.RuntimeRoot.transform,
+                $"TrainingHero_{hero.Id}", CellPosition(level.SpawnPoints[0], level.ColumnCount, session.CellSize));
+            if (session.CancelRequested) return;
+            // 保留 Prefab 的专属武器和控制器，不驱动动画参数；禁止根运动改变出生位置。
+            foreach (Animator animator in session.Hero.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
+            session.NPCRoot = new GameObject("NPCs");
+            session.NPCRoot.transform.SetParent(session.RuntimeRoot.transform, false);
+            for (int i = 0; i < npcs.Length; ++i)
+            {
+                if (session.CancelRequested) return;
+                GameObject npc = await InstantiateModel(session, npcs[i].ModelPath, session.NPCRoot.transform,
+                    $"NPC_{i}_{npcs[i].Id}", CellPosition(level.NPCPoints[i], level.ColumnCount, session.CellSize));
+                if (session.CancelRequested) return;
+                foreach (Animator animator in npc.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
+            }
+        }
+
+        private static async ETTask LoadPracticeUnits(BrawlTrainingSession session)
+        {
+            session.NPCRoot = new GameObject("ServerUnits");
+            session.NPCRoot.transform.SetParent(session.RuntimeRoot.transform, false);
+            foreach (BrawlPracticeUnitView view in session.PracticeUnits)
+            {
+                if (session.CancelRequested) return;
+                view.Model = await InstantiateModel(session, view.ModelPath, session.NPCRoot.transform,
+                    $"{view.Kind}_{view.ConfigId}_{view.UnitId}", view.Position);
+                if (session.CancelRequested) return;
+                foreach (Animator animator in view.Model.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
+                if (view.UnitId == session.MyUnitId) session.Hero = view.Model;
+            }
+        }
+
+        public static string TerrainAddress(BrawlLevelStyleConfig style, int tile) => tile switch
+        {
+            (int)BrawlTileType.Ground => "",
+            (int)BrawlTileType.Wall => style.ModelPath1,
+            (int)BrawlTileType.Grass => style.ModelPath2,
+            (int)BrawlTileType.BulletPassableObstacle => style.ModelPath3,
+            (int)BrawlTileType.Water => style.ModelPath4,
+            _ => throw new InvalidOperationException($"未知地形编号：{tile}"),
+        };
+
+        public static async ETTask LoadTerrain(BrawlTrainingSession session, BrawlLevelConfig level, BrawlLevelStyleConfig style)
+        {
+            ValidateLevel(level, style);
+            session.TerrainRoot = new GameObject("Terrain");
+            session.TerrainRoot.transform.SetParent(session.RuntimeRoot.transform, false);
+            for (int index = 0; index < level.MapGrid.Length; ++index)
+            {
+                if (session.CancelRequested) return;
+                string address = TerrainAddress(style, level.MapGrid[index]);
+                if (string.IsNullOrWhiteSpace(address)) continue;
+                await InstantiateModel(session, address, session.TerrainRoot.transform, $"Tile_{index}_{address}",
+                    CellPosition(index, level.ColumnCount, session.CellSize));
+                // 保留 Prefab 原有旋转和缩放。
+            }
+        }
+
+        public static void CreatePreview(BrawlTrainingSession session, BrawlLevelConfig level)
         {
             // 暂时接管画面，退出时恢复；不移动或修改原相机的 Transform。
             foreach (Camera camera in Camera.allCameras)
@@ -119,24 +278,20 @@ namespace ET.Client
             }
             session.RuntimeRoot = new GameObject("BrawlTrainingRuntime");
             SceneManager.MoveGameObjectToScene(session.RuntimeRoot, session.SceneHandle.SceneObject);
-            GameObject hero = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            hero.name = $"TrainingHero_{heroId}";
-            hero.transform.SetParent(session.RuntimeRoot.transform, false);
-            hero.transform.position = new Vector3(0, 1, 0);
-            // 只有可视占位，不参与物理、寻路、Grid 或服务端 Unit 生命周期。
-            UnityEngine.Object.Destroy(hero.GetComponent<Collider>());
 
             GameObject cameraObject = new("TrainingCamera", typeof(Camera));
             cameraObject.transform.SetParent(session.RuntimeRoot.transform, false);
-            cameraObject.transform.position = new Vector3(0, 5, -8);
-            cameraObject.transform.LookAt(hero.transform.position);
+            Vector3 center = new((level.ColumnCount - 1) * session.CellSize * 0.5f, 0, (level.RowCount - 1) * session.CellSize * 0.5f);
+            float extent = Mathf.Max(level.RowCount, level.ColumnCount) * session.CellSize;
+            cameraObject.transform.position = center + new Vector3(0, extent, -extent);
+            cameraObject.transform.LookAt(center);
             Camera preview = cameraObject.GetComponent<Camera>();
             preview.clearFlags = CameraClearFlags.SolidColor;
             preview.backgroundColor = new Color(0.12f, 0.17f, 0.23f);
             preview.nearClipPlane = 0.1f;
-            preview.farClipPlane = 100;
+            preview.farClipPlane = extent * 5 + 100;
             preview.orthographic = true;
-            preview.orthographicSize = 4;
+            preview.orthographicSize = Mathf.Max(level.RowCount * 0.5f, level.ColumnCount / Mathf.Max(0.1f, preview.aspect) * 0.5f) * session.CellSize + 2;
 
             GameObject lightObject = new("TrainingLight", typeof(Light));
             lightObject.transform.SetParent(session.RuntimeRoot.transform, false);
@@ -173,7 +328,7 @@ namespace ET.Client
             session.StatusText.color = Color.white;
             session.StatusText.raycastTarget = false;
             session.StatusText.richText = false;
-            session.StatusText.text = "正在进入训练场……";
+            session.StatusText.text = session.IsPractice ? "正在请求练习赛……" : "正在进入训练场……";
 
             GameObject exitObject = new("ExitTraining", typeof(RectTransform), typeof(Image), typeof(Button));
             RectTransform exitRect = (RectTransform)exitObject.transform;
@@ -205,10 +360,10 @@ namespace ET.Client
             label.color = Color.white;
             label.alignment = TextAlignmentOptions.Center;
             label.raycastTarget = false;
-            label.text = "退出训练场";
+            label.text = session.IsPractice ? "退出练习赛" : "退出训练场";
         }
 
-        private static async ETTask Cleanup(BrawlTrainingSession session)
+        public static async ETTask Cleanup(BrawlTrainingSession session)
         {
             if (session.Closing) return;
             session.Closing = true;
@@ -216,6 +371,7 @@ namespace ET.Client
             {
                 if (session.ExitButton != null) session.ExitButton.interactable = false;
                 if (session.StatusText != null) session.StatusText.text = "正在返回大厅……";
+                if (session.IsPractice) await BrawlPracticeClientHelper.Exit(session);
                 if (session.PreviousScene.IsValid() && session.PreviousScene.isLoaded) SceneManager.SetActiveScene(session.PreviousScene);
                 if (session.RuntimeRoot != null)
                 {
@@ -237,6 +393,14 @@ namespace ET.Client
             catch (Exception exception) { Log.Error(exception); }
             finally
             {
+                foreach (AssetHandle modelHandle in session.ModelHandles.Values)
+                    if (modelHandle.IsValid) modelHandle.Release();
+                session.ModelHandles.Clear();
+                session.TerrainRoot = null;
+                session.Hero = null;
+                session.NPCRoot = null;
+                session.PracticeUnits.Clear();
+                session.PracticeRoomId = 0;
                 foreach (Camera camera in session.DisabledCameras) if (camera != null) camera.enabled = true;
                 foreach (AudioListener listener in session.DisabledListeners) if (listener != null) listener.enabled = true;
                 session.DisabledCameras.Clear();
@@ -246,7 +410,7 @@ namespace ET.Client
                     session.LobbyGroup.alpha = session.PreviousAlpha;
                     session.LobbyGroup.interactable = session.PreviousInteractable;
                     session.LobbyGroup.blocksRaycasts = session.PreviousBlocksRaycasts;
-                    if (session.CreatedLobbyGroup) UnityEngine.Object.Destroy(session.LobbyGroup);
+                    // 留给大厅统一销毁，避免同帧再次进入时复用到等待 Destroy 的组件。
                 }
                 if (session.ExitButton != null) session.ExitButton.onClick.RemoveAllListeners();
                 if (session.Overlay != null) UnityEngine.Object.Destroy(session.Overlay);

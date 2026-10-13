@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using MongoDB.Bson;
 
 namespace ET.Test
 {
@@ -13,22 +14,25 @@ namespace ET.Test
             Directory.CreateDirectory(directory);
             string path = Path.Combine(directory, "BrawlLevel.xlsx");
             File.Copy(BrawlLevelWorkbook.DefaultPath, path);
+            bool hadPreference = UnityEngine.PlayerPrefs.HasKey(BrawlLevelEditorWindow.LastLevelIdKey);
+            int previousId = UnityEngine.PlayerPrefs.GetInt(BrawlLevelEditorWindow.LastLevelIdKey);
             try
             {
                 // Test inputs live only in the workbook copy; use unused IDs rather than changing production rows.
                 int id = 2000000001;
-                BrawlLevelConfig first = new(id, 1, "001", 2, 3,
-                    new[] { 0, 1, 2, 3, 4, 0 }, new[] { 0, 5 }, new[] { 3 });
+                BrawlLevelConfig first = new(id, 1, 1, "001", 2, 3,
+                    new[] { 0, 1, 0, 3, 4, 0 }, new[] { 0, 5 }, new[] { 101 }, new[] { 2 });
                 string stamp = BrawlLevelWorkbook.Save(path, first, null);
                 BrawlLevelConfig loaded = BrawlLevelWorkbook.Read(path).Load(id, out string readStamp);
-                if (stamp != readStamp || !loaded.MapGrid.SequenceEqual(first.MapGrid) || loaded.SceneAsset != first.SceneAsset)
+                if (stamp != readStamp || !loaded.MapGrid.SequenceEqual(first.MapGrid) || loaded.SceneAsset != first.SceneAsset ||
+                    !loaded.NPCIds.SequenceEqual(first.NPCIds) || !loaded.NPCPoints.SequenceEqual(first.NPCPoints))
                     return Fail(1, "Initial save/import did not round-trip.");
 
-                BrawlLevelConfig updated = new(id, 1, "ChangedArena", 2, 3,
-                    first.MapGrid, first.SpawnPoints, first.ItemSpawnPoints);
+                BrawlLevelConfig updated = new(id, 1, 1, "ChangedArena", 2, 3,
+                    first.MapGrid, first.SpawnPoints, first.NPCIds, first.NPCPoints);
                 stamp = BrawlLevelWorkbook.Save(path, updated, stamp);
-                BrawlLevelConfig other = new(id + 1, 2, "OtherArena", 1, 1,
-                    Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
+                BrawlLevelConfig other = new(id + 1, 2, 1, "OtherArena", 1, 1,
+                    Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 BrawlLevelWorkbook.Save(path, other, null);
                 loaded = BrawlLevelWorkbook.Read(path).Load(id, out readStamp);
                 if (readStamp != stamp || loaded.SceneAsset != "ChangedArena" || !loaded.SpawnPoints.SequenceEqual(first.SpawnPoints))
@@ -40,15 +44,17 @@ namespace ET.Test
                 if (!Rejects(() => BrawlLevelWorkbook.Read(path).Load(id + 2, out _)))
                     return Fail(5, "Missing ID was accepted.");
 
-                BrawlLevelConfig invalid = new(id, 1, "", 1, 1, new[] { 0, 0 }, Array.Empty<int>(), Array.Empty<int>());
+                BrawlLevelConfig invalid = new(id, 1, 1, "", 1, 1, new[] { 0, 0 }, Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 if (!Rejects(() => BrawlLevelWorkbook.Validate(invalid))) return Fail(6, "Grid length mismatch was accepted.");
-                invalid = new(id, 1, "", 1, 1, new[] { 9 }, Array.Empty<int>(), Array.Empty<int>());
+                invalid = new(id, 1, 1, "", 1, 1, new[] { 9 }, Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 if (!Rejects(() => BrawlLevelWorkbook.Validate(invalid))) return Fail(7, "Unknown tile was accepted.");
-                invalid = new(id, 1, "", 1, 1, new[] { 0 }, new[] { 1 }, Array.Empty<int>());
+                invalid = new(id, 1, 1, "", 1, 1, new[] { 0 }, Array.Empty<int>(), new[] { 101 }, Array.Empty<int>());
+                if (!Rejects(() => BrawlLevelWorkbook.Validate(invalid))) return Fail(13, "Mismatched NPC arrays were accepted.");
+                invalid = new(id, 1, 1, "", 1, 1, new[] { 0 }, new[] { 1 }, Array.Empty<int>(), Array.Empty<int>());
                 if (!Rejects(() => BrawlLevelWorkbook.Validate(invalid))) return Fail(8, "Out-of-bounds spawn was accepted.");
-                invalid = new(id, 1, "", 1, 1, new[] { 0 }, new[] { 0, 0 }, Array.Empty<int>());
+                invalid = new(id, 1, 1, "", 1, 1, new[] { 0 }, new[] { 0, 0 }, Array.Empty<int>(), Array.Empty<int>());
                 if (!Rejects(() => BrawlLevelWorkbook.Validate(invalid))) return Fail(9, "Duplicate spawn was accepted.");
-                invalid = new(id, 1, "", 129, 129, Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
+                invalid = new(id, 1, 1, "", 129, 129, Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 if (!Rejects(() => BrawlLevelWorkbook.Validate(invalid))) return Fail(10, "Excel cell size bound was not checked.");
 
                 byte[] before = File.ReadAllBytes(path);
@@ -59,15 +65,79 @@ namespace ET.Test
                 }
                 if (!before.SequenceEqual(File.ReadAllBytes(path))) return Fail(12, "Failed save changed original bytes.");
                 using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { }
+                foreach (string group in new[] { "", "c" })
+                {
+                    SetGroup(path, "D3", group);
+                    string groupsBefore = ReadGroups(path);
+                    loaded = BrawlLevelWorkbook.Read(path).Load(id, out stamp);
+                    BrawlLevelWorkbook.Save(path, loaded, stamp);
+                    if (ReadGroups(path) != groupsBefore) return Fail(14, "Save changed export groups.");
+                    if (BrawlLevelWorkbook.Read(path).Load(id, out _).StyleId != first.StyleId)
+                        return Fail(15, "StyleId did not round-trip.");
+                    BrawlLevelEditorWindow window = UnityEngine.ScriptableObject.CreateInstance<BrawlLevelEditorWindow>();
+                    try
+                    {
+                        window.ImportLevel(id, path);
+                        if (window.SelectedLevelId != id || window.hasUnsavedChanges)
+                            return Fail(18, "Editor window import failed.");
+                        window.ExitLevel();
+                        if (window.SelectedLevelId != 0 || UnityEngine.PlayerPrefs.GetInt(BrawlLevelEditorWindow.LastLevelIdKey) != id)
+                            return Fail(19, "Exit lost remembered ID.");
+                    }
+                    finally
+                    {
+                        window.DiscardChanges();
+                        UnityEngine.Object.DestroyImmediate(window);
+                    }
+                    window = UnityEngine.ScriptableObject.CreateInstance<BrawlLevelEditorWindow>();
+                    try
+                    {
+                        using UnityEditor.SerializedObject state = new(window);
+                        if (state.FindProperty("requestedId").intValue != id || window.SelectedLevelId != 0)
+                            return Fail(20, "Reopening did not restore ID or unexpectedly imported a level.");
+                    }
+                    finally { UnityEngine.Object.DestroyImmediate(window); }
+                }
+                foreach (var invalidGroup in new[] { ("D3", "s", "c"), ("E3", "s", "c"), ("H3", "c", "") })
+                {
+                    SetGroup(path, invalidGroup.Item1, invalidGroup.Item2);
+                    try
+                    {
+                        BrawlLevelWorkbook.Read(path);
+                        return Fail(16, "Invalid export group was accepted.");
+                    }
+                    catch (InvalidDataException e)
+                    {
+                        if (!e.Message.Contains(invalidGroup.Item1)) return Fail(17, "Group diagnostic lacks cell address.");
+                    }
+                    SetGroup(path, invalidGroup.Item1, invalidGroup.Item3);
+                }
                 return ErrorCode.ERR_Success;
             }
             finally
             {
+                if (hadPreference) UnityEngine.PlayerPrefs.SetInt(BrawlLevelEditorWindow.LastLevelIdKey, previousId);
+                else UnityEngine.PlayerPrefs.DeleteKey(BrawlLevelEditorWindow.LastLevelIdKey);
+                UnityEngine.PlayerPrefs.Save();
                 // These are the exact files created above, never a user workbook or broad recursive delete.
                 if (File.Exists(path)) File.Delete(path);
                 Directory.Delete(directory);
             }
         }
+
+        private static void SetGroup(string path, string cell, string group)
+        {
+            BrawlEditorToolRunner.Excel("excel_range", new BsonDocument
+            {
+                { "operation", "write" }, { "path", path }, { "range", cell },
+                { "data", new BsonArray { new BsonArray { group } } },
+            });
+        }
+
+        private static string ReadGroups(string path) => BrawlEditorToolRunner.Excel("excel_range", new BsonDocument
+        {
+            { "operation", "get" }, { "path", path }, { "range", "A3:K3" }, { "calculateFormulas", false },
+        });
 
         private static bool Rejects(Action action)
         {

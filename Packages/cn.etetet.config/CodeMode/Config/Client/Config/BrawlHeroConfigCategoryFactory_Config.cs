@@ -21,8 +21,8 @@ public sealed class BrawlHeroConfigCategoryFactory_Config : IConfigFactory
     {
         return new BrawlHeroConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlHeroConfig>()
         {
-            [ 101 ] = new ET.BrawlHeroConfig(101, @"雪莉", @"雪莉是最棒的巡逻员：可靠、顽强、擅长使用霰弹枪。她实在不明白柯尔特为什么一定要抢她的风头......", @"", 1, 1, 10101, 10102, 10103, 3900, 390, 3, 0),
-            [ 201 ] = new ET.BrawlHeroConfig(201, @"公牛", @"公牛没有年轻时那么无忧无虑，也没有那么爱惹事了。但如果有人敢挑衅，他还是会毫不犹豫地把他们撞飞！", @"", 2, 2, 20101, 20102, 20103, 5000, 500, 3, 10)
+            [ 101 ] = new ET.BrawlHeroConfig(101, @"雪莉", @"雪莉是最棒的巡逻员：可靠、顽强、擅长使用霰弹枪。她实在不明白柯尔特为什么一定要抢她的风头......", @"BasicFemaleDefault", 1, 1, 10101, 10102, 10103, 3900, 390, 3, 0),
+            [ 201 ] = new ET.BrawlHeroConfig(201, @"公牛", @"公牛没有年轻时那么无忧无虑，也没有那么爱惹事了。但如果有人敢挑衅，他还是会毫不犹豫地把他们撞飞！", @"BasicMaleDefault", 2, 2, 20101, 20102, 20103, 5000, 500, 3, 10)
         });
     }
 }

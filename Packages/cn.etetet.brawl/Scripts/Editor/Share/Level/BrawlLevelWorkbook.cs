@@ -30,7 +30,7 @@ namespace ET
             int count = Math.Max(HeaderRows, sheets[0]["rowCount"].AsInt32);
             string result = BrawlEditorToolRunner.Excel("excel_range", new BsonDocument
             {
-                { "operation", "get" }, { "path", Path.GetFullPath(path) }, { "range", $"A1:I{count}" },
+                { "operation", "get" }, { "path", Path.GetFullPath(path) }, { "range", $"A1:K{count}" },
                 { "includeFormulas", true }, { "calculateFormulas", false },
             });
             BrawlLevelWorkbook workbook = new() { rowCount = count, fileHash = hash };
@@ -49,7 +49,7 @@ namespace ET
                 string rawId = workbook.Cell(row, 1);
                 if (string.IsNullOrWhiteSpace(rawId))
                 {
-                    if (Enumerable.Range(2, 7).Any(column => !string.IsNullOrWhiteSpace(workbook.Cell(row, column))))
+                    if (Enumerable.Range(2, 9).Any(column => !string.IsNullOrWhiteSpace(workbook.Cell(row, column))))
                         throw new InvalidDataException($"第 {row} 行有数据但缺少 Id。");
                     continue;
                 }
@@ -66,10 +66,10 @@ namespace ET
         public BrawlLevelConfig Load(int id, out string stamp)
         {
             if (!this.rowsById.TryGetValue(id, out int row)) throw new InvalidDataException($"关卡 {id} 不存在。");
-            BrawlLevelConfig config = new(id, ParseInt(this.Cell(row, 2), "ModeId"), this.Cell(row, 3),
-                ParseInt(this.Cell(row, 4), "RowCount"), ParseInt(this.Cell(row, 5), "ColumnCount"),
-                ParseArray(this.Cell(row, 6), "MapGrid"), ParseArray(this.Cell(row, 7), "SpawnPoints"),
-                ParseArray(this.Cell(row, 8), "ItemSpawnPoints"));
+            BrawlLevelConfig config = new(id, ParseInt(this.Cell(row, 2), "ModeId"), ParseInt(this.Cell(row, 3), "StyleId"), this.Cell(row, 4),
+                ParseInt(this.Cell(row, 5), "RowCount"), ParseInt(this.Cell(row, 6), "ColumnCount"),
+                ParseArray(this.Cell(row, 7), "MapGrid"), ParseArray(this.Cell(row, 8), "SpawnPoints"),
+                ParseArray(this.Cell(row, 9), "NPCIds"), ParseArray(this.Cell(row, 10), "NPCPoints"));
             Validate(config);
             stamp = this.Stamp(row);
             return config;
@@ -96,20 +96,21 @@ namespace ET
             {
                 BsonArray values = new()
                 {
-                    "", config.Id, config.ModeId, "'" + (config.SceneAsset ?? ""), config.RowCount, config.ColumnCount,
-                    "'" + FormatArray(config.MapGrid), "'" + FormatArray(config.SpawnPoints), "'" + FormatArray(config.ItemSpawnPoints),
+                    "", config.Id, config.ModeId, config.StyleId, "'" + (config.SceneAsset ?? ""), config.RowCount, config.ColumnCount,
+                    "'" + FormatArray(config.MapGrid), "'" + FormatArray(config.SpawnPoints),
+                    "'" + FormatArray(config.NPCIds), "'" + FormatArray(config.NPCPoints),
                 };
                 BrawlEditorToolRunner.Excel("excel_range", new BsonDocument
                 {
-                    { "operation", "write" }, { "path", pending }, { "range", $"A{row}:I{row}" },
+                    { "operation", "write" }, { "path", pending }, { "range", $"A{row}:K{row}" },
                     { "data", new BsonArray { values } },
                 });
                 BrawlLevelWorkbook saved = Read(pending);
                 BrawlLevelConfig roundTrip = saved.Load(config.Id, out string stamp);
-                if (roundTrip.SceneAsset != (config.SceneAsset ?? "") || roundTrip.ModeId != config.ModeId ||
+                if (roundTrip.SceneAsset != (config.SceneAsset ?? "") || roundTrip.ModeId != config.ModeId || roundTrip.StyleId != config.StyleId ||
                     roundTrip.RowCount != config.RowCount || roundTrip.ColumnCount != config.ColumnCount ||
                     !roundTrip.MapGrid.SequenceEqual(config.MapGrid) || !roundTrip.SpawnPoints.SequenceEqual(config.SpawnPoints) ||
-                    !roundTrip.ItemSpawnPoints.SequenceEqual(config.ItemSpawnPoints))
+                    !roundTrip.NPCIds.SequenceEqual(config.NPCIds) || !roundTrip.NPCPoints.SequenceEqual(config.NPCPoints))
                     throw new InvalidDataException("临时工作簿回读不一致，原表未修改。");
                 // Deny concurrent writes while allowing our atomic replacement; an Excel lock fails safely here.
                 using (FileStream guard = new(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
@@ -130,21 +131,25 @@ namespace ET
         public static void Validate(BrawlLevelConfig config)
         {
             if (config.Id <= 0 || config.ModeId <= 0) throw new InvalidDataException("关卡 Id 和 ModeId 必须大于 0。");
+            if (config.StyleId <= 0) throw new InvalidDataException("StyleId 必须大于 0。");
             long count = (long)config.RowCount * config.ColumnCount;
             if (config.RowCount <= 0 || config.ColumnCount <= 0 || config.RowCount > 100 || config.ColumnCount > 100)
                 throw new InvalidDataException("行数和列数必须在 1–100 之间。");
-            if (config.MapGrid == null || config.SpawnPoints == null || config.ItemSpawnPoints == null)
+            if (config.MapGrid == null || config.SpawnPoints == null || config.NPCIds == null || config.NPCPoints == null)
                 throw new InvalidDataException("数组不能为 null；未配置时使用空数组。");
             if (config.MapGrid.Length != 0 && config.MapGrid.Length != count)
                 throw new InvalidDataException("已有 MapGrid 长度与行列数不匹配。本阶段不自动裁剪或重排地图。");
             foreach (int tile in config.MapGrid)
                 if (!Enum.IsDefined(typeof(BrawlTileType), tile)) throw new InvalidDataException($"未知格子类型：{tile}");
             ValidatePoints(config.SpawnPoints, count, "SpawnPoints");
-            ValidatePoints(config.ItemSpawnPoints, count, "ItemSpawnPoints");
+            ValidatePoints(config.NPCPoints, count, "NPCPoints");
+            if (config.NPCIds.Length != config.NPCPoints.Length || config.NPCIds.Any(id => id <= 0))
+                throw new InvalidDataException("NPCIds 与 NPCPoints 必须等长，且 NPC ID 必须大于 0。");
             if ((config.SceneAsset ?? "").Length > ExcelCellTextLimit) throw new InvalidDataException("SceneAsset 超过 Excel 单元格字符上限。");
             FormatArray(config.MapGrid);
             FormatArray(config.SpawnPoints);
-            FormatArray(config.ItemSpawnPoints);
+            FormatArray(config.NPCIds);
+            FormatArray(config.NPCPoints);
         }
 
         private static void ValidatePoints(int[] values, long count, string name)
@@ -156,14 +161,23 @@ namespace ET
 
         private void CheckHeaders()
         {
-            string[] names = { "##var", "Id", "ModeId", "SceneAsset", "RowCount", "ColumnCount", "MapGrid", "SpawnPoints", "ItemSpawnPoints" };
-            string[] types = { "##type", "int", "int", "string", "int", "int", "(array#sep=,),int", "(array#sep=,),int", "(array#sep=,),int" };
+            string[] names = { "##var", "Id", "ModeId", "StyleId", "SceneAsset", "RowCount", "ColumnCount", "MapGrid", "SpawnPoints", "NPCIds", "NPCPoints" };
+            string[] types = { "##type", "int", "int", "int", "string", "int", "int", "(array#sep=,),int", "(array#sep=,),int", "(array#sep=,),int", "(array#sep=,),int" };
             for (int column = 0; column < names.Length; ++column)
             {
                 if (this.Cell(1, column) != names[column] || this.Cell(2, column) != types[column])
                     throw new InvalidDataException($"关卡表第 {column + 1} 列表头/类型不匹配，请保留标准表头。");
-                string group = column == 0 ? "##group" : column == 3 ? "c" : "";
-                if (this.Cell(3, column) != group) throw new InvalidDataException("关卡表导出分组已改变，请保留 SceneAsset=c，其余分组留空。");
+                string group = this.Cell(3, column);
+                bool validGroup = names[column] switch
+                {
+                    "##var" => group == "##group",
+                    "SceneAsset" => group == "c",
+                    // 风格只影响客户端显示；同时兼容旧表双端导出的空分组。
+                    "StyleId" => group == "" || group == "c",
+                    _ => group == "",
+                };
+                if (!validGroup)
+                    throw new InvalidDataException($"关卡表 {(char)('A' + column)}3（{names[column]}）分组“{group}”不支持：SceneAsset=c，StyleId 可填 c 或留空，其余字段留空，A3 保留 ##group。");
             }
             if (this.Cell(4, 0) != "##") throw new InvalidDataException("关卡表第 4 行必须是注释行。");
         }
@@ -172,7 +186,7 @@ namespace ET
         private string Stamp(int row)
         {
             // Length-prefix the fields so no cell text can collide with a separator.
-            string text = string.Concat(Enumerable.Range(0, 9).Select(column => $"{this.Cell(row, column).Length}:{this.Cell(row, column)}"));
+            string text = string.Concat(Enumerable.Range(0, 11).Select(column => $"{this.Cell(row, column).Length}:{this.Cell(row, column)}"));
             using MemoryStream stream = new(Encoding.UTF8.GetBytes(text));
             return Hash(stream);
         }

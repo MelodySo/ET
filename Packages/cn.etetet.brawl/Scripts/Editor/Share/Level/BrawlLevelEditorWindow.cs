@@ -9,15 +9,24 @@ namespace ET
 {
     public sealed class BrawlLevelEditorWindow : EditorWindow
     {
+        internal const string LastLevelIdKey = "ET.Brawl.LevelEditor.LastLevelId";
         [SerializeField] private int requestedId;
         [SerializeField] private int selectedId;
         [SerializeField] private int modeId;
+        [SerializeField] private int styleId;
         [SerializeField] private string sceneAsset = "";
         [SerializeField] private int rowCount;
         [SerializeField] private int columnCount;
         [SerializeField] private int[] mapGrid = Array.Empty<int>();
         [SerializeField] private int[] spawnPoints = Array.Empty<int>();
-        [SerializeField] private int[] itemSpawnPoints = Array.Empty<int>();
+        [SerializeField] private int[] npcIds = Array.Empty<int>();
+        [SerializeField] private int[] npcPoints = Array.Empty<int>();
+        [SerializeField] private int npcBrushId;
+        [SerializeField] private bool npcTool;
+        private BrawlNPCWorkbook npcWorkbook;
+        private int[] npcOptions = Array.Empty<int>();
+        private string[] npcLabels = Array.Empty<string>();
+        private bool npcLoadAttempted;
         [SerializeField] private string savedStamp;
         [SerializeField] private bool isNew;
         [SerializeField] private bool dirty;
@@ -36,7 +45,7 @@ namespace ET
         internal int SelectedLevelId => this.selectedId;
 
 
-        [MenuItem("ET/Brawl/关卡编辑器")]
+        [MenuItem("Brawl/关卡编辑器")]
         public static void Open()
         {
             BrawlLevelEditorWindow window = GetWindow<BrawlLevelEditorWindow>();
@@ -47,6 +56,9 @@ namespace ET
 
         private void OnEnable()
         {
+            if (this.requestedId == 0 && this.selectedId == 0)
+                this.requestedId = PlayerPrefs.GetInt(LastLevelIdKey, 0);
+            if (!Enum.IsDefined(typeof(BrawlTileType), this.brush)) this.brush = BrawlTileType.Ground;
             this.minSize = new Vector2(650, 650);
             if (this.selectedId != 0 && this.mapGrid.Length == 0)
             {
@@ -64,8 +76,16 @@ namespace ET
 
         private void OnDisable()
         {
+            if (this.requestedId > 0) this.RememberLevelId(this.requestedId);
             this.EndStroke();
             Undo.undoRedoPerformed -= this.OnUndoRedo;
+        }
+
+        private void RememberLevelId(int id)
+        {
+            this.requestedId = id;
+            PlayerPrefs.SetInt(LastLevelIdKey, id);
+            PlayerPrefs.Save();
         }
 
         private void OnUndoRedo()
@@ -118,11 +138,13 @@ namespace ET
             EditorGUILayout.Space();
             EditorGUI.BeginChangeCheck();
             int nextMode = EditorGUILayout.IntField("ModeId（所属玩法）", this.modeId);
+            int nextStyle = EditorGUILayout.IntField("StyleId（地形风格）", this.styleId);
             SceneAsset nextScene = (SceneAsset)EditorGUILayout.ObjectField("SceneAsset（拖入场景）", this.sceneObject, typeof(SceneAsset), false);
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RegisterCompleteObjectUndo(this, "修改关卡信息");
                 this.modeId = nextMode;
+                this.styleId = nextStyle;
                 if (nextScene != this.sceneObject)
                 {
                     this.sceneObject = nextScene;
@@ -143,7 +165,7 @@ namespace ET
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("MapGrid", $"{this.mapGrid.Length} 个格子");
             EditorGUILayout.LabelField("SpawnPoints", $"{this.spawnPoints.Length} 个出生点");
-            EditorGUILayout.LabelField("ItemSpawnPoints", $"{this.itemSpawnPoints.Length} 个道具点");
+            EditorGUILayout.LabelField("NPC", $"{this.npcPoints.Length} 个（独立于地形）");
             this.DrawGrid();
         }
 
@@ -155,17 +177,20 @@ namespace ET
             Undo.ClearUndo(this);
             this.selectedId = id;
             this.modeId = id / 100;
+            this.styleId = 0;
             this.sceneAsset = "";
             this.rowCount = 20;
             this.columnCount = 20;
             this.mapGrid = new int[this.rowCount * this.columnCount];
             this.ResetView();
             this.spawnPoints = Array.Empty<int>();
-            this.itemSpawnPoints = Array.Empty<int>();
+            this.npcIds = Array.Empty<int>();
+            this.npcPoints = Array.Empty<int>();
             this.savedStamp = null;
             this.isNew = true;
             this.SetDirty(true);
             this.SetMessage("草稿已创建，请填写所属玩法、行数和列数后保存。ModeId 初始建议值为 ID / 100，可修改。");
+            this.RememberLevelId(id);
         }
 
         internal void ImportLevel(int id, string workbookPath)
@@ -174,18 +199,21 @@ namespace ET
             Undo.ClearUndo(this);
             this.selectedId = config.Id;
             this.modeId = config.ModeId;
+            this.styleId = config.StyleId;
             this.sceneAsset = config.SceneAsset;
             this.rowCount = config.RowCount;
             this.columnCount = config.ColumnCount;
             this.mapGrid = config.MapGrid.Length == 0 ? new int[config.RowCount * config.ColumnCount] : config.MapGrid;
             this.spawnPoints = config.SpawnPoints;
-            this.itemSpawnPoints = config.ItemSpawnPoints;
+            this.npcIds = config.NPCIds;
+            this.npcPoints = config.NPCPoints;
             this.savedStamp = stamp;
             this.isNew = false;
             this.ResetView();
             this.ResolveScene();
             this.SetDirty(config.MapGrid.Length == 0);
-            this.SetMessage("关卡已导入。出生点按添加顺序编号；道具点暂不编辑。");
+            this.SetMessage("关卡已导入。出生点按添加顺序编号。");
+            this.RememberLevelId(id);
         }
 
         private void SaveLevel()
@@ -195,8 +223,8 @@ namespace ET
 
         internal void SaveLevel(string workbookPath)
         {
-            BrawlLevelWorkbook.Validate(new BrawlLevelConfig(this.selectedId, this.modeId, this.sceneAsset,
-                this.rowCount, this.columnCount, this.mapGrid, this.spawnPoints, this.itemSpawnPoints));
+            BrawlLevelWorkbook.Validate(new BrawlLevelConfig(this.selectedId, this.modeId, this.styleId, this.sceneAsset,
+                this.rowCount, this.columnCount, this.mapGrid, this.spawnPoints, this.npcIds, this.npcPoints));
             int required = BrawlModeWorkbook.GetPlayerCount(this.modeId);
             if (this.spawnPoints.Length != required)
                 throw new InvalidDataException($"玩法 {this.modeId} 需要 {required} 个出生点（TeamSize × TeamCount），当前为 {this.spawnPoints.Length} 个。");
@@ -204,8 +232,19 @@ namespace ET
                 throw new InvalidDataException("请先完成地图网格初始化。");
             foreach (int point in this.spawnPoints)
                 if (!IsWalkable(this.mapGrid[point])) throw new InvalidDataException($"出生点 {point} 位于不可站立的格子，请移动出生点或修改地形。");
-            BrawlLevelConfig config = new(this.selectedId, this.modeId, this.sceneAsset, this.rowCount, this.columnCount,
-                this.mapGrid, this.spawnPoints, this.itemSpawnPoints);
+            if (this.npcIds.Length > 0)
+            {
+                this.ReloadNPCs();
+                for (int i = 0; i < this.npcIds.Length; ++i)
+                {
+                    if (!this.npcWorkbook.Contains(this.npcIds[i]))
+                        throw new InvalidDataException($"NPC ID {this.npcIds[i]} 已不存在，请删除该摆放或修复 NPC 表。");
+                    if (!IsWalkable(this.mapGrid[this.npcPoints[i]]) || this.spawnPoints.Contains(this.npcPoints[i]))
+                        throw new InvalidDataException($"NPC 格子 {this.npcPoints[i]} 必须是平地或草丛，且不能与玩家出生点重叠。");
+                }
+            }
+            BrawlLevelConfig config = new(this.selectedId, this.modeId, this.styleId, this.sceneAsset, this.rowCount, this.columnCount,
+                this.mapGrid, this.spawnPoints, this.npcIds, this.npcPoints);
             this.savedStamp = BrawlLevelWorkbook.Save(workbookPath, config, this.isNew ? null : this.savedStamp);
             this.isNew = false;
             // Window snapshots contain workbook conflict stamps: never restore an old stamp after saving.
@@ -223,7 +262,8 @@ namespace ET
             this.isNew = false;
             this.mapGrid = Array.Empty<int>();
             this.spawnPoints = Array.Empty<int>();
-            this.itemSpawnPoints = Array.Empty<int>();
+            this.npcIds = Array.Empty<int>();
+            this.npcPoints = Array.Empty<int>();
             this.SetDirty(false);
             this.SetMessage("已退出，未执行保存。");
         }
@@ -272,6 +312,7 @@ namespace ET
         {
             this.brush = BrawlTileType.Ground;
             this.spawnTool = false;
+            this.npcTool = false;
             this.cellPixels = 20;
             this.pan = new Vector2(10, 10);
             this.sceneObject = null;
@@ -296,7 +337,18 @@ namespace ET
                 for (int column = 0; column < Math.Min(columns, this.columnCount); ++column)
                     resized[row * columns + column] = this.mapGrid[row * this.columnCount + column];
             this.spawnPoints = this.RemapPoints(this.spawnPoints, rows, columns);
-            this.itemSpawnPoints = this.RemapPoints(this.itemSpawnPoints, rows, columns);
+            List<int> nextIds = new();
+            List<int> nextPoints = new();
+            for (int i = 0; i < this.npcPoints.Length; ++i)
+            {
+                int row = this.npcPoints[i] / this.columnCount;
+                int column = this.npcPoints[i] % this.columnCount;
+                if (row >= rows || column >= columns) continue;
+                nextIds.Add(this.npcIds[i]);
+                nextPoints.Add(row * columns + column);
+            }
+            this.npcIds = nextIds.ToArray();
+            this.npcPoints = nextPoints.ToArray();
             this.rowCount = rows;
             this.columnCount = columns;
             this.mapGrid = resized;
@@ -313,15 +365,20 @@ namespace ET
         private void DrawGrid()
         {
             EditorGUILayout.BeginHorizontal();
-            this.spawnTool = GUILayout.Toolbar(this.spawnTool ? 1 : 0, new[] { "地形", "出生点" }) == 1;
-            using (new EditorGUI.DisabledScope(this.spawnTool))
+            int tool = GUILayout.Toolbar(this.npcTool ? 2 : this.spawnTool ? 1 : 0, new[] { "地形", "出生点", "NPC" });
+            this.spawnTool = tool == 1;
+            this.npcTool = tool == 2;
+            using (new EditorGUI.DisabledScope(this.spawnTool || this.npcTool))
                 this.brush = (BrawlTileType)EditorGUILayout.EnumPopup(this.brush);
             if (GUILayout.Button("撤销", GUILayout.Width(45))) Undo.PerformUndo();
             if (GUILayout.Button("重做", GUILayout.Width(45))) Undo.PerformRedo();
             bool fit = GUILayout.Button("全图", GUILayout.Width(45));
             EditorGUILayout.EndHorizontal();
-            EditorGUILayout.LabelField("左键拖画 / 添加出生点，右键删除出生点；滚轮缩放，中键平移。左下角为 (0,0)。", EditorStyles.wordWrappedMiniLabel);
-            EditorGUILayout.LabelField("0 平地（绿）  1 硬墙（灰）  2 软墙（棕）  3 草丛（深绿）  4 障碍（蓝）", EditorStyles.miniLabel);
+            if (this.npcTool) this.DrawNPCBrush();
+            EditorGUILayout.LabelField(this.npcTool
+                ? "NPC：左键单击放置/替换，右键单击删除，不支持拖刷。滚轮缩放，中键平移。"
+                : "左键拖画 / 添加出生点，右键删除出生点；滚轮缩放，中键平移。左下角为 (0,0)。", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField("0 平地（绿）  1 墙（灰）  2 草丛（深绿）  3 障碍（蓝）  4 水面（青）；NPC 为橙色", EditorStyles.miniLabel);
             Rect viewport = GUILayoutUtility.GetRect(100, 100, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             if (fit)
             {
@@ -347,6 +404,17 @@ namespace ET
                 }
             if (this.spawnStyle == null) this.spawnStyle = new GUIStyle(EditorStyles.boldLabel)
                 { alignment = TextAnchor.MiddleCenter, normal = { textColor = Color.white } };
+            for (int i = 0; i < this.npcPoints.Length; ++i)
+            {
+                int index = this.npcPoints[i];
+                Rect cell = new(this.pan.x + index % this.columnCount * this.cellPixels,
+                    this.pan.y + (this.rowCount - 1 - index / this.columnCount) * this.cellPixels, this.cellPixels, this.cellPixels);
+                EditorGUI.DrawRect(new Rect(cell.x + cell.width * 0.12f, cell.y + cell.height * 0.12f,
+                    cell.width * 0.76f, cell.height * 0.76f), new Color32(210, 110, 20, 255));
+                string name = this.npcWorkbook?.Get(this.npcIds[i], "Name") ?? "";
+                GUI.Label(cell, new GUIContent(this.cellPixels >= 35 ? this.npcIds[i].ToString() : "N",
+                    $"NPC {this.npcIds[i]} {name}\n格子索引：{index}"), this.spawnStyle);
+            }
             for (int i = 0; i < this.spawnPoints.Length; ++i)
             {
                 int index = this.spawnPoints[i];
@@ -379,11 +447,11 @@ namespace ET
                 GUIUtility.hotControl = control;
                 this.strokeControl = control;
                 this.lastCell = -1;
-                if (e.button == 0 || (e.button == 1 && this.spawnTool))
+                if (e.button == 0 || (e.button == 1 && (this.spawnTool || this.npcTool)))
                 {
                     Undo.IncrementCurrentGroup();
                     this.strokeGroup = Undo.GetCurrentGroup();
-                    Undo.RegisterCompleteObjectUndo(this, this.spawnTool ? "编辑出生点" : "绘制地形");
+                    Undo.RegisterCompleteObjectUndo(this, this.npcTool ? "编辑 NPC" : this.spawnTool ? "编辑出生点" : "绘制地形");
                     this.PaintAt(local, e.button == 1);
                 }
                 e.Use();
@@ -391,7 +459,7 @@ namespace ET
             else if (e.type == EventType.MouseDrag && GUIUtility.hotControl == this.strokeControl && this.strokeControl != 0)
             {
                 if (e.button == 2) this.pan += e.delta;
-                else if (viewport.Contains(e.mousePosition) && (e.button == 0 || (e.button == 1 && this.spawnTool)))
+                else if (!this.npcTool && viewport.Contains(e.mousePosition) && (e.button == 0 || (e.button == 1 && this.spawnTool)))
                     this.PaintAt(local, e.button == 1);
                 else this.lastCell = -1;
                 e.Use();
@@ -419,10 +487,14 @@ namespace ET
             int y = this.rowCount - 1 - Mathf.FloorToInt((local.y - this.pan.y) / this.cellPixels);
             if (x < 0 || x >= this.columnCount || y < 0 || y >= this.rowCount) { this.lastCell = -1; return; }
             int index = y * this.columnCount + x;
-            if (this.spawnTool)
+            if (this.npcTool)
+            {
+                this.PaintNPC(index, remove);
+            }
+            else if (this.spawnTool)
             {
                 List<int> points = new(this.spawnPoints);
-                bool changed = remove ? points.Remove(index) : !points.Contains(index) && IsWalkable(this.mapGrid[index]);
+                bool changed = remove ? points.Remove(index) : !points.Contains(index) && !this.npcPoints.Contains(index) && IsWalkable(this.mapGrid[index]);
                 if (changed)
                 {
                     if (!remove) points.Add(index);
@@ -450,13 +522,88 @@ namespace ET
 
         private static bool IsWalkable(int tile) => tile == (int)BrawlTileType.Ground || tile == (int)BrawlTileType.Grass;
 
+        private void ReloadNPCs()
+        {
+            this.npcLoadAttempted = true;
+            this.npcWorkbook = null;
+            this.npcOptions = Array.Empty<int>();
+            this.npcLabels = Array.Empty<string>();
+            this.npcWorkbook = BrawlNPCWorkbook.Read();
+            this.npcOptions = this.npcWorkbook.Ids;
+            this.npcLabels = this.npcOptions.Select(id => $"{id}  {this.npcWorkbook.Get(id, "Name")}").ToArray();
+        }
+
+        private void DrawNPCBrush()
+        {
+            if (!this.npcLoadAttempted) this.TryOperation("读取 NPC 表", this.ReloadNPCs);
+            EditorGUILayout.BeginHorizontal();
+            this.npcBrushId = EditorGUILayout.IntField("NPC ID", this.npcBrushId);
+            if (GUILayout.Button("刷新 NPC 表", GUILayout.Width(100))) this.TryOperation("读取 NPC 表", this.ReloadNPCs);
+            EditorGUILayout.EndHorizontal();
+            if (this.npcWorkbook == null)
+            {
+                EditorGUILayout.HelpBox("NPC 表读取失败，请修复后点击刷新；仍可右键删除已有 NPC。", MessageType.Warning);
+                return;
+            }
+            int selected = Array.IndexOf(this.npcOptions, this.npcBrushId);
+            EditorGUI.BeginChangeCheck();
+            int next = EditorGUILayout.Popup("选择 NPC", selected, this.npcLabels);
+            if (EditorGUI.EndChangeCheck() && next >= 0 && next < this.npcOptions.Length) this.npcBrushId = this.npcOptions[next];
+            if (!this.npcWorkbook.Contains(this.npcBrushId))
+            {
+                EditorGUILayout.HelpBox("请填写有效 NPC ID，或从下拉列表选择后再放置。", MessageType.Info);
+                return;
+            }
+            EditorGUILayout.LabelField("名称", this.npcWorkbook.Get(this.npcBrushId, "Name"));
+            EditorGUILayout.LabelField("类型 / 基础生命值", $"{this.npcWorkbook.Get(this.npcBrushId, "NPCType")} / {this.npcWorkbook.Get(this.npcBrushId, "BaseHp")}");
+            using (new EditorGUI.DisabledScope(true))
+                EditorGUILayout.TextField("模型地址（只读）", this.npcWorkbook.Get(this.npcBrushId, "ModelPath"));
+            string description = this.npcWorkbook.Get(this.npcBrushId, "Description");
+            if (!string.IsNullOrEmpty(description)) EditorGUILayout.LabelField(description, EditorStyles.wordWrappedMiniLabel);
+        }
+
+        private void PaintNPC(int index, bool remove)
+        {
+            int existing = Array.IndexOf(this.npcPoints, index);
+            if (remove)
+            {
+                if (existing < 0) return;
+                this.npcIds = this.npcIds.Where((_, i) => i != existing).ToArray();
+                this.npcPoints = this.npcPoints.Where((_, i) => i != existing).ToArray();
+            }
+            else
+            {
+                if (this.npcWorkbook == null || !this.npcWorkbook.Contains(this.npcBrushId))
+                {
+                    this.SetMessage("请先选择有效 NPC。");
+                    return;
+                }
+                if (!IsWalkable(this.mapGrid[index]) || this.spawnPoints.Contains(index))
+                {
+                    this.SetMessage("NPC 只能放在平地或草丛，且不能与玩家出生点重叠。");
+                    return;
+                }
+                if (existing >= 0)
+                {
+                    if (this.npcIds[existing] == this.npcBrushId) return;
+                    this.npcIds[existing] = this.npcBrushId;
+                }
+                else
+                {
+                    this.npcIds = this.npcIds.Append(this.npcBrushId).ToArray();
+                    this.npcPoints = this.npcPoints.Append(index).ToArray();
+                }
+            }
+            this.SetDirty(true);
+        }
+
         private static Color TileColor(BrawlTileType tile) => tile switch
         {
             BrawlTileType.Ground => new Color32(0, 255, 0, 255),
-            BrawlTileType.IndestructibleWall => new Color32(90, 95, 105, 255),
-            BrawlTileType.DestructibleWall => new Color32(175, 110, 50, 255),
+            BrawlTileType.Wall => new Color32(90, 95, 105, 255),
             BrawlTileType.Grass => new Color32(20, 115, 45, 255),
             BrawlTileType.BulletPassableObstacle => new Color32(55, 145, 220, 255),
+            BrawlTileType.Water => new Color32(35, 205, 220, 255),
             _ => Color.magenta,
         };
     }

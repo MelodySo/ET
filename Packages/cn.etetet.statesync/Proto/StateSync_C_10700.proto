@@ -41,3 +41,48 @@ message G2C_Benchmark // ISessionResponse
 	int32 Error = 2;
 	string Message = 3;
 }
+
+message BrawlPracticeUnitInfo
+{
+    int64 UnitId = 1;
+    int32 Kind = 2;
+    int32 ConfigId = 3;
+    int32 TeamId = 4;
+    float X = 5;
+    float Y = 6;
+    float Z = 7;
+}
+
+// ResponseType G2C_BrawlPracticeEnter
+message C2G_BrawlPracticeEnter // ISessionRequest
+{
+    int32 RpcId = 1;
+    int32 HeroId = 2;
+    int64 EntryId = 3;
+}
+
+message G2C_BrawlPracticeEnter // ISessionResponse
+{
+    int32 RpcId = 1;
+    int32 Error = 2;
+    string Message = 3;
+    int64 RoomId = 4;
+    int32 LevelId = 5;
+    int64 MyUnitId = 6;
+    int32 CellSize = 7;
+    repeated BrawlPracticeUnitInfo Units = 8;
+}
+
+// ResponseType G2C_BrawlPracticeExit
+message C2G_BrawlPracticeExit // ISessionRequest
+{
+    int32 RpcId = 1;
+    int64 EntryId = 2;
+}
+
+message G2C_BrawlPracticeExit // ISessionResponse
+{
+    int32 RpcId = 1;
+    int32 Error = 2;
+    string Message = 3;
+}
