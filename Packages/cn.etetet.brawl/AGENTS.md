@@ -13,6 +13,7 @@
 - BrawlLevel.xlsx 包含 BrawlLevel 和 BrawlLevelStyle 两个子表，通过 `子表名@文件路径` 分别登记。关卡 StyleId 引用风格；编辑器读写十个字段，保存时保留风格子表。
 - 风格字段沿用用户命名 ModelPath1..5；编号对应地形枚举，Ground=0 暂无资源字段，ModelPath5 保留。模型值为 YooAsset 文件名短地址；运行时实例化由 statesync 的 BrawlTrainingHelper 负责。
 - `Luban/Config/Defines/BrawlHero.xml` 注册英雄表，供 statesync 大厅和试用入口读取；不实现购买、升级。
+- BrawlHero新增双端Level（Q列），当前所有英雄初始1级；statesync创建练习英雄时初始化属性，生命成长与弹丸成长均按Level-1计算，不新增英雄攻击力配置。
 - `Luban/Config/Defines/BrawlMode.xml` 注册玩法表，供双端运行时读取玩法人数、开关和时限；Name、Description 仍仅导出客户端。玩法 102、关卡 10201 的服务器练习赛由 statesync 包实现。
 - `SceneAsset` 分组为 c；`StyleId` 支持 c（仅客户端显示风格）或留空（兼容旧表），其余字段分组留空。编辑器保存保留原有分组，不强行覆盖。关卡表只保存格子索引，不保存 CellSize。
 - `BrawlGlobal.xlsx` 为竖向单例表，A1 为 `##var#column`，每个参数占一行，E 列为值；BrawlGlobal.xml 使用 mode="one" 注册，无 ID。CellSize 为 int，当前约定 1 米，分组留空供双端使用；运行时通过 BrawlGlobalConfigCategory.CellSize 读取。新增参数后使用原 ExcelExporter 导出。
@@ -47,5 +48,8 @@
 - 旧 EditorState 测试的空出生点保存预期需随新规则更新；本轮地形运行集成验证与该旧编辑器测试分开记录。
 
 ## 验证
+
+- 2026-10-15生命周期配置：BrawlGlobal的HeroSpawnProtectionDuration/HeroSpawnDuration/HeroDeathDuration单位秒，RedRespawnPointNpcId/BlueRespawnPointNpcId指定英雄复活点NPC。BrawlNPC.DeathDuration为死亡实体保留时间，RespawnDelay从销毁后开始等待，0不重生。NPC没有额外出生过程/保护。
+- BrawlUnitComponentReborn.xlsx通过同名Defines XML生成BrawlRespawnPointConfig/Category，组件类型2，仅绑定英雄复活点；当前只有Id/Name。逻辑在statesync，关卡SpawnPoints是复活点唯一来源，不往NPCIds重复放出生点。
 
 参见 `Test.md`。所有命令使用 pwsh，唯一编译命令 `dotnet build ET.sln`。不要手工生成 .meta 或编辑 .csproj。

@@ -46,12 +46,16 @@ namespace ET.Client
                     foundPlayer = true;
                     session.FacingDirection = new Vector2(info.FacingX, info.FacingZ);
                 }
-                session.PracticeUnits.Add(new BrawlPracticeUnitView
+                BrawlPracticeUnitView view = new BrawlPracticeUnitView
                 {
                     UnitId = info.UnitId, ConfigId = info.ConfigId, Kind = kind, Faction = (BrawlFaction)info.Faction,
                     FacingDirection = new Vector2(info.FacingX, info.FacingZ),
+                    Level = info.Level, Health = info.Health, MaxHealth = info.MaxHealth,
+                    SpawnCompleteAt = info.SpawnCompleteAt, DeathDestroyAt = info.DeathDestroyAt,
                     Position = new Vector3(info.X, info.Y, info.Z), ModelPath = address,
-                });
+                };
+                foreach (BrawlStateValue value in info.States) view.States[(StateId)value.StateId] = value.Value;
+                session.PracticeUnits.Add(view);
             }
             if (!foundPlayer) throw new InvalidOperationException("服务器单位清单中缺少当前玩家。");
             session.MovementClient = self.Root().AddComponent<BrawlPracticeClientComponent, BrawlTrainingSession>(session);

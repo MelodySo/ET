@@ -14,6 +14,7 @@ namespace ET.Client
         private static void Update(this BrawlPracticeClientComponent self)
         {
             BrawlPracticeMovementViewHelper.Update(self.Session);
+            BrawlUnitRosterViewHelper.Update(self.Session);
             BrawlSkillJoystickHelper.Update(self.Session);
             BrawlProjectileViewHelper.Update(self.Session);
         }

@@ -51,7 +51,7 @@ namespace ET.Test
             obstacleData.Kind = BrawlPracticeUnitKind.NPC;
             obstacleData.NPCType = BrawlNPCType.Obstacle;
             obstacleData.Faction = BrawlFaction.NeutralHostile;
-            BrawlNPCConfig config = new(2, 2, 0, 1, 0, 0, new[] { 1 }, new[] { 1 }, 1, 1, 0, 0, 0);
+            BrawlNPCConfig config = new(2, 2, 0, 1, 0, 0, new[] { 1 }, new[] { 1 }, 1, 1, 0, 0, 0, 0, 0);
             BrawlNPCBlockHelper.Attach(obstacle, config, new BrawlUnitComponentBlockConfigCategory(
                 new Dictionary<int, BrawlUnitComponentBlockConfig> { [1] = new(1, true) }));
             projectile = Shot(projectiles, owner);
@@ -100,6 +100,26 @@ namespace ET.Test
             projectile = Shot(projectiles, owner);
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0);
             if (!Stopped(projectile, 0, 1)) return Fail(100514, "Spawn overlap must be detected before the first flight step.");
+            PropertyComponent health = enemy.AddComponent<PropertyComponent, Dictionary<PropertyId, double>>(new()
+            {
+                [PropertyId.BaseMaxHealth] = 1000, [PropertyId.Health] = 1000, [PropertyId.DamageReductionRatio] = 0.2,
+            });
+            enemy.AddComponent<StateComponent>();
+            projectile = Shot(projectiles, owner);
+            projectile.HitEvent1 = BrawlHitEventType.Damage;
+            projectile.EffectValue = 330;
+            projectile.BlockMask = BrawlProjectileBlockMask.None;
+            projectile.MaxHitCount = 0;
+            BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0);
+            BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0);
+            if (math.abs(health.GetFloat(PropertyId.Health) - 736) > 0.001f || projectile.HitCount != 1)
+                return Fail(100515, "One penetrating projectile applied damage repeatedly to an overlapping target.");
+            projectile = Shot(projectiles, owner);
+            projectile.HitEvent1 = BrawlHitEventType.Damage;
+            projectile.EffectValue = 330;
+            BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0);
+            if (math.abs(health.GetFloat(PropertyId.Health) - 472) > 0.001f)
+                return Fail(100516, "Different pellets must damage the same target independently.");
             return ErrorCode.ERR_Success;
         }
 

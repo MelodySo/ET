@@ -6,7 +6,7 @@ namespace ET
     [EnableClass]
     public sealed class BrawlShotgunEmitter : IBrawlSkillEmitter
     {
-        public BrawlProjectileLaunch[] Emit(BrawlSkillConfig skill, BrawlProjectileConfig projectile)
+        public BrawlProjectileLaunch[] Emit(BrawlSkillConfig skill, BrawlProjectileConfig projectile, int level)
         {
             if (skill.SkillRangeType != (int)BrawlSkillRangeType.Sector || skill.SkillCastRangeType != 0 ||
                 skill.EmitterParam1 != 1 || skill.EmitterParam2 != 0 || skill.EmitterParam3 != 0)
@@ -16,6 +16,7 @@ namespace ET
                 !math.isfinite(projectile.Speed) || projectile.Speed <= 0 || !math.isfinite(projectile.Radius) || projectile.Radius <= 0)
                 throw new ArgumentException($"技能 {skill.Id} 或弹丸 {projectile.Id} 的数量、射程、角度、速度、半径非法。");
 
+            float effectValue = BrawlEffectValueHelper.Calculate(projectile.Value, projectile.ValueGrowthPerLevel, level);
             BrawlProjectileLaunch[] launches = new BrawlProjectileLaunch[skill.ProjectilesPerVolley];
             for (int i = 0; i < launches.Length; ++i)
             {
@@ -28,6 +29,7 @@ namespace ET
                     Speed = projectile.Speed,
                     Radius = projectile.Radius,
                     Range = skill.SkillRangeParam1,
+                    EffectValue = effectValue,
                 };
             }
             return launches;

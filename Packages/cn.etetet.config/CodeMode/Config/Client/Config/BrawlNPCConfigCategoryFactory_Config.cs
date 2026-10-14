@@ -21,12 +21,12 @@ public sealed class BrawlNPCConfigCategoryFactory_Config : IConfigFactory
     {
         return new BrawlNPCConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlNPCConfig>()
         {
-            [ 101 ] = new ET.BrawlNPCConfig(101, @"可摧毁墙", @"", @"Wall_Tile_X", 2, 0, 1, 0, 0, new int[] { 1 }, new int[] { 1 }, 1f, 1f, 1f, 0f, 0f),
-            [ 201 ] = new ET.BrawlNPCConfig(201, @"木桶", @"", @"Wall_Tile_Barrel", 2, 0, 1, 0, 0, new int[] { 1 }, new int[] { 2 }, 1f, 1f, 0f, 0f, 0f),
-            [ 301 ] = new ET.BrawlNPCConfig(301, @"劫匪", @"", @"TerroristDefault", 1, 0, 5000, 500, 2, new int[] { }, new int[] { }, 0.6f, 1f, 0f, 0f, 0f),
-            [ 1001 ] = new ET.BrawlNPCConfig(1001, @"能量水晶", @"", @"Spawn_Gem", 4, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f),
-            [ 2001 ] = new ET.BrawlNPCConfig(2001, @"出生点-红", @"", @"SpawnZone_Red", 7, 3, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f),
-            [ 2002 ] = new ET.BrawlNPCConfig(2002, @"出生点-蓝", @"", @"SpawnZone_Blue", 7, 3, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f)
+            [ 101 ] = new ET.BrawlNPCConfig(101, @"可摧毁墙", @"", @"Wall_Tile_X", 2, 0, 1, 0, 0, new int[] { 1 }, new int[] { 1 }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f),
+            [ 201 ] = new ET.BrawlNPCConfig(201, @"木桶", @"", @"Wall_Tile_Barrel", 2, 0, 1, 0, 0, new int[] { 1 }, new int[] { 2 }, 1f, 1f, 0f, 0f, 0f, 0.2f, 0f),
+            [ 301 ] = new ET.BrawlNPCConfig(301, @"劫匪", @"", @"TerroristDefault", 1, 0, 5000, 500, 2, new int[] { }, new int[] { }, 0.6f, 1f, 0f, 0f, 0f, 3f, 5f),
+            [ 1001 ] = new ET.BrawlNPCConfig(1001, @"能量水晶", @"", @"Spawn_Gem", 4, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.5f, 10f),
+            [ 2001 ] = new ET.BrawlNPCConfig(2001, @"出生点-红", @"", @"SpawnZone_Red", 7, 3, 1, 0, 0, new int[] { 2 }, new int[] { 1 }, 1f, 1f, 1f, 0f, 0f, 0f, 0f),
+            [ 2002 ] = new ET.BrawlNPCConfig(2002, @"出生点-蓝", @"", @"SpawnZone_Blue", 7, 3, 1, 0, 0, new int[] { 2 }, new int[] { 1 }, 1f, 1f, 1f, 0f, 0f, 0f, 0f)
         });
     }
 }

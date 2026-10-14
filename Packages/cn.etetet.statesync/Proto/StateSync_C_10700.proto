@@ -53,6 +53,12 @@ message BrawlPracticeUnitInfo
     float Z = 7;
     float FacingX = 8;
     float FacingZ = 9;
+    int32 Level = 10;
+    float Health = 11;
+    float MaxHealth = 12;
+    repeated BrawlStateValue States = 13;
+    int64 SpawnCompleteAt = 14;
+    int64 DeathDestroyAt = 15;
 }
 
 // ResponseType G2C_BrawlPracticeEnter
@@ -118,6 +124,43 @@ message G2C_BrawlMoveSnapshot // IMessage
     int64 Tick = 3;
     int64 LastInputSequence = 4;
     repeated BrawlMoveState Units = 5;
+    repeated BrawlPropertyState Properties = 6;
+    repeated BrawlUnitStateChanges States = 7;
+    int64 MyUnitId = 8;
+    bool HasRoster = 9;
+    repeated BrawlPracticeUnitInfo Roster = 10;
+    repeated BrawlLifeEvent LifeEvents = 11;
+}
+
+// 服务器模拟毫秒；仅供未来表现，不由客户端驱动玩法计时。
+message BrawlLifeEvent
+{
+    int64 UnitId = 1;
+    int32 Phase = 2;
+    int64 At = 3;
+    int64 EndsAt = 4;
+}
+
+message BrawlStateValue
+{
+    int32 StateId = 1;
+    bool Value = 2;
+}
+
+// 仅最终布尔值发生变化时同步，不下发来源或计时器；顺序沿用外层Tick。
+message BrawlUnitStateChanges
+{
+    int64 UnitId = 1;
+    repeated BrawlStateValue States = 2;
+}
+
+// 当前练习房间所有单位的生命快照，包含不移动的 NPC。
+message BrawlPropertyState
+{
+    int64 UnitId = 1;
+    int32 Level = 2;
+    float Health = 3;
+    float MaxHealth = 4;
 }
 
 // 普攻释放意图；X/Z 为本次施放方向，独立于移动/人物面向。准备拖动不发送此消息。

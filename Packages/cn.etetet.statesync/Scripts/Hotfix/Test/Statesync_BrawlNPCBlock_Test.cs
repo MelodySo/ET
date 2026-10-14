@@ -76,7 +76,7 @@ namespace ET.Test
 
         private static BrawlNPCConfig NPC(int[] types, int[] values, float width, float pivotX)
         {
-            return new BrawlNPCConfig(101, 1, 0, 100, 0, 0, types, values, 0.6f, 1, width, pivotX, 0);
+            return new BrawlNPCConfig(101, 1, 0, 100, 0, 0, types, values, 0.6f, 1, width, pivotX, 0, 0, 0);
         }
 
         private static bool Rejected(BrawlNPCConfig npc, BrawlUnitComponentBlockConfigCategory blocks)

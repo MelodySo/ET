@@ -13,7 +13,7 @@ namespace ET
 {
     public sealed partial class BrawlNPCConfig : ET.Object
     {
-        public BrawlNPCConfig(int Id, int NPCType, int Faction, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues, float CollisionLength, float CollisionHeight, float CollisionWidth, float PivotX, float PivotZ) 
+        public BrawlNPCConfig(int Id, int NPCType, int Faction, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues, float CollisionLength, float CollisionHeight, float CollisionWidth, float PivotX, float PivotZ, float DeathDuration, float RespawnDelay) 
         {
             this.Id = Id;
             this.NPCType = NPCType;
@@ -28,6 +28,8 @@ namespace ET
             this.CollisionWidth = CollisionWidth;
             this.PivotX = PivotX;
             this.PivotZ = PivotZ;
+            this.DeathDuration = DeathDuration;
+            this.RespawnDelay = RespawnDelay;
             EndInit();
         }
 
@@ -56,7 +58,7 @@ namespace ET
         /// </summary>
         public readonly int MoveSpeedTier;
         /// <summary>
-        /// 组件类型数组
+        /// 组件类型数组<br/>1 阻挡<br/>2 复活点<br/>3<br/>4<br/>5<br/>6
         /// </summary>
         public readonly int[] ComponentTypes;
         /// <summary>
@@ -83,6 +85,14 @@ namespace ET
         /// 中心点Z
         /// </summary>
         public readonly float PivotZ;
+        /// <summary>
+        /// 死亡持续时间
+        /// </summary>
+        public readonly float DeathDuration;
+        /// <summary>
+        /// 死亡后重生时间<br/>（0代表不会再重生）
+        /// </summary>
+        public readonly float RespawnDelay;
 
         public  void ResolveRef()
         {

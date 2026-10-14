@@ -182,30 +182,10 @@ namespace ET.Client
             return configs;
         }
 
-        private static async ETTask<GameObject> InstantiateModel(BrawlTrainingSession session, string address, Transform parent,
-            string objectName, Vector3 position)
-        {
-            if (session.CancelRequested) return null;
-            if (!session.ModelHandles.TryGetValue(address, out AssetHandle handle))
-            {
-                handle = YooAssets.GetPackage("DefaultPackage").LoadAssetAsync<GameObject>(address);
-                // 先登记句柄，取消或加载失败时也由会话统一释放。
-                session.ModelHandles.Add(address, handle);
-                await handle.Task;
-            }
-            if (session.CancelRequested) return null;
-            if (handle.Status != EOperationStatus.Succeed || handle.AssetObject is not GameObject prefab)
-                throw new InvalidOperationException($"模型 {address} 加载失败：{handle.LastError}");
-            GameObject instance = UnityEngine.Object.Instantiate(prefab, parent, false);
-            instance.name = objectName;
-            instance.transform.localPosition = position;
-            return instance;
-        }
-
         private static async ETTask LoadCharacters(BrawlTrainingSession session, BrawlHeroConfig hero, BrawlLevelConfig level,
             BrawlNPCConfig[] npcs)
         {
-            session.Hero = await InstantiateModel(session, hero.ModelPath, session.RuntimeRoot.transform,
+            session.Hero = await BrawlModelHelper.InstantiateModel(session, hero.ModelPath, session.RuntimeRoot.transform,
                 $"TrainingHero_{hero.Id}", CellPosition(level.SpawnPoints[0], level.ColumnCount, session.CellSize));
             if (session.CancelRequested) return;
             // 保留 Prefab 的专属武器和控制器，不驱动动画参数；禁止根运动改变出生位置。
@@ -215,7 +195,7 @@ namespace ET.Client
             for (int i = 0; i < npcs.Length; ++i)
             {
                 if (session.CancelRequested) return;
-                GameObject npc = await InstantiateModel(session, npcs[i].ModelPath, session.NPCRoot.transform,
+                GameObject npc = await BrawlModelHelper.InstantiateModel(session, npcs[i].ModelPath, session.NPCRoot.transform,
                     $"NPC_{i}_{npcs[i].Id}", CellPosition(level.NPCPoints[i], level.ColumnCount, session.CellSize));
                 if (session.CancelRequested) return;
                 foreach (Animator animator in npc.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
@@ -226,17 +206,12 @@ namespace ET.Client
         {
             session.NPCRoot = new GameObject("ServerUnits");
             session.NPCRoot.transform.SetParent(session.RuntimeRoot.transform, false);
-            foreach (BrawlPracticeUnitView view in session.PracticeUnits)
+            foreach (BrawlPracticeUnitView view in session.PracticeUnits.ToArray())
             {
                 if (session.CancelRequested) return;
-                view.Model = await InstantiateModel(session, view.ModelPath, session.NPCRoot.transform,
-                    $"{view.Kind}_{view.ConfigId}_{view.UnitId}", view.Position);
-                if (session.CancelRequested) return;
-                foreach (Animator animator in view.Model.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
-                if (view.UnitId == session.MyUnitId) session.Hero = view.Model;
+                await BrawlUnitRosterViewHelper.LoadModel(session, view);
             }
         }
-
         public static string TerrainAddress(BrawlLevelStyleConfig style, int tile) => tile switch
         {
             (int)BrawlTileType.Ground => "",
@@ -257,7 +232,7 @@ namespace ET.Client
                 if (session.CancelRequested) return;
                 string address = TerrainAddress(style, level.MapGrid[index]);
                 if (string.IsNullOrWhiteSpace(address)) continue;
-                await InstantiateModel(session, address, session.TerrainRoot.transform, $"Tile_{index}_{address}",
+                await BrawlModelHelper.InstantiateModel(session, address, session.TerrainRoot.transform, $"Tile_{index}_{address}",
                     CellPosition(index, level.ColumnCount, session.CellSize));
                 // 保留 Prefab 原有旋转和缩放。
             }

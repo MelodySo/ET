@@ -11,6 +11,8 @@ namespace ET.Server
             {
                 Unit obstacle = (Unit)child;
                 if (obstacle.Id == movingUnitId) continue;
+                StateComponent states = obstacle.GetComponent<StateComponent>();
+                if (states != null && (states.Has(StateId.Dead) || states.Has(StateId.Spawning))) continue;
                 // 阻挡是可选能力；英雄和未配置阻挡的 NPC 不参与。
                 BrawlUnitComponentBlock block = obstacle.GetComponent<BrawlUnitComponentBlock>();
                 if (block == null) continue;
@@ -44,6 +46,8 @@ namespace ET.Server
             {
                 Unit obstacle = (Unit)child;
                 if (obstacle.Id == movingUnitId) continue;
+                StateComponent states = obstacle.GetComponent<StateComponent>();
+                if (states != null && (states.Has(StateId.Dead) || states.Has(StateId.Spawning))) continue;
                 BrawlUnitComponentBlock block = obstacle.GetComponent<BrawlUnitComponentBlock>();
                 if (block == null) continue;
                 target = BrawlBlockGeometryHelper.ClampAxis(position, target - current, radius,

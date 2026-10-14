@@ -13,9 +13,15 @@ namespace ET
 {
     public sealed partial class BrawlGlobalConfig : ET.Object
     {
-        public BrawlGlobalConfig(int CellSize) 
+        public BrawlGlobalConfig(int CellSize, int MaxLevel, float HeroSpawnProtectionDuration, float HeroSpawnDuration, float HeroDeathDuration, int RedRespawnPointNpcId, int BlueRespawnPointNpcId) 
         {
             this.CellSize = CellSize;
+            this.MaxLevel = MaxLevel;
+            this.HeroSpawnProtectionDuration = HeroSpawnProtectionDuration;
+            this.HeroSpawnDuration = HeroSpawnDuration;
+            this.HeroDeathDuration = HeroDeathDuration;
+            this.RedRespawnPointNpcId = RedRespawnPointNpcId;
+            this.BlueRespawnPointNpcId = BlueRespawnPointNpcId;
             EndInit();
         }
 
@@ -23,6 +29,30 @@ namespace ET
         /// 格子尺寸（米），必须大于0
         /// </summary>
         public readonly int CellSize;
+        /// <summary>
+        /// 最高等级（英雄和单位）
+        /// </summary>
+        public readonly int MaxLevel;
+        /// <summary>
+        /// 英雄出生完成后的无敌时间 
+        /// </summary>
+        public readonly float HeroSpawnProtectionDuration;
+        /// <summary>
+        /// 英雄出生阶段时间 
+        /// </summary>
+        public readonly float HeroSpawnDuration;
+        /// <summary>
+        /// 英雄死亡保留时间 
+        /// </summary>
+        public readonly float HeroDeathDuration;
+        /// <summary>
+        /// 红方复活点NPC配置ID
+        /// </summary>
+        public readonly int RedRespawnPointNpcId;
+        /// <summary>
+        /// 蓝方复活点NPC配置ID
+        /// </summary>
+        public readonly int BlueRespawnPointNpcId;
 
         public  void ResolveRef()
         {

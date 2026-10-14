@@ -1,0 +1,5 @@
+<module name="ET">
+  <table name="BrawlRespawnPointConfigCategory" value="BrawlRespawnPointConfig" index="Id" mode="map"
+         input="Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlUnitComponentReborn.xlsx"
+         readSchemaFromFile="true" comment="英雄复活点组件" />
+</module>

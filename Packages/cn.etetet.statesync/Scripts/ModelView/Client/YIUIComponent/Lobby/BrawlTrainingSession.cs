@@ -46,6 +46,7 @@ namespace ET.Client
         public RectTransform JoystickBase;
         public RectTransform JoystickKnob;
         public readonly List<BrawlPracticeUnitView> PracticeUnits = new();
+        public readonly List<BrawlLifeNotice> LastLifeEvents = new();
         public readonly Dictionary<string, AssetHandle> ModelHandles = new();
         public GameObject Overlay;
         public Image LoadingBackground;

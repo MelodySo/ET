@@ -46,6 +46,39 @@ namespace ET.Client
             bool first = session.LastServerTick == 0;
             session.LastServerTick = message.Tick;
             session.LastAcknowledgedInput = message.LastInputSequence;
+            if (message.HasRoster) BrawlUnitRosterViewHelper.Apply(session, message.Roster, message.MyUnitId);
+            session.LastLifeEvents.Clear();
+            foreach (BrawlLifeEvent item in message.LifeEvents)
+            {
+                session.LastLifeEvents.Add(new BrawlLifeNotice { UnitId = item.UnitId, Phase = (BrawlLifePhase)item.Phase, At = item.At, EndsAt = item.EndsAt });
+                foreach (BrawlPracticeUnitView view in session.PracticeUnits)
+                {
+                    if (view.UnitId != item.UnitId) continue;
+                    if ((BrawlLifePhase)item.Phase == BrawlLifePhase.Died) view.DeathDestroyAt = item.EndsAt;
+                    if ((BrawlLifePhase)item.Phase == BrawlLifePhase.SpawnStarted) view.SpawnCompleteAt = item.EndsAt;
+                    break;
+                }
+            }
+            foreach (BrawlUnitStateChanges change in message.States)
+            {
+                foreach (BrawlPracticeUnitView view in session.PracticeUnits)
+                {
+                    if (view.UnitId != change.UnitId) continue;
+                    foreach (BrawlStateValue value in change.States) view.States[(StateId)value.StateId] = value.Value;
+                    break;
+                }
+            }
+            foreach (BrawlPropertyState info in message.Properties)
+            {
+                foreach (BrawlPracticeUnitView view in session.PracticeUnits)
+                {
+                    if (view.UnitId != info.UnitId) continue;
+                    view.Level = info.Level;
+                    view.Health = info.Health;
+                    view.MaxHealth = info.MaxHealth;
+                    break;
+                }
+            }
             if (first || message.Tick - session.RenderTick > BrawlMovementSettings.MaxCatchUpTicks)
                 session.RenderTick = message.Tick - BrawlMovementSettings.InterpolationDelayTicks;
             foreach (BrawlMoveState info in message.Units)

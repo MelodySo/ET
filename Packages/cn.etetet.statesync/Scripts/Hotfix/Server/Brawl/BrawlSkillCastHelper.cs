@@ -23,17 +23,19 @@ namespace ET.Server
             if (emitter == null) return;
             BrawlProjectileConfig config = fiber.GetSingleton<BrawlProjectileConfigCategory>().GetOrDefault(skill.ProjectileId);
             if (config == null) return;
+            // 先结算已有时间，再取当前等级与位置，避免新弹丸参与释放前的补帧。
+            BrawlPracticeMovementHelper.Update(state);
+            Scene room = state.Room;
+            Unit unit = room.GetComponent<UnitComponent>().Get(state.MyUnitId);
+            PropertyComponent properties = unit.GetComponent<PropertyComponent>();
+            if (BrawlUnitLifeHelper.CannotAct(unit)) return;
             BrawlProjectileLaunch[] launches;
-            try { launches = emitter.Emit(skill, config); }
+            try { launches = emitter.Emit(skill, config, properties.GetInt(PropertyId.Level)); }
             catch (Exception exception) when (exception is ArgumentException || exception is NotSupportedException)
             {
                 Log.Warning(exception.Message);
                 return;
             }
-            // 先结算已有时间，避免新弹丸参与释放前的补帧。无 CD、装填或弹药检查。
-            BrawlPracticeMovementHelper.Update(state);
-            Scene room = state.Room;
-            Unit unit = room.GetComponent<UnitComponent>().Get(state.MyUnitId);
             BrawlProjectileRoomComponent projectiles = room.GetComponent<BrawlProjectileRoomComponent>();
             float2 right = new float2(direction.y, -direction.x);
             foreach (BrawlProjectileLaunch launch in launches)
@@ -45,6 +47,9 @@ namespace ET.Server
                 projectile.BlockMask = (BrawlProjectileBlockMask)config.BlockMask;
                 projectile.TargetMask = (BrawlProjectileTargetMask)config.TargetMask;
                 projectile.MaxHitCount = config.MaxHitCount;
+                projectile.EffectValue = launch.EffectValue;
+                projectile.HitEvent1 = (BrawlHitEventType)config.HitEvent1;
+                projectile.HitEvent2 = (BrawlHitEventType)config.HitEvent2;
                 projectile.Position = unit.Position.xz + right * launch.Offset.x + direction * launch.Offset.y;
                 projectile.Direction = right * launch.Direction.x + direction * launch.Direction.y;
                 // 高度只用于 Sphere 展示，不参与 XZ 平面轨迹计算。

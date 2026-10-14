@@ -12,6 +12,9 @@ namespace ET.Server
         public BrawlProjectileTargetMask TargetMask;
         public int MaxHitCount;
         public int HitCount;
+        public float EffectValue;
+        public BrawlHitEventType HitEvent1;
+        public BrawlHitEventType HitEvent2;
         public System.Collections.Generic.HashSet<long> HitUnits = new();
         public float2 Position;
         public float2 Direction;

@@ -1,6 +1,50 @@
 # Brawl Demo 开发交接
 
-更新日期：2026-10-14。此文件用于新会话恢复上下文，不代表授权立即实施所有待办。
+更新日期：2026-10-15。此文件用于新会话恢复上下文，不代表授权立即实施所有待办。
+
+## 快速恢复：当前实现与下一阶段
+
+- **当前生命周期以紧接下方的2026-10-15章节为准**：英雄死亡销毁后创建新实体，在绑定复活点出生；NPC销毁后延迟原地重生。下面旧章节的NPC出生无敌、Revive原实体、尸体仍阻挡和不自动复活均为历史记录，已被本轮替代。
+
+- 最新状态拆分已编码：属性只保留数值；StateId/StateComponent管理眩晕、击飞、无敌、已死亡，出生/复活保护3秒，死亡后保留实体并禁止行动，服务器同步最终bool。详见下一节“状态组件、出生保护与死亡标记”；本节以下旧记录的“尚未处理死亡”不再代表当前行为。
+
+- 已实现：服务器权威移动、NPC 阻挡、移动方向与人物面向独立同步、普攻/大招技能摇杆与预览接口、雪莉5枚弹丸及服务器位置同步、弹丸连续扫掠与阻挡/有效命中计数销毁、阵营。详见下文最新增量，历史阶段记录不代表当前行为。
+- 最新用户已授权文档完成后直接编码；属性组件、弹丸等级成长、HitEvent=1扣血和生命状态同步已接入，构建状态见下方“属性与扣血实现”。本版不处理单位死亡/复活、护盾、柯尔特连发、CD/弹药/装填、瞄准范围mesh和动画。
+- 下方属性/伤害方案保留设计缘由；其“尚未实现/建议”措辞为前一轮讨论记录，实际落地差异以紧接着的最新实现章节为准。
+- 移动与面向已完成部分见“技能摇杆与独立面向”；属性枚举、修正项及伤害流程见“属性系统方案”和“弹丸数值与扣血方案”。后续开发先读这三处，勿从早期技能草案重新推导需求。
+
+## 最新增量：出生、死亡与重生（2026-10-15）
+
+### 已确认且已实现的规则
+
+- 英雄（主角/Bot）初次进场与每次复活均先进入Spawning阶段2秒，不能移动/攻击、不受弹丸碰撞；结束后进入3秒Invincible。无敌期间可以行动，子弹仍可碰撞，但不扣血。
+- HP归零只触发一次Died通知，进入Dead阶段3秒，停止移动/攻击。到时销毁旧Unit，立即在绑定复活点创建满血的新Unit；随后出生2秒、无敌3秒，即死亡到可操作共5秒。复活不是旧实体加血，UnitId会改变。
+- NPC读取DeathDuration，死亡后保留到期再销毁。RespawnDelay从实际销毁时刻开始计时，0表示不再重生；劫匪3秒死亡加5秒等待，共8秒后在原始种植位置创建新Unit。NPC没有服务器Spawning过程，没有出生/复活无敌；未来客户端可自行播放和打断出生动画。
+- 所有死亡单位立即退出弹丸碰撞和移动阻挡查询。墙/木桶配置死亡0.2秒、不重生，其模型保留至销毁以便未来接死亡表现。当前雪莉TargetMask仍为敌方，不能靠雪莉打掉墙/桶，不修改技能目标规则来测试生命周期。
+- 水晶仅保留配置扩展，不实现拾取或重生；复活点NPC也不参与NPC自动重生流程。
+
+### 组件、绑定与配置
+
+- Unit默认挂BrawlSpawnComponent/BrawlDeathComponent，保存原始位置、出生结束时刻、死亡期限等。StateId新增Spawning=500，已有100/200/300/400保持；状态来源-1保护、-2死亡、-3出生。删除旧Revive入口，统一由BrawlUnitFactory创建新实体。
+- BrawlLifecycleRoomComponent保存在房间Scene：保存模拟时刻、参与者记录、long[]复活点UnitId、NPC待重生记录、生命周期通知与名单变化标记。System/Helper只执行逻辑，不持有静态待重生集合。NPC记录仅ConfigId/Faction/原位置/ReadyAt，不引用已销毁Unit。
+- 玩家/Bot的BrawlParticipant保存在房间中，保存英雄配置、玩家ID、阵营、绑定复活点ID和当前UnitId。死亡重建后更新当前UnitId，绑定不变；快照同步新的MyUnitId，客户端切换模型和输入目标。
+- 关卡SpawnPoints是英雄复活点唯一来源，不再允许NPCIds里重复刷NPCType=7。按前TeamSize个红方、后TeamSize个蓝方创建复活点NPC，运行时覆盖其Faction；组内顺序对应参与者索引。当前练习赛仍仅1v1，尚未扩展多人入场。
+- 复活点组件类型为2，仅服务英雄；配置沿用用户已有BrawlUnitComponentReborn.xlsx，XML注册生成BrawlRespawnPointConfig/Category，目前仅Id/Name。NPC原地重生不创建复活点NPC。
+- BrawlGlobal已有HeroSpawnProtectionDuration=3、HeroSpawnDuration=2、HeroDeathDuration=3，本轮额外配置RedRespawnPointNpcId=2001、BlueRespawnPointNpcId=2002，避免代码硬编码资源ID。NPC消费DeathDuration/RespawnDelay。时间配置单位秒，内部使用房间50ms Tick的模拟毫秒，未对齐的期限在下一Tick处理。
+- 配置和协议经ExcelExporter/Proto2CS正式生成，未手改生成文件、meta或csproj；全量配置导出可能包含用户此前已修改的其他表。
+
+### 同步与客户端边界
+
+- 入场UnitInfo增加SpawnCompleteAt/DeathDestroyAt。移动快照增加MyUnitId、HasRoster、Roster与LifeEvents；实体增删时发送当前全量名单，状态与生命继续沿原快照同步。
+- LifeEvents传递SpawnStarted/SpawnCompleted/Died/Removed及服务器时刻，避免死亡时间为0时只剩最终状态而丢失通知。客户端暂保存在TrainingSession.LastLifeEvents（最近一批）；未来表现层需要在收包处消费，不能把此列表当永久事件历史。
+- BrawlUnitRosterViewHelper按新名单创建/销毁模型，异步加载结束后检查取消与移除状态；相同资源复用句柄并等待完成。英雄Spawning期间隐藏人物模型，完成后显示；死亡期间保留模型直到服务器移除。
+- 本轮没有倒计时UI、出生特效、死亡动画或客户端状态机，也没有NPC AI、柯尔特技能、弹药/CD的新实现。看不到倒地动作不代表死亡计时没生效。
+
+### 验证与接手
+
+- 新增Statesync_BrawlLifecycle_Test：英雄2秒出生/3秒保护、单次死亡通知、死亡3秒后新实体及固定复活点、NPC按3+5秒原位置重生、零延迟不重生、死墙立即解除移动阻挡。更新State/Property和旧NPC配置构造测试以适配生命周期契约。
+- 测试仅编译，未执行；没有启动服务器或Unity Play。用户自行运行验证：新局英雄2秒后显示；击杀Bot后3秒移除、出生2秒后显示；劫匪死亡3秒移除、再5秒原地出现且可立即受伤。退出/重进应不残留前房间模型或待重生任务。
+- 最终验证（2026-10-15）：dotnet build ET.sln成功，0错误、14个原有HybridCLR编辑器CS0649警告，耗时46.60秒，日志Temp/BrawlLifecycle-build-final.log。UnityBridge错误日志查询Logs为空；业务代码/文档git diff --check通过。现有大量未提交修改继续保留，未提交Git。
 
 ## 当前目标与协作方式
 
@@ -9,6 +53,41 @@
 - 用户自己操作 Unity 测试；节省 token，不主动进行耗时游戏测试或读取整个资源目录/Excel。唯一编译入口 `dotnet build ET.sln`。
 - 不手改 .meta / .csproj / Luban 生成代码。已有大量未提交改动（资源、配置、先前移动代码），不可清理或覆盖。此次没有提交 Git。
 - 保留已有临时验证入口，不删除 `Brawl/Verification/RunTerrain`。
+
+## 最新增量：状态组件、出生保护与死亡标记（2026-10-14）
+
+- 用户明确授权拆分属性与逻辑状态，不实现客户端表现/逻辑状态机。PropertyId移除IsStunned/IsAirborne，900/910永久保留不用；PropertyComponent删除GetBool及布尔修正支持，只处理数值。当前属性枚举共28项。
+- 新增StateId：Stunned=100、Airborne=200、Invincible=300、Dead=400；均为最终bool，默认false，编号不要求连续。StateComponent挂载到所有练习赛Unit（英雄、Bot与NPC），保存Sources、Values及PendingChanges。
+- 来源结构为“状态ID -> 来源实例ID -> 到期模拟毫秒”。AddSource同状态/来源幂等更新期限；RemoveSource可移除某状态某来源，也可移除某来源的全部状态；Expire按服务器时间清除已到期来源。任一有效来源存在则为true，只有最终bool变化才记录待同步项，来源数量变化不额外发状态变化。
+- 来源ID不使用Buff配置ID。生命周期保留负来源：-1出生保护、-2死亡；未来Buff实例使用独立正ID。0到期值表示永久，等待来源主动移除。状态不拥有Buff规则，叠层、免疫、驱散等仍由未来Buff逻辑处理。
+- BrawlUnitLifeHelper.OnSpawn给有正生命值的单位添加3秒Invincible，常量SpawnProtectionMilliseconds=3000来自本轮用户要求；当前建房单位均从模拟时间0开始，包括NPC。每个50ms Tick用Tick×50毫秒处理到期，使用模拟时间、不使用客户端计时。动态出生或复活时必须传当前房间模拟时间，不能继续传0。
+- BrawlUnitLifeHelper.Revive提供恢复MaxHealth、清除生命周期死亡来源、重新开始3秒保护的入口，当前无自动调用者。只处理生命和保护；不负责位置、Buff清理、重生等待或NPC配置。出生保护到期只移除其自身来源，不覆盖其它无敌来源。
+- BrawlProjectileHitHelper遇到Invincible或Dead不扣血，但原弹丸阻挡/有效命中计数仍执行。致命扣血立即调用CheckDeath，标记Dead并清零移动方向/实际速度；每Tick另核对HP，保障其它属性设置入口将HP改为0时最迟下一Tick标记死亡。
+- Dead/Stunned/Airborne统一通过CannotAct禁止服务端移动意图执行和普攻。无敌不禁止行动。死亡后单位、模型与阻挡组件均保留，目前尸体仍参与原碰撞/阻挡查询，但不再受伤。死亡后加血不自动复活，必须走复活流程。
+- 不实现死亡持续时间、尸体自动销毁、自动复活、死亡/重生配置列、Animator或客户端状态机。未来用户可能在NPC表增加死亡/重生时间，本轮不擅自定义列。
+- 入场BrawlPracticeUnitInfo.States为四项全量状态（包括false）；后续G2C_BrawlMoveSnapshot.States只包含最终bool变化，按外层EntryId/RoomId/Tick过滤旧消息，沿用当前有序可靠Session传输。多次Tick追赶期间同一状态合并为最新值，这里同步状态而非技能/动画事件。
+- 客户端现有BrawlPracticeUnitView增加Dictionary<StateId,bool> States，直接应用服务端全量/变化；当前客户端没有完整Unit实例，不为这一步额外创建一套实体。客户端不计算Buff关系、不计时解除无敌、不自行判断死亡、不新增表现逻辑。
+- 新增Statesync_BrawlState_Test：多来源叠加、按来源清除多个状态、无敌到期边界、其它无敌来源保留、死亡保留实体并禁止行动、复活保护、全量和false变化同步。旧属性测试改为拒绝废弃900/910，并校验致命伤害标记死亡；原碰撞测试补齐StateComponent契约。用例只编译，不主动运行。
+- 最终验证：协议通过Proto2CS重新导出；Unity自动生成新增脚本.meta和工程引用。最后一次dotnet build ET.sln通过，0错误、14个已有HybridCLR编辑器CS0649警告，耗时27.08秒，日志Temp/BrawlState-build-verified.log；第一次完整构建日志Temp/BrawlState-build-final.log（1分00.33秒）。业务/协议/文档diff空白检查通过。本轮未修改Excel，未启动服务器/Play，新增用例已编译但未执行。
+
+本轮回归建议：启动新服务器并新建雪莉练习赛，查看客户端PracticeUnits中States：出生Invincible=true，3秒模拟时间后false；保护期间命中不掉血但弹丸仍消失，到期后正常扣血；HP降到0时Dead=true，模型保留，死亡单位不能移动/发射。不应期待自动复活或死亡动画。
+
+## 最新增量：属性与扣血实现（2026-10-14）
+
+- 用户在文档完成后明确授权继续代码实现。PropertyComponent挂载到练习赛英雄/Bot/NPC，PropertyId采用下方30个显式编号。初始化要求传入字典，遗漏输入为0/false；提供GetInt/GetFloat/GetBool及Set，校验未知ID、非法类型和非有限值，禁止直接写派生结果。
+- PropertyModifier为按值保存的struct，字段Id/SourceInstanceId/Property/Value；当前只有加法，不引入没有使用场景的Operation枚举。修正项保存于组件字典；AddModifier/UpdateModifier/RemoveModifier/RemoveSource立即重算，不依赖连续编号。当前没有脏队列或属性变化事件；即时重算保证下一次读取有效，之后有批量需求再扩展。
+- 重算按显式依赖计算最大生命、移速、生命恢复、装填速率和超级技能恢复；最终值下限0。当前Health/Shield/Ammo/SuperCharge独立保存且不接受持续修正项，资源变化用Set，不会因重算最大值而重置。最大生命变化暂保留绝对Health，不自动补血或截断；后续再确定玩法规则。
+- IsStunned/IsAirborne支持多个来源各加1，按汇总大于0解释，移除一个来源不覆盖其它来源。英雄移动每Tick从属性读取MoveSpeed，受控制时禁止主动移动，普攻请求受控制时忽略。不新增Buff生命周期或强制位移算法。
+- BrawlHero.xlsx在Q列新增Level，现有5行均为1；备份Temp/BrawlHero.before-property-level.xlsx。创建英雄时以BaseHp+(Level-1)*HpGrowthPerLevel初始化BaseMaxHealth与Health，基础移速沿用当前MoveSpeedTier规则。NPC暂固定1级，使用NPC.BaseHp初始化，不做NPC等级成长。无攻击力属性。
+- IBrawlSkillEmitter.Emit增加level参数；BrawlEffectValueHelper计算Value+(Level-1)*ValueGrowthPerLevel。发射器输出BrawlProjectileLaunch.EffectValue，由BrawlSkillCastHelper复制到BrawlProjectile.EffectValue；同时保存两个HitEvent类型。弹丸Awake重置新增字段。数值是生成时快照，不随英雄后续等级变化。
+- BrawlProjectileCollisionHelper只在有效且未重复命中的接触调用BrawlProjectileHitHelper。HitEvent=1按Max(0,Health-EffectValue*(1-Clamp(DamageReductionRatio,0,1)))扣血；HitEvent=0/未实现类型不执行效果。命中计数与阻挡保持独立，同一弹丸对同一单位只执行一次，两组事件仍按配置顺序执行。雪莉墙体仅阻挡，不在生效目标中所以不扣墙血。
+- Health最低0。当前不触发死亡、不销毁模型/墙体、不禁止零血量单位行动，也不处理护盾、回血、弹药或超级技能充能；这些字段仅建立数据接口。
+- 入场BrawlPracticeUnitInfo新增Level/Health/MaxHealth；移动快照增加独立Properties列表，同步所有单位（含静止NPC），没有给NPC制造移动组件。客户端BrawlPracticeUnitView保存这三个值，尚未新增血条/飘字，表现层不得自行扣血。
+- 配置和Proto均通过正式工具导出；源表中用户已有的BrawlGlobal.MaxLevel=12及关卡修改也随全量导出生成，未修改这两份源表。当前仅校验英雄等级至少1，最高等级规则未接入。Unity自动生成新增.meta与工程引用，未手改.csproj。
+- 新增Statesync_BrawlProperty_Test，扩展弹丸发射与碰撞测试：修正项移除/来源移除、两个眩晕来源、类型/只读约束、成长与减伤、重算不重置HP、100%减伤、零血量不销毁、同弹丸去重/不同弹丸分别扣血。按协作约定只编译，不主动运行游戏或自动化测试。
+- 最终验证：用户停服后dotnet build ET.sln成功，0错误、14个既有HybridCLR编辑器CS0649警告，耗时1分40.52秒；客户端与服务端程序集均生成。日志Temp/BrawlProperty-build-final.log。之前Unity Console Error查询为空；本轮未启动服务器/Play，也未执行自动化用例。业务代码与文档diff空白检查通过，Luban生成文件仍保留模板自带尾随空格，未手改生成代码。首次构建的DLL占用已解决，失败日志Temp/BrawlProperty-build.log保留供诊断。
+
+当前手动验证：重启最新服务器并新建雪莉练习赛，检查客户端PracticeUnits中的Level/Health/MaxHealth。1级每枚有效命中扣300，墙/桶阻挡但不扣血；劫匪与Bot扣血，水晶/出生点不受影响。多枚各自结算，血量最低0且模型保留。修改英雄Level并重新导出/编译后，新局生命与新生弹丸按等级成长。
 
 ## 已有流程
 
@@ -75,7 +154,7 @@ statesync 包：
 - 新增 Statesync_BrawlProjectileCollision_Test，修正NPC旧测试构造函数以适配新增Faction。配置及Proto已重新导出，源码/配置构建通过；运行时测试仍由用户执行，未启动服务器或Play、未运行自动化用例。
 - 本轮最终 dotnet build ET.sln 成功：0错误、4个MSB3026文件占用重试警告，随后DLL复制成功，耗时42.24秒。服务器与客户端程序集均已生成；日志 Temp/BrawlCollision-build-final.log。UnityBridge最后的Console查询超时，不作为Unity运行测试通过证据。git diff --check 无空白错误。
 
-### 后续增量：技能摇杆与独立面向（最新约定）
+### 已完成：技能摇杆与独立面向（当前约定）
 
 - 用户确认雪莉普攻第一阶段基本可用。本轮在此基础上添加移动协议独立面向、普攻/大招共用技能摇杆；不做范围 mesh/特效/动画、不实现柯尔特。原“普攻只能沿移动方向”和“大招禁用”被本节取代。
 - 方向分三份：移动输入 X/Z；人物面向 FacingX/Z；技能有效释放时 C2G_BrawlNormalAttack.X/Z。移动输入/移动快照/入场快照新增独立面向，服务器保存到 BrawlMoveComponent.FacingDirection。快照另含 MoveX/Z（移动意图，不是实际碰墙速度）。不根据移动或技能拖动覆盖面向，默认 +Z。
@@ -87,7 +166,7 @@ statesync 包：
 - 用户拟将未来柯尔特 CD 设为0.8秒（0.16×(6−1)），本轮不改 Excel、不实现 CD 或柯尔特连发。
 - 新增 Statesync_BrawlSkillAim_Test；按已有协作方式只编译，用例和 Unity 游戏回归未运行。CCD001 已修复，Unity Console Error 查询为空。用户停服解除 DLL 占用后，最终 dotnet build ET.sln 成功：0 错误、14 个 HybridCLR 编辑器 CS0649 警告，耗时 25.82 秒；客户端与服务器均已生成，日志 Temp/BrawlAim-build-final.log。git diff --check 无空白错误。
 
-### 第一阶段实现记录
+### 第一阶段实现记录（历史：碰撞和摇杆行为已由上文覆盖）
 
 - 用户最终缩小范围：仅雪莉 10101；柯尔特等做完雪莉再做。雪莉为每轮 **5** 枚，用户已确认“6个Sphere”为笔误。无 CD、无弹药消耗、无装填；按普攻按钮即可释放。
 - 已确认 XZ 平面；重复 Speed 已删除，Emitter 拼写已更正。最新导出雪莉速度 8 米/秒、半径 0.05 米、射程 7.67 米、总夹角 30 度、轮数 1。
@@ -100,9 +179,108 @@ statesync 包：
 - BrawlSkill.xml 已注册技能与弹丸分页并成功导出 Client/Server/ClientServer。源表尾 N22 及弹丸分页 J21:Q21 中纯空格造成空 Id 导出失败，已清除；未改实际技能数值。备份在 Temp/BrawlSkill.before-tail-cleanup.xlsx。
 - 协议已通过 Proto2CS 导出；新增 Statesync_BrawlProjectile_Test 覆盖散射与射程裁剪，只编译不执行游戏测试。构建结果见文末验证状态。
 
+## 属性系统方案（用户已认可，尚未实现）
+
+### 数据归属与初始化
+
+- 给需要属性的 Unit 挂载 PropertyComponent，保存初始/基础值、修正项、汇总值与最终值，以及 Health 等运行时状态。Entity/Component 只存数据，计算、修改与通知由 System/Helper 承担。
+- 初始化必须传入属性参数；未给定的输入属性默认0/false，填充完后统一计算派生属性。等级等有业务约束的必填项须校验，不应悄悄用默认0代替合法等级。初始化 MaxHealth 不意味着自动填满 Health，出生时要显式给出当前生命值。
+- 枚举表示属性键，不表示数组下标。每个成员显式指定稳定编号；允许不连续、任意调整声明位置，新增编号不能撞号，删除成员后保留该编号不用，避免旧配置/存档误解释。禁止通过枚举顺序推导依赖关系。
+- int/float/bool 是属性的业务类型，访问接口需维护类型约束；不要因为修正项用 float 就允许等级、小数弹药和布尔状态随意混用。
+- 不包含攻击力属性：攻击效果的基础数值与等级成长配置在弹丸表中，见下一节。
+
+### 最终属性枚举列表
+
+以下作为后续 PropertyId 的设计清单，尚未写入 C#。BonusRatio 表示当前各来源汇总后的加成比例，0.2表示加20%，-0.5表示减50%。
+
+| 编号 | 枚举名 | 类型 | 含义 |
+| --- | --- | --- | --- |
+| 100 | Level | int | 英雄等级 |
+| 200 | BaseMaxHealth | float | 基础最大生命值 |
+| 210 | MaxHealthBonus | float | 最大生命值固定加成汇总 |
+| 220 | MaxHealthBonusRatio | float | 最大生命值百分比加成汇总 |
+| 230 | MaxHealth | float | 计算后的最大生命值 |
+| 240 | Health | float | 当前生命值，独立运行时状态 |
+| 300 | BaseHealthRegenRate | float | 基础生命恢复，生命/秒 |
+| 310 | HealthRegenRateBonus | float | 生命恢复固定加成汇总 |
+| 320 | HealthRegenRateBonusRatio | float | 生命恢复百分比加成汇总 |
+| 330 | HealthRegenRate | float | 当前生命恢复，生命/秒 |
+| 400 | Shield | float | 当前护盾值 |
+| 410 | DamageReductionRatio | float | 减伤比例，0.2表示减伤20% |
+| 500 | BaseMoveSpeed | float | 基础移动速度，米/秒 |
+| 510 | MoveSpeedBonus | float | 移动速度固定加成汇总 |
+| 520 | MoveSpeedBonusRatio | float | 移动速度百分比加成汇总 |
+| 530 | MoveSpeed | float | 最终移动速度能力，不是当前实际位移速度 |
+| 600 | MaxAmmo | int | 最大弹药格数 |
+| 610 | Ammo | float | 当前弹药，整数部分为可用格，小数部分为下一格进度 |
+| 700 | BaseReloadRate | float | 基础装填速率，格/秒 |
+| 710 | ReloadRateBonus | float | 装填速率固定加成汇总 |
+| 720 | ReloadRateBonusRatio | float | 装填速率百分比加成汇总 |
+| 730 | ReloadRate | float | 当前装填速率，格/秒 |
+| 800 | MaxSuperCharge | float | 最大超级技能进度值 |
+| 810 | SuperCharge | float | 当前超级技能进度，达到最大值即可释放 |
+| 820 | BaseSuperChargeRegenRate | float | 基础超级技能自动恢复，进度/秒 |
+| 830 | SuperChargeRegenRateBonus | float | 超级技能恢复固定加成汇总 |
+| 840 | SuperChargeRegenRateBonusRatio | float | 超级技能恢复百分比加成汇总 |
+| 850 | SuperChargeRegenRate | float | 当前超级技能自动恢复，进度/秒 |
+| 900 | 已废弃 | — | 旧IsStunned迁到StateId.Stunned，不复用此属性编号 |
+| 910 | 已废弃 | — | 旧IsAirborne迁到StateId.Airborne，不复用此属性编号 |
+
+### 修正项集合与计算规则
+
+- PropertyComponent 内维护按唯一修正项ID索引的字典。修正项是普通数据记录，可采用 PropertyModifier 类（落地时遵循项目普通类规则），不是每项一个 Entity。建议字段：Id、SourceInstanceId、Property、Operation、Value。
+- SourceInstanceId 标识某一次 Buff/装备/被动来源实例；同类两个 Buff 不能共用一个来源ID。移除单项按 Id，移除整个来源按 SourceInstanceId。字典删除不需要连续编号，也无需移动其它元素。
+- 未来 BuffComponent 管理 Buff 的持续时间、层数、到期和来源；通过属性接口添加/更新/移除修正项。属性系统负责数值汇总，装备和被动也走同一入口，不将全部属性算法绑在 BuffComponent 内。
+- MoveSpeedBonusRatio 是一个 float 汇总值，不是数组；每个 Buff 的贡献保存在修正项字典。对该比例属性添加0.2表示增加20个百分点，不是把已有比例乘1.2。显式“固定加成/比例加成”属性与通用乘法操作不能重复结算同一效果。
+- 通用派生公式：最终值 = (基础值 + 固定加成汇总) × (1 + 百分比加成汇总)。适用于 MaxHealth、MoveSpeed、HealthRegenRate、ReloadRate、SuperChargeRegenRate。有效范围按具体属性约束；移动速度不应因总减速超过100%而变成负数。
+- 例：基础移动速度300、固定加成50、比例贡献-0.50/+0.20/+0.15/-0.40，汇总比例-0.55，结果为350×0.45=157.5。一个来源退出后，从剩余来源重新汇总，不恢复旧最终值，也不靠除回旧倍率。
+- 基础值变化、修正项添加/移除/更新或层数变化时，标记相关属性及派生依赖为脏，在消费属性前完成重算；可合并同一批变更，只通知真正变化的结果。移动逻辑读取重算后的 MoveSpeed，停止移动不把它改成0。
+- Health、Shield、Ammo、SuperCharge 是当前状态，不能因重算最大值而重置。最大生命变化后保留绝对血量、保留比例或补差值的规则尚待用户确定。
+- ReloadTime 是秒/格；ReloadRate 是格/秒，正常正时间取倒数，0不能直接相除。基础恢复为0时，单纯百分比加成仍为0，需要固定恢复贡献才能自动恢复。
+- 初期单位上的 Ammo/ReloadRate 对应普通攻击；将来多个技能独立装填时，分离到各技能运行时状态，不能共用一套当前弹药覆盖所有技能。
+- IsStunned/IsAirborne 是汇总状态。未来多个控制效果共存时按来源或计数维护，某一个控制结束不能直接清除其它来源仍生效的状态。
+
+### 出生、死亡、复活（规划，未实施）
+
+- 有生命流程的英雄/NPC 可挂出生与死亡组件；复活点NPC上的复活组件负责复活队列、条件、位置和时机。水晶/出生点等非作战对象不应仅因也是 Unit 就强制具备全部战斗生命周期组件。
+- 死亡与实体 Dispose 不等同；复活重用原实体还是重建、延迟、恢复哪些属性、客户端通知方式后续确认。本次不实现死亡、复活或护盾结算。
+
+## 弹丸数值与扣血方案（本次文档讨论，未实现）
+
+### 用户确定的方向与当前代码差距
+
+- 英雄等级来自英雄配置，在生成英雄 Unit 时初始化 PropertyComponent.Level；发射时把 Level 作为数值参数传给发射器，由发射器计算每枚弹丸的实际效果值。不新增单位攻击力属性，不让客户端传入等级或伤害作为权威结果。
+- 当前 BrawlProjectile 是服务器房间 BrawlProjectileRoomComponent 的子 Entity，代码在 statesync 的 `Scripts/Model/Server/Brawl/BrawlProjectile.cs`。它本身保存运动、阵营和命中数据，并非 Unit 加 ProjectileComponent，因此直接加一个字段即可，无需仅为该值再拆组件。
+- 当前 `IBrawlSkillEmitter.Emit` 只有技能配置和弹丸配置参数；`BrawlProjectileLaunch` 只输出偏移、方向、速度、半径和射程，均尚未接入 Level/效果值。现有碰撞也尚未执行 HitEvent。
+- 实施前核对英雄配置是否已添加并导出 Level；当前生成版英雄配置没有该字段，不应直接假定已可读取。文档更新不修改 Excel，不手工修改生成代码。
+
+### 建议的数值传递与存储
+
+1. 创建英雄时校验配置等级不小于1，并初始化 Level。NPC 属性初始化按对应NPC配置和其等级规则处理，不直接套英雄表。
+2. 发射时读取服务器 Level，作为发射器输入；建议使用简单线性公式 `EffectValue = Value + (Level - 1) * ValueGrowthPerLevel`。1级就是 Value。若以后换成长公式，统一调整公共数值计算 Helper，避免各发射器复制不同算法。
+3. 建议给 BrawlProjectileLaunch 与 BrawlProjectile 增加 `float EffectValue`：前者携带发射器输出，BrawlSkillCastHelper 创建弹丸时复制到后者。Awake/回收初始化也必须重置新增字段。这里仅建议，尚未改接口或字段。
+4. EffectValue 保存生成时的效果基础值快照；HitEvent=1时它就是尚未计算目标减伤的攻击力。保留通用名称，后续治疗/护盾事件可自行解释。不需要每帧反查发射者，发射者离场也不会让已生成弹丸丢失数值。
+5. 建议已发射弹丸不随英雄后续升级变化；未来连发技能是整次施法锁定等级，还是每发重新取等级，实施连发时再确定。本版雪莉同时发射，不存在该差异。
+6. 命中有效目标且事件为伤害时，由服务器命中事件/属性逻辑读取目标当前减伤并扣血；发射器不修改目标生命。阻挡与生效筛选继续独立，不能对只阻挡、不在 TargetMask 中的墙自动扣血。后续再设计生命同步，展示 Sphere 本身不需要同步伤害字段。
+
+### 扣血公式修正与例子
+
+暂不涉及护盾时，建议初版限定减伤比例在0到1之间：
+
+```text
+攻击力 = Value + (Level - 1) × ValueGrowthPerLevel
+减伤比例 = Clamp(目标.DamageReductionRatio, 0, 1)
+本次实际伤害 = Max(0, 弹丸.EffectValue) × (1 - 减伤比例)
+目标.Health = Max(0, 目标.Health - 本次实际伤害)
+```
+
+雪莉单枚 Value=300、成长30：1级300、2级330、5级420。2级弹丸击中当前生命1000、减伤20%的目标，本次伤害330×0.8=264，剩余736。五枚分别命中分别结算，不将一次技能预先乘5后扣一次。
+
+用户提出的 `(当前生命 - 攻击力) × (1 - 减伤比例)` 不正确：它会把剩余生命也乘上减伤系数，甚至在100%减伤时把生命变成0。应对攻击力应用减伤，再从当前生命扣除。护盾先后顺序、免疫、增伤、死亡触发、伤害取整等尚未约定，不能在这一步擅自补齐。
+
 ## 技能后续设计（历史讨论，未全部实施）
 
-以下保留前期讨论；若与上方本轮范围冲突，以上方为准。碰撞、冷却、数值、柯尔特连发均未在本轮实现。
+以下保留前期讨论；若与上方当前状态冲突，以上方为准。碰撞已实现；冷却、数值、柯尔特连发仍未实现。此处旧的待确认问题中，Speed重复、Emitter拼写、XZ平面和Faction语义已解决，不要再次询问。
 
 本节依据前期会话粘贴的表格整理，保留供后续阶段参考，不代表本轮实际行为。
 
@@ -162,7 +340,7 @@ statesync 包：
 2. 旋转盒、垂直高度分层和动态障碍挤压处理，当前仅静态轴对齐 NPC。
 3. Bot 移动 AI、寻路；先调查 ET 现有能力，沿用服务器权威移动入口。
 4. 客户端预测、校正和真正多人房间广播。
-5. 雪莉无碰撞弹丸已写入本轮代码；柯尔特连发、碰撞/伤害/生命、冷却/弹药/装填待后续。动画、上下身分层、其它技能和木桩复活仍留待后续。
+5. 雪莉弹丸的阻挡/碰撞销毁已完成；属性方案已记录但未编码，伤害/生命、柯尔特连发、冷却/弹药/装填待后续。动画、上下身分层、其它技能和木桩复活仍留待后续。
 6. 动态单位出生/销毁通知、对局结算、时限、防消极对局机制及匹配。
 7. 将本地训练场从展示升级为可玩的流程，需用户确定方案。
 
@@ -170,9 +348,9 @@ statesync 包：
 
 用户已反馈移动/NPC阻挡“测试没问题”。本轮技能已完成代码及配置/协议导出。首次构建的类级循环依赖已通过独立 BrawlSkillCastHelper 修正；用户打开 Unity 后自动刷新新增脚本与工程引用，未手改 .meta/.csproj。
 
-技能最终 `dotnet build ET.sln` 成功：0 错误、14 个 HybridCLR 编辑器 CS0649 警告，耗时 39.86 秒；日志 `Temp/BrawlSkill-build-final.log`。客户端 Model/Hotfix/ModelView/HotfixView 与服务器 Model/Hotfix/Config 均已编译。`git diff --check` 无空白错误。未启动服务器/Unity Play，新增回归用例仅编译、尚未运行。
+最新碰撞版本 `dotnet build ET.sln` 成功：0错误、4个MSB3026文件占用重试警告，随后复制成功，耗时42.24秒；日志 `Temp/BrawlCollision-build-final.log`。之前技能第一阶段日志为 `Temp/BrawlSkill-build-final.log`（39.86秒），面向/摇杆阶段为 `Temp/BrawlAim-build-final.log`（25.82秒）。这些是编译记录，不代表运行时用例通过；未主动启动服务器/Unity Play，新增回归用例仅编译、尚未运行。本次仅更新交接文档，不重新编译。
 
-测试入口：启动本轮编译的服务器，Unity 中选择雪莉进入服务器练习赛。每次点击普攻应生成 5 枚 Sphere，方向取最近移动方向（初始 +Z）；无 CD/弹药/装填限制，可穿墙和单位，沿各自方向飞完 7.67 米后移除。大招按钮禁用。退出再进入检查无残留 Sphere，原英雄移动阻挡保持正常。
+当前测试入口：启动最新编译的服务器，Unity 中选择雪莉进入服务器练习赛。点击普攻生成5枚Sphere，取当前移动方向、静止取最近非零移动方向（初始+Z）；死区外松手按瞄准方向释放，出过死区后回到里面松手取消。大招按钮可拖动但不发技能。无CD/弹药/装填限制；弹丸被地形墙、带阻挡组件的墙/桶和敌方作战单位阻挡销毁，友方穿过，水晶/出生点不挡；未碰撞则走满7.67米移除，不扣血。检查高速扫掠、移动目标横穿、贴墙出生及退出重进无残留。原英雄移动阻挡保持正常。
 
 NPC 阻挡本轮 `dotnet build ET.sln` 已通过：0 错误、0 警告，耗时 23.75 秒。首次编译发现测试名前缀需为 Statesync，修正后重编译通过。未启动服务器、Unity Play 或自动化用例，运行时回归由用户执行。
 用户回归关注：1 米通道通过；墙/水/边缘停止和斜向滑动；摇杆死区内静止、死区外不同距离等速；松手/失焦停止；切英雄使用对应半径；可穿过 Bot/劫匪，但不能穿过带阻挡组件的墙/木桶。NPC 阻挡验证清单见 statesync/Test.md。

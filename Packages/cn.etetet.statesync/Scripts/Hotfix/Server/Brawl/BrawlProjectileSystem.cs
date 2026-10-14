@@ -15,6 +15,9 @@ namespace ET.Server
             self.TargetMask = default;
             self.MaxHitCount = 0;
             self.HitCount = 0;
+            self.EffectValue = 0;
+            self.HitEvent1 = default;
+            self.HitEvent2 = default;
             self.HitUnits.Clear();
             self.Position = default;
             self.Direction = default;

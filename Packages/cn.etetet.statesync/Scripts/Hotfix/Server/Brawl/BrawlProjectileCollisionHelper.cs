@@ -18,6 +18,8 @@ namespace ET.Server
             {
                 Unit unit = (Unit)child;
                 if (unit.Id == projectile.OwnerUnitId) continue;
+                StateComponent states = unit.GetComponent<StateComponent>();
+                if (states != null && (states.Has(StateId.Dead) || states.Has(StateId.Spawning))) continue;
                 BrawlPracticeUnitComponent data = unit.GetComponent<BrawlPracticeUnitComponent>();
                 BrawlProjectileBlockMask block;
                 BrawlProjectileTargetMask target;
@@ -63,8 +65,11 @@ namespace ET.Server
             contacts.Sort(Compare);
             foreach (BrawlProjectileContact contact in contacts)
             {
-                // 本轮只记录有效接触次数，不执行 HitEvent，不读取 Value，也不改变目标状态。
-                if (contact.Effective && projectile.HitUnits.Add(contact.UnitId)) ++projectile.HitCount;
+                if (contact.Effective && projectile.HitUnits.Add(contact.UnitId))
+                {
+                    BrawlProjectileHitHelper.Apply(projectile, units.Get(contact.UnitId));
+                    ++projectile.HitCount;
+                }
                 if (!contact.Blocked && (projectile.MaxHitCount == 0 || projectile.HitCount < projectile.MaxHitCount)) continue;
                 projectile.Position = start + delta * contact.Fraction;
                 projectile.RemainingDistance -= distance * contact.Fraction;

@@ -39,7 +39,7 @@ namespace ET.Server
             Unit unit = room.GetComponent<UnitComponent>().Get(state.MyUnitId);
             BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
             // 输入只表达方向和停止；死区由客户端处理，服务端统一按全速意图移动。
-            move.DesiredDirection = math.normalizesafe(direction);
+            move.DesiredDirection = BrawlUnitLifeHelper.CannotAct(unit) ? default : math.normalizesafe(direction);
             move.FacingDirection = facing;
             state.LastInputTime = now;
             state.LastInputSequence = message.Sequence;
@@ -61,31 +61,49 @@ namespace ET.Server
             {
                 state.AccumulatorMilliseconds -= BrawlMovementSettings.TickMilliseconds;
                 ++state.Tick;
+                room.GetComponent<BrawlLifecycleRoomComponent>().SimulationTime = state.Tick * BrawlMovementSettings.TickMilliseconds;
+                state.MyUnitId = BrawlLifecycleHelper.Tick(room);
                 foreach (Entity child in units.Children.Values)
                 {
                     Unit unit = (Unit)child;
+                    unit.GetComponent<StateComponent>().Expire(state.Tick * BrawlMovementSettings.TickMilliseconds);
+                    BrawlUnitLifeHelper.CheckDeath(unit);
                     unit.GetComponent<BrawlPracticeUnitComponent>().PreviousPosition = unit.Position.xz;
                     // NPC 本轮没有移动组件，但挂载阻挡组件的 NPC 参与英雄移动限位。
                     BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
                     if (move == null) continue;
+                    PropertyComponent properties = unit.GetComponent<PropertyComponent>();
+                    move.Speed = properties.GetFloat(PropertyId.MoveSpeed);
+                    bool controlled = BrawlUnitLifeHelper.CannotAct(unit);
                     if (unit.Id == state.MyUnitId && now - state.LastInputTime > BrawlMovementSettings.InputTimeoutMilliseconds)
                         move.DesiredDirection = default;
                     float2 previous = unit.Position.xz;
                     float2 next = BrawlUnitMovementHelper.Move(units, level, state.CellSize, unit.Id, previous,
-                        move.DesiredDirection * move.Speed * BrawlMovementSettings.TickSeconds, move.Radius);
+                        (controlled ? float2.zero : move.DesiredDirection) * move.Speed * BrawlMovementSettings.TickSeconds, move.Radius);
                     move.Velocity = (next - previous) / BrawlMovementSettings.TickSeconds;
                     if (math.any(next != previous)) unit.Position = new float3(next.x, unit.Position.y, next.y);
                 }
                 BrawlProjectileHelper.Tick(state);
+                state.MyUnitId = BrawlLifecycleHelper.Tick(room);
             }
             using G2C_BrawlMoveSnapshot snapshot = G2C_BrawlMoveSnapshot.Create();
             snapshot.EntryId = state.EntryId;
             snapshot.RoomId = room.Id;
             snapshot.Tick = state.Tick;
             snapshot.LastInputSequence = state.LastInputSequence;
+            snapshot.MyUnitId = state.MyUnitId;
+            BrawlUnitSnapshotHelper.FillRoster(room, snapshot);
             foreach (Entity child in units.Children.Values)
             {
                 Unit unit = (Unit)child;
+                PropertyComponent properties = unit.GetComponent<PropertyComponent>();
+                BrawlPropertyState propertyInfo = BrawlPropertyState.Create();
+                propertyInfo.UnitId = unit.Id;
+                propertyInfo.Level = properties.GetInt(PropertyId.Level);
+                propertyInfo.Health = properties.GetFloat(PropertyId.Health);
+                propertyInfo.MaxHealth = properties.GetFloat(PropertyId.MaxHealth);
+                snapshot.Properties.Add(propertyInfo);
+                BrawlStateSyncHelper.FillChanges(unit, snapshot.States);
                 BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
                 if (move == null) continue;
                 BrawlMoveState info = BrawlMoveState.Create();

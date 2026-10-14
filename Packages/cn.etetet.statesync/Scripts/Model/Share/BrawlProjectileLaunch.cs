@@ -10,5 +10,6 @@ namespace ET
         public float Speed;
         public float Radius;
         public float Range;
+        public float EffectValue;
     }
 }

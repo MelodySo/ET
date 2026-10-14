@@ -87,6 +87,28 @@
 - BrawlProjectileCollisionHelper 对实际移动路径收集接触并排序：先近后远，同点墙优先。圆目标用半径和，矩形使用精确圆角扩张，尺寸/Pivot来自配置。出生重叠立即检测；英雄/作战NPC相对本Tick前后位置扫掠，避免横穿漏判。水、草、可穿弹障碍不按墙处理；草掩码只预留。
 - 碰撞设置 Finished，并同步接触位置；沿用下一Tick移除和客户端插值删除。Unit/NPC不会随弹丸销毁，原英雄移动阻挡逻辑不变。测试入口见 Test.md。
 
+## 属性与弹丸扣血（2026-10-14 最新增量）
+
+- 本节覆盖上述“不执行伤害”的历史记录。PropertyComponent挂到练习赛所有Unit，显式PropertyId编号与按来源管理的PropertyModifier字典；系统提供类型校验、输入设置与修正项增删改，变更时立即重算派生值。当前资源不因重算被重置，派生值禁止直接写入。
+- 英雄Level读取BrawlHero新增配置，初始生命按BaseHp+(Level-1)*HpGrowthPerLevel；NPC暂1级、BaseHp。移速继续以MoveSpeedTier为基础，从PropertyId.MoveSpeed读取，眩晕/击飞禁止主动移动和普攻；不实现Buff产生机制。
+- 发射器接收服务器英雄等级，输出EffectValue=Value+(Level-1)*ValueGrowthPerLevel，保存到独立弹丸Entity。有效首次接触执行两个HitEvent，其中1为伤害；扣血为Health-EffectValue*(1-Clamp(DamageReductionRatio,0,1))并限制最低0。没有攻击力属性，不计算护盾、死亡、复活、摧毁。
+- 入场及每Tick快照同步Level/Health/MaxHealth，静止NPC也同步。客户端单位视图只保存权威结果，不增加血条。新测试仍由用户决定执行；文档见Book/Brawl开发交接.md。
+
+## 状态拆分与生命标记（2026-10-14 最新）
+
+- 本节覆盖之前属性内眩晕/击飞与“零血量仍可行动”的旧说明。PropertyId仅数值，900/910废弃；StateId定义Stunned100/Airborne200/Invincible300/Dead400，StateComponent按状态与来源实例维护最终bool及待同步变化。
+- 所有练习赛Unit创建StateComponent。出生与Revive入口添加3秒无敌，按房间模拟毫秒到期；生命周期使用保留来源-1/-2，其它Buff来源应使用独立正ID。过期/移除只清理对应来源，不覆盖其它贡献。
+- 伤害对无敌/死亡目标无效，弹丸原阻挡和计数不变；血量归零立即标记死亡并停止移动，Tick也核对HP。死亡/眩晕/击飞禁止服务端主动移动和攻击。死亡实体及原阻挡保留，不自动销毁/复活。
+- 入场发送全量StateId/bool，后续随移动快照发送最终值变化；客户端仅保存到BrawlPracticeUnitView.States，不实现状态机/动画/本地倒计时。NPC死亡/重生配置列、自动调度、表现留后续。
+- State相关测试见Statesync_BrawlState_Test；具体实现、边界和构建结果见根目录Book/Brawl开发交接.md。
+
+## 出生、死亡与重生（2026-10-15 当前规则）
+
+- 本节覆盖上方旧生命标记规则。所有练习赛Unit由BrawlUnitFactory创建，默认带Spawn/Death/State组件；StateId.Spawning=500。英雄出生2秒后无敌3秒，死亡3秒后销毁旧实体并在绑定复活点生成新实体；时长来自BrawlGlobal。
+- NPC死亡按DeathDuration销毁，再从销毁时刻等待RespawnDelay后在原始位置重建；0表示永不重生。NPC没有Spawning阶段/保护，Gem和Spawn不做NPC重生。死单位立即退出移动和弹丸阻挡查询。
+- 房间BrawlLifecycleRoomComponent保存参与者绑定、long[]复活点ID、纯值NPC待重生记录及通知；禁止静态System集合或保存已销毁实体引用。复活点只服务英雄，SpawnPoints前TeamSize个红方、其余蓝方；当前实际仍1v1。NPCIds不得重复配置出生点。
+- 快照携带MyUnitId、变化时全量Roster和LifeEvents。客户端切换新实体模型，Spawning时隐藏人物；不实现动画/特效/倒计时/状态机。具体配置、测试和历史覆盖关系见Book/Brawl开发交接.md最新章节。
+
 ## 本地训练场展示流程
 
 - `BrawlTrainingHelper` 由英雄详情的训练场按钮触发；当前按用户约定选取关卡 10101，场景从 BrawlLevelConfig.SceneAsset 读取，不调用原 MMO EnterMap，也不进入 Map2。

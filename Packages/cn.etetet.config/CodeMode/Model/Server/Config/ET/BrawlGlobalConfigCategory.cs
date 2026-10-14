@@ -29,6 +29,30 @@ public partial class BrawlGlobalConfigCategory : Singleton<BrawlGlobalConfigCate
     /// 格子尺寸（米），必须大于0
     /// </summary>
     public int CellSize => _data.CellSize;
+    /// <summary>
+    /// 最高等级（英雄和单位）
+    /// </summary>
+    public int MaxLevel => _data.MaxLevel;
+    /// <summary>
+    /// 英雄出生完成后的无敌时间 
+    /// </summary>
+    public float HeroSpawnProtectionDuration => _data.HeroSpawnProtectionDuration;
+    /// <summary>
+    /// 英雄出生阶段时间 
+    /// </summary>
+    public float HeroSpawnDuration => _data.HeroSpawnDuration;
+    /// <summary>
+    /// 英雄死亡保留时间 
+    /// </summary>
+    public float HeroDeathDuration => _data.HeroDeathDuration;
+    /// <summary>
+    /// 红方复活点NPC配置ID
+    /// </summary>
+    public int RedRespawnPointNpcId => _data.RedRespawnPointNpcId;
+    /// <summary>
+    /// 蓝方复活点NPC配置ID
+    /// </summary>
+    public int BlueRespawnPointNpcId => _data.BlueRespawnPointNpcId;
 
     public void ResolveRef()
     {

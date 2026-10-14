@@ -4,5 +4,6 @@ namespace ET
     public enum BrawlUnitComponentType
     {
         Block = 1,
+        RespawnPoint = 2,
     }
 }

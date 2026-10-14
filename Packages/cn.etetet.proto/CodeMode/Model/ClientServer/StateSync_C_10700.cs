@@ -148,6 +148,19 @@ namespace ET
         public float FacingX { get; set; }
         [MemoryPackOrder(8)]
         public float FacingZ { get; set; }
+        [MemoryPackOrder(9)]
+        public int Level { get; set; }
+        [MemoryPackOrder(10)]
+        public float Health { get; set; }
+        [MemoryPackOrder(11)]
+        public float MaxHealth { get; set; }
+        [MemoryPackOrder(12)]
+        public List<BrawlStateValue> States { get; set; } = new();
+
+        [MemoryPackOrder(13)]
+        public long SpawnCompleteAt { get; set; }
+        [MemoryPackOrder(14)]
+        public long DeathDestroyAt { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -328,6 +341,110 @@ namespace ET
         [MemoryPackOrder(4)]
         public List<BrawlMoveState> Units { get; set; } = new();
 
+        [MemoryPackOrder(5)]
+        public List<BrawlPropertyState> Properties { get; set; } = new();
+
+        [MemoryPackOrder(6)]
+        public List<BrawlUnitStateChanges> States { get; set; } = new();
+
+        [MemoryPackOrder(7)]
+        public long MyUnitId { get; set; }
+        [MemoryPackOrder(8)]
+        public bool HasRoster { get; set; }
+        [MemoryPackOrder(9)]
+        public List<BrawlPracticeUnitInfo> Roster { get; set; } = new();
+
+        [MemoryPackOrder(10)]
+        public List<BrawlLifeEvent> LifeEvents { get; set; } = new();
+
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    // 服务器模拟毫秒；仅供未来表现，不由客户端驱动玩法计时。
+    [MemoryPackable]
+    [Message(Opcode.BrawlLifeEvent)]
+    public partial class BrawlLifeEvent : MessageObject
+    {
+        public static BrawlLifeEvent Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlLifeEvent>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long UnitId { get; set; }
+        [MemoryPackOrder(1)]
+        public int Phase { get; set; }
+        [MemoryPackOrder(2)]
+        public long At { get; set; }
+        [MemoryPackOrder(3)]
+        public long EndsAt { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.BrawlStateValue)]
+    public partial class BrawlStateValue : MessageObject
+    {
+        public static BrawlStateValue Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlStateValue>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public int StateId { get; set; }
+        [MemoryPackOrder(1)]
+        public bool Value { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    // 仅最终布尔值发生变化时同步，不下发来源或计时器；顺序沿用外层Tick。
+    [MemoryPackable]
+    [Message(Opcode.BrawlUnitStateChanges)]
+    public partial class BrawlUnitStateChanges : MessageObject
+    {
+        public static BrawlUnitStateChanges Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlUnitStateChanges>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long UnitId { get; set; }
+        [MemoryPackOrder(1)]
+        public List<BrawlStateValue> States { get; set; } = new();
+
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    // 当前练习房间所有单位的生命快照，包含不移动的 NPC。
+    [MemoryPackable]
+    [Message(Opcode.BrawlPropertyState)]
+    public partial class BrawlPropertyState : MessageObject
+    {
+        public static BrawlPropertyState Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlPropertyState>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long UnitId { get; set; }
+        [MemoryPackOrder(1)]
+        public int Level { get; set; }
+        [MemoryPackOrder(2)]
+        public float Health { get; set; }
+        [MemoryPackOrder(3)]
+        public float MaxHealth { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -432,8 +549,12 @@ namespace ET
         public const ushort C2G_BrawlMoveInput = 10712;
         public const ushort BrawlMoveState = 10713;
         public const ushort G2C_BrawlMoveSnapshot = 10714;
-        public const ushort C2G_BrawlNormalAttack = 10715;
-        public const ushort BrawlProjectileState = 10716;
-        public const ushort G2C_BrawlProjectileSnapshot = 10717;
+        public const ushort BrawlLifeEvent = 10715;
+        public const ushort BrawlStateValue = 10716;
+        public const ushort BrawlUnitStateChanges = 10717;
+        public const ushort BrawlPropertyState = 10718;
+        public const ushort C2G_BrawlNormalAttack = 10719;
+        public const ushort BrawlProjectileState = 10720;
+        public const ushort G2C_BrawlProjectileSnapshot = 10721;
     }
 }

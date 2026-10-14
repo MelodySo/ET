@@ -11,11 +11,20 @@ namespace ET.Client
         public int ConfigId;
         public BrawlPracticeUnitKind Kind;
         public BrawlFaction Faction;
+        public int Level;
+        public float Health;
+        public float MaxHealth;
+        public readonly Dictionary<StateId, bool> States = new();
         public Vector3 Position;
         public Vector2 MoveDirection;
         public Vector2 FacingDirection;
         public string ModelPath;
         public GameObject Model;
+        public bool Removed;
+        public bool ModelLoading;
+        public bool ModelLoadFailed;
+        public long SpawnCompleteAt;
+        public long DeathDestroyAt;
         public readonly List<BrawlPositionSample> Samples = new();
     }
 }
