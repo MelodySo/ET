@@ -11,7 +11,7 @@ namespace ET.Test
         {
             await ETTask.CompletedTask;
             BrawlSkillConfig skill = new(40101, 40101, 6, 2, 1, 0, 0.16f, 3, 1.6f, 0.8f, 1, 1, 9, 0.7f, 0, 0, 0);
-            BrawlProjectileConfig config = new(40101, 0.04f, 7, 1, 1, 0, 10, 360, 36, 1, 0, 0, 0, 0, 0);
+            BrawlProjectileConfig config = new(40101, 0.04f, 7, 1, 1, 0, 10, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f);
             IBrawlSkillEmitter emitter = BrawlSkillEmitterHelper.Create(BrawlEmitterType.Revolver);
             BrawlProjectileLaunch[] launches = emitter.Emit(skill, config, 2);
             if (launches.Length != 6) return Fail(100901, "Revolver count must come from config.");
@@ -19,7 +19,7 @@ namespace ET.Test
             {
                 if (math.abs(launches[i].Offset.x - (i % 2 == 0 ? -0.31f : 0.31f)) > 0.00001f ||
                     launches[i].Offset.y != 0 || math.any(launches[i].Direction != new float2(0, 1)) ||
-                    launches[i].DelayMilliseconds != i * 160 || launches[i].Range != 9 || launches[i].EffectValue != 396)
+                    launches[i].DelayMilliseconds != i * 160 || launches[i].Range != 9 || launches[i].EffectValue != 396 || launches[i].SuperChargeOnHit != 0.1f)
                     return Fail(100902, "Revolver offsets, direction, timing, range or level snapshot are incorrect.");
             }
             try
@@ -42,7 +42,12 @@ namespace ET.Test
                 owner.AddComponent<BrawlPracticeUnitComponent>().Faction = BrawlFaction.Red;
                 StateComponent states = owner.AddComponent<StateComponent>();
                 BrawlSkillCastComponent cast = owner.AddComponent<BrawlSkillCastComponent>();
+                owner.AddComponent<BrawlAmmoComponent>();
+                owner.AddComponent<BrawlSpawnComponent>();
+                PropertyComponent properties = owner.AddComponent<PropertyComponent, Dictionary<PropertyId, double>>(new());
+                BrawlAmmoHelper.Initialize(owner, skill, false, 1000);
                 BrawlLevelConfig level = new(1, 1, 20, 20, new int[400], Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
+                if (!BrawlAmmoHelper.TryConsume(owner, 1000)) return Fail(100911, "Full ammo failed to start burst.");
                 BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(1, 0), 0.6f, 1000, 800);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1000);
                 if (projectiles.Children.Count != 1 || BrawlSkillSequenceHelper.CanStart(cast, 1000))
@@ -62,6 +67,8 @@ namespace ET.Test
                 if (projectiles.Children.Count != 5 || BrawlSkillSequenceHelper.CanStart(cast, 1799))
                     return Fail(100907, "Absolute shot schedule drifted or cooldown ended early.");
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1800);
+                BrawlAmmoHelper.Tick(owner, 1800);
+                if (properties.GetFloat(PropertyId.Ammo) != 2) return Fail(100912, "Six shots must consume one ammo without reloading during the burst.");
                 if (projectiles.Children.Count != 6 || !BrawlSkillSequenceHelper.CanStart(cast, 1800))
                     return Fail(100908, "Sixth shot and cooldown must finish at 800ms.");
                 BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(0, 1), 0.6f, 1800, 800);

@@ -111,6 +111,13 @@
 
 ## 本地训练场展示流程
 
+- 柯尔特大招40102已实现（覆盖旧的仅充能说明）：复用Revolver，读取12发/0.08333间隔/12米/宽1配置。C2G_BrawlCastSkill按槽位选择英雄技能，普攻和大招分别冷却、共享连发互斥。成功施放大招仅扣SuperAmmo一格且保留小数；墙与敌人有效扣血后回充，碰撞仍销毁本枚。大招发射期间暂停普通装填，但大招充能不暂停。雪莉大招草稿仍未实现，详见交接文档。
+
+- 超级技能充能（2026-10-15最新）：MaxSuperAmmo=800改为int容量、SuperAmmo=810保存连续储量，已有自动恢复属性组复用。英雄大招容量来自大招技能AmmoCapacity，初始0、死亡保存到房间参与者、重生恢复；NPC不挂BrawlSuperChargeComponent。
+- 弹丸SuperChargeOnHit为每目标实际扣血后的固定充能，不看技能类型，不按伤害量缩放；HitUnits去重、双伤害事件仅充一次。当前NPC有效敌方受伤目标也可贡献，未来再加NPC资格筛选；无实际伤害/友方不充。死亡/已销毁所有者不充能，也不转交重生英雄。仅实现充能及同步显示，大招释放仍未实现。详见交接文档。
+
+- 弹药最新规则（2026-10-15，覆盖无弹药旧说明）：普攻读技能AmmoCapacity/ReloadTime，首次满弹、重生容量1/3。Ammo保留连续装填进度，完整一格才能开火；一次技能仅扣一格并保留未完成装填进度，最后一发结束后逐格恢复。死亡/Spawning暂停装填，柯尔特一轮只扣一次。BrawlAmmoComponent记录积分时刻，资源值保存在PropertyComponent；GetDouble保持内部精度。快照同步MaxAmmo/Ammo/ReloadRate，客户端按钮仅显示权威数值；详见交接文档。
+
 - 柯尔特普攻最新规则（2026-10-15）：Revolver=2对应BrawlRevolverEmitter，按配置单轮6发、160ms间隔、左右交替边缘偏移，方向锁定、位置随英雄。BrawlSkillCastComponent保存发射计划，SequenceHelper在服务器Tick执行绝对时刻；死亡/受控取消剩余发射。左轮读取CooldownTime（当前800ms），雪莉继续无CD，无弹药/装填。详细边界与验证见Book/Brawl开发交接.md。
 
 - `BrawlTrainingHelper` 由英雄详情的训练场按钮触发；当前按用户约定选取关卡 10101，场景从 BrawlLevelConfig.SceneAsset 读取，不调用原 MMO EnterMap，也不进入 Map2。

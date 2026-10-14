@@ -23,9 +23,15 @@ namespace ET
 
         public static float GetFloat(this PropertyComponent self, PropertyId id)
         {
+            return (float)self.GetDouble(id);
+        }
+
+        /// <summary>连续资源积分保留内部double精度，避免每Tick转float累计误差。</summary>
+        public static double GetDouble(this PropertyComponent self, PropertyId id)
+        {
             PropertySchemaHelper.Validate(id, 0);
             if (PropertySchemaHelper.IsInt(id)) throw new ArgumentException($"{id} is not float.");
-            return (float)Read(self.Values, id);
+            return Read(self.Values, id);
         }
 
         public static int GetInt(this PropertyComponent self, PropertyId id)

@@ -102,6 +102,12 @@ namespace ET.Server
                 propertyInfo.Level = properties.GetInt(PropertyId.Level);
                 propertyInfo.Health = properties.GetFloat(PropertyId.Health);
                 propertyInfo.MaxHealth = properties.GetFloat(PropertyId.MaxHealth);
+                propertyInfo.MaxAmmo = properties.GetInt(PropertyId.MaxAmmo);
+                propertyInfo.Ammo = properties.GetFloat(PropertyId.Ammo);
+                propertyInfo.ReloadRate = properties.GetFloat(PropertyId.ReloadRate);
+                propertyInfo.MaxSuperAmmo = properties.GetInt(PropertyId.MaxSuperAmmo);
+                propertyInfo.SuperAmmo = properties.GetFloat(PropertyId.SuperAmmo);
+                propertyInfo.SuperChargeRegenRate = properties.GetFloat(PropertyId.SuperChargeRegenRate);
                 snapshot.Properties.Add(propertyInfo);
                 BrawlStateSyncHelper.FillChanges(unit, snapshot.States);
                 BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();

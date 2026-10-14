@@ -7,7 +7,8 @@ namespace ET.Server
         public BrawlProjectileLaunch[] Launches;
         public int NextIndex;
         public long StartedAt;
-        public long NextCastAt;
+        public long NextNormalCastAt;
+        public long NextSuperCastAt;
         public float2 Direction;
         public float Height;
         public int ProjectileConfigId;

@@ -59,6 +59,12 @@ message BrawlPracticeUnitInfo
     repeated BrawlStateValue States = 13;
     int64 SpawnCompleteAt = 14;
     int64 DeathDestroyAt = 15;
+    int32 MaxAmmo = 16;
+    float Ammo = 17;
+    float ReloadRate = 18;
+    int32 MaxSuperAmmo = 19;
+    float SuperAmmo = 20;
+    float SuperChargeRegenRate = 21;
 }
 
 // ResponseType G2C_BrawlPracticeEnter
@@ -154,22 +160,29 @@ message BrawlUnitStateChanges
     repeated BrawlStateValue States = 2;
 }
 
-// 当前练习房间所有单位的生命快照，包含不移动的 NPC。
+// 当前练习房间单位属性快照，包含不移动的NPC；英雄额外同步弹药与装填速率。
 message BrawlPropertyState
 {
     int64 UnitId = 1;
     int32 Level = 2;
     float Health = 3;
     float MaxHealth = 4;
+    int32 MaxAmmo = 5;
+    float Ammo = 6;
+    float ReloadRate = 7;
+    int32 MaxSuperAmmo = 8;
+    float SuperAmmo = 9;
+    float SuperChargeRegenRate = 10;
 }
 
-// 普攻释放意图；X/Z 为本次施放方向，独立于移动/人物面向。准备拖动不发送此消息。
-message C2G_BrawlNormalAttack // ISessionMessage
+// 技能释放意图；服务器按英雄配置选择槽位技能，不接受客户端技能ID。准备拖动不发送。
+message C2G_BrawlCastSkill // ISessionMessage
 {
     int64 EntryId = 1;
     int64 Sequence = 2;
     float X = 3;
     float Z = 4;
+    int32 Slot = 5;
 }
 
 message BrawlProjectileState

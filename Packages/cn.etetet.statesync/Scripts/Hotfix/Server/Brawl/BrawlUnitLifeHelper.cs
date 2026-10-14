@@ -50,6 +50,7 @@ namespace ET.Server
             unit.GetComponent<BrawlSpawnComponent>().Active = false;
             StateComponent states = unit.GetComponent<StateComponent>();
             states.AddSource(StateId.Dead, DeathSource);
+            BrawlSuperChargeHelper.SaveOnDeath(unit);
             states.RemoveSource(StateId.Invincible, SpawnProtectionSource);
             states.RemoveSource(StateId.Spawning, SpawningSource);
             BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();

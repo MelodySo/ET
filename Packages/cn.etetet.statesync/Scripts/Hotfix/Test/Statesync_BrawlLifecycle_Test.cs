@@ -11,6 +11,7 @@ namespace ET.Test
             Fiber fiber = context.Fiber;
             BrawlGlobalConfigCategory oldGlobal = fiber.GetSingleton<BrawlGlobalConfigCategory>();
             BrawlHeroConfigCategory oldHeroes = fiber.GetSingleton<BrawlHeroConfigCategory>();
+            BrawlSkillConfigCategory oldSkills = fiber.GetSingleton<BrawlSkillConfigCategory>();
             BrawlNPCConfigCategory oldNPCs = fiber.GetSingleton<BrawlNPCConfigCategory>();
             BrawlRespawnPointConfigCategory oldPoints = fiber.GetSingleton<BrawlRespawnPointConfigCategory>();
             BrawlUnitComponentBlockConfigCategory oldBlocks = fiber.GetSingleton<BrawlUnitComponentBlockConfigCategory>();
@@ -18,7 +19,9 @@ namespace ET.Test
             {
                 fiber.AddSingleton(new BrawlGlobalConfigCategory(new BrawlGlobalConfig(1, 12, 3, 2, 3, 3, 3)));
                 fiber.AddSingleton(new BrawlHeroConfigCategory(new Dictionary<int, BrawlHeroConfig>
-                    { [1] = new(1, 1, 1, 0, 0, 0, 1000, 100, 3, 0, 0.3f, 1.2f, 1) }));
+                    { [1] = new(1, 1, 1, 0, 99, 0, 1000, 100, 3, 0, 0.3f, 1.2f, 1) }));
+                fiber.AddSingleton(new BrawlSkillConfigCategory(new Dictionary<int, BrawlSkillConfig>
+                    { [99] = new(99, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0) }));
                 fiber.AddSingleton(new BrawlNPCConfigCategory(new Dictionary<int, BrawlNPCConfig>
                 {
                     [2] = new(2, 1, 0, 5000, 500, 2, new int[0], new int[0], 0.6f, 1, 0, 0, 0, 3, 5),
@@ -45,6 +48,7 @@ namespace ET.Test
                 life.SimulationTime = 5000;
                 hero.GetComponent<StateComponent>().Expire(5000);
                 hero.GetComponent<PropertyComponent>().Set(PropertyId.Health, 0);
+                hero.GetComponent<PropertyComponent>().Set(PropertyId.SuperAmmo, 1.6);
                 BrawlUnitLifeHelper.CheckDeath(hero);
                 BrawlUnitLifeHelper.CheckDeath(hero);
                 if (life.Notices.FindAll(n => n.UnitId == originalHeroId && n.Phase == BrawlLifePhase.Died).Count != 1)
@@ -57,6 +61,9 @@ namespace ET.Test
                     life.Participants[0].RespawnPointId != point.Id || math.any(reborn.Position != point.Position) ||
                     reborn.GetComponent<BrawlSpawnComponent>().CompleteAt != 10000)
                     return Fail(100806, "Hero must use a new entity at its stable respawn point after three seconds.");
+                if (reborn.GetComponent<PropertyComponent>().GetDouble(PropertyId.SuperAmmo) != 1.6 ||
+                    reborn.GetComponent<PropertyComponent>().GetInt(PropertyId.MaxSuperAmmo) != 2)
+                    return Fail(100815, "Hero respawn did not restore fractional super ammo with configured capacity.");
                 life.SimulationTime = 10000; BrawlLifecycleHelper.Tick(scene);
                 if (!reborn.GetComponent<StateComponent>().Has(StateId.Invincible)) return Fail(100807, "Reborn hero has no protection.");
                 life.SimulationTime = 13000;
@@ -91,6 +98,7 @@ namespace ET.Test
             finally
             {
                 fiber.AddSingleton(oldGlobal); fiber.AddSingleton(oldHeroes); fiber.AddSingleton(oldNPCs);
+                fiber.AddSingleton(oldSkills);
                 fiber.AddSingleton(oldPoints); fiber.AddSingleton(oldBlocks);
             }
         }

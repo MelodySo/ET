@@ -11,7 +11,8 @@ namespace ET
             if (skill.SkillRangeType != (int)BrawlSkillRangeType.Sector || skill.SkillCastRangeType != 0 ||
                 skill.EmitterParam1 != 1 || skill.EmitterParam2 != 0 || skill.EmitterParam3 != 0)
                 throw new NotSupportedException($"技能 {skill.Id}：当前霰弹枪只支持单轮同时发射的扇形。");
-            if (projectile.MaxHitCount < 0 || skill.ProjectilesPerVolley <= 0 || !math.isfinite(skill.SkillRangeParam1) || skill.SkillRangeParam1 <= 0 ||
+            if (!math.isfinite(projectile.SuperChargeOnHit) || projectile.SuperChargeOnHit < 0 ||
+                projectile.MaxHitCount < 0 || skill.ProjectilesPerVolley <= 0 || !math.isfinite(skill.SkillRangeParam1) || skill.SkillRangeParam1 <= 0 ||
                 !math.isfinite(skill.SkillRangeParam2) || skill.SkillRangeParam2 < 0 || skill.SkillRangeParam2 > 360 ||
                 !math.isfinite(projectile.Speed) || projectile.Speed <= 0 || !math.isfinite(projectile.Radius) || projectile.Radius <= 0)
                 throw new ArgumentException($"技能 {skill.Id} 或弹丸 {projectile.Id} 的数量、射程、角度、速度、半径非法。");
@@ -30,6 +31,7 @@ namespace ET
                     Radius = projectile.Radius,
                     Range = skill.SkillRangeParam1,
                     EffectValue = effectValue,
+                    SuperChargeOnHit = projectile.SuperChargeOnHit,
                 };
             }
             return launches;

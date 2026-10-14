@@ -49,6 +49,8 @@
 
 ## 验证
 
+- 2026-10-15大招充能：BrawlSkill.xlsx弹丸分页新增float SuperChargeOnHit（R列），单位为每枚对每个有效扣血目标提供的大招格数，与技能类型无关。10101/40101暂0.1测试，其余0；技能分页10102.AmmoCapacity补为1。容量由英雄SuperSkillId指向技能读取，大招ReloadTime本轮不用于自动充能；逻辑在statesync。
+
 - 2026-10-15生命周期配置：BrawlGlobal的HeroSpawnProtectionDuration/HeroSpawnDuration/HeroDeathDuration单位秒，RedRespawnPointNpcId/BlueRespawnPointNpcId指定英雄复活点NPC。BrawlNPC.DeathDuration为死亡实体保留时间，RespawnDelay从销毁后开始等待，0不重生。NPC没有额外出生过程/保护。
 - BrawlUnitComponentReborn.xlsx通过同名Defines XML生成BrawlRespawnPointConfig/Category，组件类型2，仅绑定英雄复活点；当前只有Id/Name。逻辑在statesync，关卡SpawnPoints是复活点唯一来源，不往NPCIds重复放出生点。
 

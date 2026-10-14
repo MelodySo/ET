@@ -13,7 +13,7 @@ namespace ET
 {
     public sealed partial class BrawlProjectileConfig : ET.Object
     {
-        public BrawlProjectileConfig(int Id, string Description, float Radius, int BlockMask, int TargetMask, int MaxHitCount, float Lifetime, float Speed, int Value, int ValueGrowthPerLevel, int HitEvent1, int HitEvent1Param1, int HitEvent1Param2, int HitEvent2, int HitEvent2Param1, int HitEvent2Param2) 
+        public BrawlProjectileConfig(int Id, string Description, float Radius, int BlockMask, int TargetMask, int MaxHitCount, float Lifetime, float Speed, int Value, int ValueGrowthPerLevel, int HitEvent1, int HitEvent1Param1, int HitEvent1Param2, int HitEvent2, int HitEvent2Param1, int HitEvent2Param2, float SuperChargeOnHit) 
         {
             this.Id = Id;
             this.Description = Description;
@@ -31,6 +31,7 @@ namespace ET
             this.HitEvent2 = HitEvent2;
             this.HitEvent2Param1 = HitEvent2Param1;
             this.HitEvent2Param2 = HitEvent2Param2;
+            this.SuperChargeOnHit = SuperChargeOnHit;
             EndInit();
         }
 
@@ -98,6 +99,10 @@ namespace ET
         /// 击中事件2参数2
         /// </summary>
         public readonly int HitEvent2Param2;
+        /// <summary>
+        /// 每枚弹丸对有效目标实际扣血后获得的大招格数；0不充能，与技能类型无关
+        /// </summary>
+        public readonly float SuperChargeOnHit;
 
         public  void ResolveRef()
         {

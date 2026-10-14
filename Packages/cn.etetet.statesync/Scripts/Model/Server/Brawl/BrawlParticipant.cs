@@ -8,5 +8,6 @@ namespace ET.Server
         public long PlayerId;
         public long RespawnPointId;
         public long UnitId;
+        public double SuperAmmo;
     }
 }

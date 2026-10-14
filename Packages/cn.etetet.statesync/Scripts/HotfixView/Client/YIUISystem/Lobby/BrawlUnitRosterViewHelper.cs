@@ -29,6 +29,8 @@ namespace ET.Client
                 view.Position = new Vector3(info.X, info.Y, info.Z);
                 view.FacingDirection = new Vector2(info.FacingX, info.FacingZ);
                 view.Level = info.Level; view.Health = info.Health; view.MaxHealth = info.MaxHealth;
+                view.MaxAmmo = info.MaxAmmo; view.Ammo = info.Ammo; view.ReloadRate = info.ReloadRate;
+                view.MaxSuperAmmo = info.MaxSuperAmmo; view.SuperAmmo = info.SuperAmmo; view.SuperChargeRegenRate = info.SuperChargeRegenRate;
                 view.SpawnCompleteAt = info.SpawnCompleteAt; view.DeathDestroyAt = info.DeathDestroyAt;
                 view.States.Clear();
                 foreach (BrawlStateValue value in info.States) view.States[(StateId)value.StateId] = value.Value;

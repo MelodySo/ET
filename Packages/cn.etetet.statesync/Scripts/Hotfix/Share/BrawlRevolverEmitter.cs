@@ -11,7 +11,8 @@ namespace ET
             if (skill.SkillRangeType != (int)BrawlSkillRangeType.Rectangle || skill.SkillCastRangeType != 0 ||
                 skill.EmitterParam1 != 1 || skill.EmitterParam2 != 0)
                 throw new NotSupportedException($"技能 {skill.Id}：左轮发射器当前只支持单轮矩形连发。");
-            if (skill.ProjectilesPerVolley <= 0 || projectile.MaxHitCount < 0 ||
+            if (!math.isfinite(projectile.SuperChargeOnHit) || projectile.SuperChargeOnHit < 0 ||
+                skill.ProjectilesPerVolley <= 0 || projectile.MaxHitCount < 0 ||
                 !math.isfinite(skill.SkillRangeParam1) || skill.SkillRangeParam1 <= 0 ||
                 !math.isfinite(skill.SkillRangeParam2) || !math.isfinite(projectile.Radius) || projectile.Radius <= 0 ||
                 skill.SkillRangeParam2 < projectile.Radius * 2 || !math.isfinite(projectile.Speed) || projectile.Speed <= 0 ||
@@ -30,6 +31,7 @@ namespace ET
                     Direction = new float2(0, 1),
                     Speed = projectile.Speed, Radius = projectile.Radius, Range = skill.SkillRangeParam1,
                     EffectValue = value,
+                    SuperChargeOnHit = projectile.SuperChargeOnHit,
                     // 从整轮起点计算，避免逐发按Tick取整而累计漂移。
                     DelayMilliseconds = (long)Math.Round(i * (double)skill.EmitterParam3 * 1000),
                 };

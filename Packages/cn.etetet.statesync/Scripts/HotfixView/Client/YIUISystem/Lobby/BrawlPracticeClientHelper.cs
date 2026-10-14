@@ -51,6 +51,8 @@ namespace ET.Client
                     UnitId = info.UnitId, ConfigId = info.ConfigId, Kind = kind, Faction = (BrawlFaction)info.Faction,
                     FacingDirection = new Vector2(info.FacingX, info.FacingZ),
                     Level = info.Level, Health = info.Health, MaxHealth = info.MaxHealth,
+                    MaxAmmo = info.MaxAmmo, Ammo = info.Ammo, ReloadRate = info.ReloadRate,
+                    MaxSuperAmmo = info.MaxSuperAmmo, SuperAmmo = info.SuperAmmo, SuperChargeRegenRate = info.SuperChargeRegenRate,
                     SpawnCompleteAt = info.SpawnCompleteAt, DeathDestroyAt = info.DeathDestroyAt,
                     Position = new Vector3(info.X, info.Y, info.Z), ModelPath = address,
                 };

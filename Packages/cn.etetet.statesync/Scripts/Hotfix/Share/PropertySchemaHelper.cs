@@ -4,9 +4,9 @@ namespace ET
 {
     public static class PropertySchemaHelper
     {
-        public static bool IsInt(PropertyId id) => id == PropertyId.Level || id == PropertyId.MaxAmmo;
+        public static bool IsInt(PropertyId id) => id == PropertyId.Level || id == PropertyId.MaxAmmo || id == PropertyId.MaxSuperAmmo;
         public static bool IsResource(PropertyId id) => id == PropertyId.Health || id == PropertyId.Shield ||
-            id == PropertyId.Ammo || id == PropertyId.SuperCharge;
+            id == PropertyId.Ammo || id == PropertyId.SuperAmmo;
         public static bool IsDerived(PropertyId id) => id == PropertyId.MaxHealth || id == PropertyId.MoveSpeed ||
             id == PropertyId.HealthRegenRate || id == PropertyId.ReloadRate || id == PropertyId.SuperChargeRegenRate;
 

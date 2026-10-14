@@ -13,6 +13,7 @@ namespace ET.Server
         public int MaxHitCount;
         public int HitCount;
         public float EffectValue;
+        public float SuperChargeOnHit;
         public BrawlHitEventType HitEvent1;
         public BrawlHitEventType HitEvent2;
         public System.Collections.Generic.HashSet<long> HitUnits = new();

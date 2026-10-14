@@ -161,6 +161,18 @@ namespace ET
         public long SpawnCompleteAt { get; set; }
         [MemoryPackOrder(14)]
         public long DeathDestroyAt { get; set; }
+        [MemoryPackOrder(15)]
+        public int MaxAmmo { get; set; }
+        [MemoryPackOrder(16)]
+        public float Ammo { get; set; }
+        [MemoryPackOrder(17)]
+        public float ReloadRate { get; set; }
+        [MemoryPackOrder(18)]
+        public int MaxSuperAmmo { get; set; }
+        [MemoryPackOrder(19)]
+        public float SuperAmmo { get; set; }
+        [MemoryPackOrder(20)]
+        public float SuperChargeRegenRate { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -427,7 +439,7 @@ namespace ET
         }
     }
 
-    // 当前练习房间所有单位的生命快照，包含不移动的 NPC。
+    // 当前练习房间单位属性快照，包含不移动的NPC；英雄额外同步弹药与装填速率。
     [MemoryPackable]
     [Message(Opcode.BrawlPropertyState)]
     public partial class BrawlPropertyState : MessageObject
@@ -445,20 +457,32 @@ namespace ET
         public float Health { get; set; }
         [MemoryPackOrder(3)]
         public float MaxHealth { get; set; }
+        [MemoryPackOrder(4)]
+        public int MaxAmmo { get; set; }
+        [MemoryPackOrder(5)]
+        public float Ammo { get; set; }
+        [MemoryPackOrder(6)]
+        public float ReloadRate { get; set; }
+        [MemoryPackOrder(7)]
+        public int MaxSuperAmmo { get; set; }
+        [MemoryPackOrder(8)]
+        public float SuperAmmo { get; set; }
+        [MemoryPackOrder(9)]
+        public float SuperChargeRegenRate { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
         }
     }
 
-    // 普攻释放意图；X/Z 为本次施放方向，独立于移动/人物面向。准备拖动不发送此消息。
+    // 技能释放意图；服务器按英雄配置选择槽位技能，不接受客户端技能ID。准备拖动不发送。
     [MemoryPackable]
-    [Message(Opcode.C2G_BrawlNormalAttack)]
-    public partial class C2G_BrawlNormalAttack : MessageObject, ISessionMessage
+    [Message(Opcode.C2G_BrawlCastSkill)]
+    public partial class C2G_BrawlCastSkill : MessageObject, ISessionMessage
     {
-        public static C2G_BrawlNormalAttack Create(bool isFromPool = false)
+        public static C2G_BrawlCastSkill Create(bool isFromPool = false)
         {
-            return ObjectPool.Fetch<C2G_BrawlNormalAttack>(isFromPool);
+            return ObjectPool.Fetch<C2G_BrawlCastSkill>(isFromPool);
         }
 
         [MemoryPackOrder(0)]
@@ -469,6 +493,8 @@ namespace ET
         public float X { get; set; }
         [MemoryPackOrder(3)]
         public float Z { get; set; }
+        [MemoryPackOrder(4)]
+        public int Slot { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -553,7 +579,7 @@ namespace ET
         public const ushort BrawlStateValue = 10716;
         public const ushort BrawlUnitStateChanges = 10717;
         public const ushort BrawlPropertyState = 10718;
-        public const ushort C2G_BrawlNormalAttack = 10719;
+        public const ushort C2G_BrawlCastSkill = 10719;
         public const ushort BrawlProjectileState = 10720;
         public const ushort G2C_BrawlProjectileSnapshot = 10721;
     }

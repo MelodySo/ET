@@ -76,6 +76,12 @@ namespace ET.Client
                     view.Level = info.Level;
                     view.Health = info.Health;
                     view.MaxHealth = info.MaxHealth;
+                    view.MaxAmmo = info.MaxAmmo;
+                    view.Ammo = info.Ammo;
+                    view.ReloadRate = info.ReloadRate;
+                    view.MaxSuperAmmo = info.MaxSuperAmmo;
+                    view.SuperAmmo = info.SuperAmmo;
+                    view.SuperChargeRegenRate = info.SuperChargeRegenRate;
                     break;
                 }
             }

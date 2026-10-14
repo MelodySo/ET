@@ -14,6 +14,12 @@ namespace ET.Client
         public int Level;
         public float Health;
         public float MaxHealth;
+        public int MaxAmmo;
+        public float Ammo;
+        public float ReloadRate;
+        public int MaxSuperAmmo;
+        public float SuperAmmo;
+        public float SuperChargeRegenRate;
         public readonly Dictionary<StateId, bool> States = new();
         public Vector3 Position;
         public Vector2 MoveDirection;

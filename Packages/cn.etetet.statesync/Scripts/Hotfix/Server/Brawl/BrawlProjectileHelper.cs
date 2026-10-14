@@ -23,7 +23,11 @@ namespace ET.Server
                 Unit unit = (Unit)child;
                 // NPC没有英雄施法组件；英雄死亡/受控时由调度器取消后续连发。
                 if (unit.GetComponent<BrawlSkillCastComponent>() != null)
+                {
                     BrawlSkillSequenceHelper.Tick(unit, level, state.CellSize, now);
+                    BrawlAmmoHelper.Tick(unit, now);
+                    BrawlSuperChargeHelper.Tick(unit, now);
+                }
             }
             SendSnapshot(state);
         }

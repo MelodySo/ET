@@ -6,7 +6,7 @@ namespace ET.Server
     public static class BrawlUnitFactory
     {
         public static Unit Create(UnitComponent units, int configId, BrawlPracticeUnitKind kind, BrawlFaction faction,
-            long playerId, float3 position, int participantSlot = -1)
+            long playerId, float3 position, int participantSlot = -1, bool isRespawn = false)
         {
             // ConfigId 在本模式中指向 BrawlHero/BrawlNPC，不调用原 MMO 的 Unit.Config()。
             Unit unit = units.AddChild<Unit, int>(configId);
@@ -26,6 +26,8 @@ namespace ET.Server
             if (kind != BrawlPracticeUnitKind.NPC)
             {
                 unit.AddComponent<BrawlSkillCastComponent>();
+                unit.AddComponent<BrawlAmmoComponent>();
+                unit.AddComponent<BrawlSuperChargeComponent>();
                 BrawlHeroConfig hero = units.Fiber().GetSingleton<BrawlHeroConfigCategory>().Get(configId);
                 if (hero.MoveSpeedTier <= 0) throw new InvalidOperationException($"英雄 {configId} 的移动挡位必须大于零。");
                 float health = BrawlEffectValueHelper.Calculate(hero.BaseHp, hero.HpGrowthPerLevel, hero.Level);
@@ -36,6 +38,14 @@ namespace ET.Server
                     [PropertyId.Health] = health,
                     [PropertyId.BaseMoveSpeed] = hero.MoveSpeedTier,
                 });
+                // 未配置普攻的单位没有弹药；已有草稿技能仍可生成单位，但施放验证独立处理。
+                if (hero.NormalAttackSkillId > 0)
+                {
+                    BrawlSkillConfig normal = units.Fiber().GetSingleton<BrawlSkillConfigCategory>().GetOrDefault(hero.NormalAttackSkillId);
+                    if (normal != null) BrawlAmmoHelper.Initialize(unit, normal, isRespawn, now);
+                }
+                BrawlSkillConfig super = hero.SuperSkillId > 0 ? units.Fiber().GetSingleton<BrawlSkillConfigCategory>().GetOrDefault(hero.SuperSkillId) : null;
+                BrawlSuperChargeHelper.Initialize(unit, super?.AmmoCapacity ?? 0, now);
                 BrawlMoveComponent move = unit.AddComponent<BrawlMoveComponent>();
                 move.Speed = hero.MoveSpeedTier;
                 move.Radius = hero.CollisionRadius;

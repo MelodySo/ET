@@ -9,7 +9,7 @@ namespace ET.Test
         public override async ETTask<int> Handle(TestContext context)
         {
             await ETTask.CompletedTask;
-            BrawlProjectileConfig config = new(1, 0.05f, 7, 1, 1, 0, 8, 300, 30, 1, 0, 0, 0, 0, 0);
+            BrawlProjectileConfig config = new(1, 0.05f, 7, 1, 1, 0, 8, 300, 30, 1, 0, 0, 0, 0, 0, 0.1f);
             IBrawlSkillEmitter emitter = BrawlSkillEmitterHelper.Create(BrawlEmitterType.Shotgun);
             BrawlProjectileLaunch[] launches = emitter.Emit(Skill(5), config, 1);
             if (launches.Length != 5) return Fail(100301, "Shotgun count does not match configuration.");
@@ -20,7 +20,7 @@ namespace ET.Test
                 float degrees = math.degrees(math.atan2(launch.Direction.x, launch.Direction.y));
                 if (math.abs(degrees - expectedAngles[i]) > 0.0001f || math.abs(math.length(launch.Direction) - 1) > 0.0001f)
                     return Fail(100302, "Shotgun directions do not span the full sector symmetrically.");
-                if (launch.EffectValue != 300 || launch.Range != 7.67f || launch.Speed != 8 || launch.Radius != 0.05f || math.any(launch.Offset != float2.zero))
+                if (launch.SuperChargeOnHit != 0.1f || launch.EffectValue != 300 || launch.Range != 7.67f || launch.Speed != 8 || launch.Radius != 0.05f || math.any(launch.Offset != float2.zero))
                     return Fail(100303, "Shotgun launch conditions do not match configuration.");
             }
             BrawlProjectileLaunch single = emitter.Emit(Skill(1), config, 1)[0];

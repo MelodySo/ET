@@ -11,6 +11,7 @@ namespace ET
         public float Radius;
         public float Range;
         public float EffectValue;
+        public float SuperChargeOnHit;
         public long DelayMilliseconds;
     }
 }

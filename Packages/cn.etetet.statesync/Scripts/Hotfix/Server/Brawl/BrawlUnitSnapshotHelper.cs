@@ -14,6 +14,12 @@ namespace ET.Server
             PropertyComponent properties = unit.GetComponent<PropertyComponent>();
             info.Level = properties.GetInt(PropertyId.Level); info.Health = properties.GetFloat(PropertyId.Health);
             info.MaxHealth = properties.GetFloat(PropertyId.MaxHealth);
+            info.MaxAmmo = properties.GetInt(PropertyId.MaxAmmo);
+            info.Ammo = properties.GetFloat(PropertyId.Ammo);
+            info.ReloadRate = properties.GetFloat(PropertyId.ReloadRate);
+            info.MaxSuperAmmo = properties.GetInt(PropertyId.MaxSuperAmmo);
+            info.SuperAmmo = properties.GetFloat(PropertyId.SuperAmmo);
+            info.SuperChargeRegenRate = properties.GetFloat(PropertyId.SuperChargeRegenRate);
             info.SpawnCompleteAt = unit.GetComponent<BrawlSpawnComponent>().CompleteAt;
             info.DeathDestroyAt = unit.GetComponent<BrawlDeathComponent>().DestroyAt;
             BrawlStateSyncHelper.FillInitial(unit.GetComponent<StateComponent>(), info.States);

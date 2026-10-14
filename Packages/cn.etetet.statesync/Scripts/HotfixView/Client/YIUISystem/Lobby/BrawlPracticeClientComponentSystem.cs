@@ -16,6 +16,7 @@ namespace ET.Client
             BrawlPracticeMovementViewHelper.Update(self.Session);
             BrawlUnitRosterViewHelper.Update(self.Session);
             BrawlSkillJoystickHelper.Update(self.Session);
+            BrawlSkillViewHelper.UpdateAmmo(self.Session);
             BrawlProjectileViewHelper.Update(self.Session);
         }
 

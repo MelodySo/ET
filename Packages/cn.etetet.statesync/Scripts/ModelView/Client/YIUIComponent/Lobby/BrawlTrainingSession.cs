@@ -34,6 +34,9 @@ namespace ET.Client
         public readonly Dictionary<long, BrawlProjectileView> Projectiles = new();
         public readonly List<long> RemovedProjectiles = new();
         public Button NormalAttackButton;
+        public TextMeshProUGUI NormalAttackLabel;
+        public TextMeshProUGUI SuperSkillLabel;
+        public bool SuperSkillImplemented;
         public Button SuperSkillButton;
         public long LastAcknowledgedInput;
         public long LastServerTick;
