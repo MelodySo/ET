@@ -17,6 +17,14 @@ namespace ET.Server
             }
             foreach (long id in projectiles.PendingRemoval) projectiles.GetChild<BrawlProjectile>(id).Dispose();
             projectiles.PendingRemoval.Clear();
+            long now = room.GetComponent<BrawlLifecycleRoomComponent>().SimulationTime;
+            foreach (Entity child in units.Children.Values)
+            {
+                Unit unit = (Unit)child;
+                // NPC没有英雄施法组件；英雄死亡/受控时由调度器取消后续连发。
+                if (unit.GetComponent<BrawlSkillCastComponent>() != null)
+                    BrawlSkillSequenceHelper.Tick(unit, level, state.CellSize, now);
+            }
             SendSnapshot(state);
         }
 

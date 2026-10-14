@@ -2,7 +2,7 @@ using Unity.Mathematics;
 
 namespace ET
 {
-    /// <summary>发射器模型空间的初始条件：X 向右、Y 对应世界 Z 向前。当前只实现立即发射、匀速直线。</summary>
+    /// <summary>发射器模型空间的初始条件：X向右、Y向前；延迟相对本次施放开始计算。</summary>
     public struct BrawlProjectileLaunch
     {
         public float2 Offset;
@@ -11,5 +11,6 @@ namespace ET
         public float Radius;
         public float Range;
         public float EffectValue;
+        public long DelayMilliseconds;
     }
 }

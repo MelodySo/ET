@@ -25,6 +25,7 @@ namespace ET.Server
             long now = units.Scene().GetComponent<BrawlLifecycleRoomComponent>().SimulationTime;
             if (kind != BrawlPracticeUnitKind.NPC)
             {
+                unit.AddComponent<BrawlSkillCastComponent>();
                 BrawlHeroConfig hero = units.Fiber().GetSingleton<BrawlHeroConfigCategory>().Get(configId);
                 if (hero.MoveSpeedTier <= 0) throw new InvalidOperationException($"英雄 {configId} 的移动挡位必须大于零。");
                 float health = BrawlEffectValueHelper.Calculate(hero.BaseHp, hero.HpGrowthPerLevel, hero.Level);

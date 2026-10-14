@@ -34,7 +34,7 @@ namespace ET.Test
             catch (ArgumentException) { }
             if (math.any(single.Direction != new float2(0, 1))) return Fail(100304, "A single pellet must go forward.");
             if (emitter.Emit(Skill(3), config, 1).Length != 3) return Fail(100305, "Pellet count was hardcoded.");
-            if (BrawlSkillEmitterHelper.Create(BrawlEmitterType.Revolver) != null)
+            if (BrawlSkillEmitterHelper.Create(BrawlEmitterType.Boomerang) != null)
                 return Fail(100306, "Unimplemented emitter should not fall back to shotgun.");
             try
             {

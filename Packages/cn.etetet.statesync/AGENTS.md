@@ -111,6 +111,8 @@
 
 ## 本地训练场展示流程
 
+- 柯尔特普攻最新规则（2026-10-15）：Revolver=2对应BrawlRevolverEmitter，按配置单轮6发、160ms间隔、左右交替边缘偏移，方向锁定、位置随英雄。BrawlSkillCastComponent保存发射计划，SequenceHelper在服务器Tick执行绝对时刻；死亡/受控取消剩余发射。左轮读取CooldownTime（当前800ms），雪莉继续无CD，无弹药/装填。详细边界与验证见Book/Brawl开发交接.md。
+
 - `BrawlTrainingHelper` 由英雄详情的训练场按钮触发；当前按用户约定选取关卡 10101，场景从 BrawlLevelConfig.SceneAsset 读取，不调用原 MMO EnterMap，也不进入 Map2。
 - 使用 DefaultPackage 叠加加载场景，兼容 SceneAsset 的相对路径/短名称；当前收集器按文件名寻址。
 - 状态与资源由 LobbyPanelComponent.TrainingSession 持有；加载防重入、异步后用 EntityRef 获取大厅；大厅销毁时取消/清理。
