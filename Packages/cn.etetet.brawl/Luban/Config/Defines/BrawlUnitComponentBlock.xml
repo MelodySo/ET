@@ -1,0 +1,5 @@
+<module name="ET">
+  <table name="BrawlUnitComponentBlockConfigCategory" value="BrawlUnitComponentBlockConfig" index="Id" mode="map"
+         input="Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlUnitComponentBlock.xlsx"
+         readSchemaFromFile="true" comment="荒野对战 NPC 阻挡组件" />
+</module>

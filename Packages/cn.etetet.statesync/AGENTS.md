@@ -44,7 +44,7 @@
 
 ## 练习赛服务器权威移动
 
-- 玩家和 Bot 共用 BrawlMoveComponent。速度暂按 BrawlHero.MoveSpeedTier 米/秒；半径读取各自 BrawlHero.CollisionRadius（米），出生检查也使用各自半径，必须为有限正数。CollisionHeight 为脚底以上完整高度，当前平面移动不使用。Bot 当前方向为零，不执行 AI 或寻路。NPC 不添加移动组件，也不参与碰撞。
+- 玩家和 Bot 共用 BrawlMoveComponent。速度暂按 BrawlHero.MoveSpeedTier 米/秒；半径读取各自 BrawlHero.CollisionRadius（米），出生检查也使用各自半径，必须为有限正数。CollisionHeight 为脚底以上完整高度，当前平面移动不使用。Bot 当前方向为零，不执行 AI 或寻路。NPC 不添加移动组件；挂载阻挡组件的 NPC 参与英雄移动限位。英雄之间可以重合。
 - BrawlPracticeSessionComponent 的 Update 使用固定 50ms 累积步长，卡顿最多追赶 5 步；不使用可变帧时长直接计算大位移。
 - BrawlTerrainMovementHelper 是无 Unity 物理依赖的共享几何算法：网格中心为列/行乘 CellSize；只阻挡 Wall、Water 和地图边缘。小步推进、圆与格子矩形的分轴连续限位实现滑墙；相切合法，不重新归一化滑动余量。出生时检查角色半径是否合法。
 - C2G_BrawlMoveInput 只带 EntryId、输入序号、XZ 方向；服务器绑定当前连接的 MyUnitId，校验有限数与方向范围，非零方向安全归一化，不保留摇杆力度。0.5 秒未收有效输入自动停止。
@@ -54,9 +54,40 @@
 - 表现仅在已收到的快照间插值，初始缓冲 2 Tick，断流不外推、不预测、不控制 Animator。退出先停止输入并 Dispose 客户端组件，再退出服务器房间和卸载模型。
 - 本地训练场保持原展示流程，不启用这一套移动。
 - 摇杆 BrawlJoystickHelper.DeadZone=0.2f，HandleRange=60，中心 12 UI 局部单位以内（含边界）停止，超过阈值全速；手柄视觉仍随拖动距离变化。碰墙滑动后的实际位移不强制恢复全速。
-- 新会话交接与待办见 `Book/Brawl开发交接.md`（项目根目录）。不擅自加入英雄互撞、NPC 阻挡、预测或动画。
+- BrawlNPCBlockHelper 按 NPC.ComponentTypes/ComponentValues 配对挂载组件，类型 BrawlUnitComponentType.Block=1，值为 BrawlUnitComponentBlockConfig.Id。拒绝未知/重复类型、不等长数组、缺失配置与非法阻挡尺寸。无配置即无阻挡。
+- BrawlUnitComponentBlock 同时保存 CanBeDestroyed 与配置尺寸。用户明确当前不拆可摧毁组件；该 bool 不影响是否阻挡，本轮未实现伤害/摧毁。NPC 移除组件或销毁后不再阻挡。
+- BrawlUnitMovementHelper 在每个分轴小步同时约束地形和带阻挡组件的 NPC，主角/Bot 共用。Width=0 为圆柱、Length 是直径；Width>0 为轴对齐矩形、Length/Width 为完整 X/Z 尺寸。中心为 Unit.Position.xz+Pivot，尺寸与偏移单位米，不乘 CellSize 或模型缩放；当前 NPC 服务器旋转恒为 identity，不支持旋转盒。出生时拒绝与阻挡 NPC 重叠。
+- 几何/组件回归入口见 Test.md；测试自行构造配置。新会话交接与待办见 `Book/Brawl开发交接.md`（项目根目录）。不擅自加入英雄互撞、预测或动画。
 
-## 本地训练场第一版
+## 雪莉普攻逐步实现（2026-10-14）
+
+- 当前仅支持单轮霰弹发射器：服务器按所选英雄 NormalAttackSkillId 查技能与弹丸配置；雪莉 10101 每轮 5 枚，数量不硬编码。其它发射器枚举预留，未实现则忽略释放。
+- IBrawlSkillEmitter 为独立算法接口，BrawlShotgunEmitter 生成局部初始数据；BrawlSkillCastHelper 负责验证输入与建实体。未来柯尔特需新增发射器及逐发调度，不能复用本轮同步生成来假装实现连发。
+- 当前无 CD、弹药、装填、伤害、命中计数、Lifetime 计时、墙/单位碰撞；已有英雄移动阻挡不变。弹丸在 XZ 直线匀速飞行，中心走完配置射程后移除。
+- BrawlProjectile 是 BrawlProjectileRoomComponent 下的独立 Entity，不放入英雄 UnitComponent，不进入英雄移动/出生快照。房间随 Session 销毁时一起释放。
+- 弹丸与英雄共用 50ms Tick；施法先结算已有 Tick，再根据英雄当前服务器位置生成。出生与后续全量弹丸快照均带 EntryId/RoomId/Tick/Sequence，同 Tick 多次释放按 Sequence 区分，缺席表示删除。
+- 练习赛 UI 显示普攻和禁用的大招按钮；普攻点击发送方向和序号，不发送技能 ID/伤害/弹丸数量。初始方向 +Z，之后取最近非零移动方向；独立瞄准和 Animator 暂不实现。
+- 客户端用无 Collider 的 Sphere 显示，直径 2×Radius；高度取英雄 CollisionHeight/2 仅供显示，不参与平面计算。只插值服务器快照，不自行模拟弹丸；终点快照保留一 Tick，按显示时间线删除。退出清理按钮/采样/模型，旧房间及乱序快照忽略。
+
+## 技能摇杆及面向扩展（2026-10-14）
+
+- 移动、面向、技能施放方向是三个独立量。C2G_BrawlMoveInput 新增 FacingX/Z，BrawlMoveState 新增 MoveX/Z 和 FacingX/Z，入场单位快照也带 FacingX/Z。服务器分别归一化移动/面向，拒绝非法或零面向。默认面向 +Z，停止移动不清空面向，不根据瞄准自动转身。
+- BrawlPracticeMovementViewHelper.SetFacingDirection 是未来技能规则的客户端入口；本轮无人调用，不实现柯尔特转身/锁定/动画/CD。客户端单位视图保存服务器返回的两个方向，暂不旋转模型。
+- BrawlSkillJoystickHelper 是两技能按钮共用的手势输入，BrawlSkillAimHelper 是可测试的纯状态机。BrawlSkillViewHelper 仅建 UI，BrawlSkillInputHelper 单独发送，避免按钮创建与摇杆回调的类级循环依赖。
+- 每个摇杆有独立 pointer 和 EverOutsideDeadZone。按下点作为拖动原点，行程 60、死区 20%，边界算内。未出死区松手按当前移动方向释放；静止回退最近非零移动方向，首次 +Z。出过死区又回到里面松手取消；在外面松手用瞄准方向。准备阶段只在客户端，无蓄力同步。
+- BrawlMovementInputHelper 供移动更新和点按松手共用输入采样，保证点按不取过期网络帧或人物面向。普攻发有效释放包，大招只接手势，暂不发大招包。
+- IBrawlSkillAimPreview.ShowOrUpdate/Hide 预留范围表现；通过 BrawlSkillJoystickHelper.SetPreview 接入。参数含槽位/技能ID/完整配置/世界原点/XZ方向，准备期间原点每帧跟随英雄。回死区、释放、失焦、退出均隐藏。不创建 mesh/范围材质/Animator。
+
+## 弹丸碰撞与阵营（2026-10-14 最新增量）
+
+- 本节取代之前无弹丸碰撞行为。BrawlPracticeUnitComponent.Faction 统一替代 TeamId，玩家 Red=1/Bot Blue=2，NPC 读取 BrawlNPC.Faction；入场快照和弹丸快照同步 Faction。弹丸创建时拷贝所有者阵营，排除 OwnerUnitId。
+- BrawlFaction=NeutralHostile0/Red1/Blue2/NeutralFriendly3，不是 mask；同阵营不敌对，NeutralFriendly 不与任何阵营敌对，其余不同阵营敌对。两个 NeutralHostile 不敌对，第二阵营参数未实现。
+- NPCTypeCombatant=1 才参与敌我目标筛选，Obstacle=2 且有 BrawlUnitComponentBlock 才按墙类处理；CanBeDestroyed 区分两种墙。Gem4/Spawn7 不参与本轮弹丸碰撞。所有 NPC 都保留配置阵营，但阵营不改变对象用途分类。
+- BrawlProjectileBlockMask 和 BrawlProjectileTargetMask 是独立位值枚举，当前7/1用于雪莉。MaxHitCount=0只禁用次数终止，不忽略阻挡；有效命中按每弹丸每单位去重计数。当前不执行任何 HitEvent、伤害公式或生命/目标摧毁，不引入伤害占位流程。
+- BrawlProjectileCollisionHelper 对实际移动路径收集接触并排序：先近后远，同点墙优先。圆目标用半径和，矩形使用精确圆角扩张，尺寸/Pivot来自配置。出生重叠立即检测；英雄/作战NPC相对本Tick前后位置扫掠，避免横穿漏判。水、草、可穿弹障碍不按墙处理；草掩码只预留。
+- 碰撞设置 Finished，并同步接触位置；沿用下一Tick移除和客户端插值删除。Unit/NPC不会随弹丸销毁，原英雄移动阻挡逻辑不变。测试入口见 Test.md。
+
+## 本地训练场展示流程
 
 - `BrawlTrainingHelper` 由英雄详情的训练场按钮触发；当前按用户约定选取关卡 10101，场景从 BrawlLevelConfig.SceneAsset 读取，不调用原 MMO EnterMap，也不进入 Map2。
 - 使用 DefaultPackage 叠加加载场景，兼容 SceneAsset 的相对路径/短名称；当前收集器按文件名寻址。

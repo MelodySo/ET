@@ -13,13 +13,14 @@ namespace ET
 {
     public sealed partial class BrawlNPCConfig : ET.Object
     {
-        public BrawlNPCConfig(int Id, string Name, string Description, string ModelPath, int NPCType, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues, float CollisionLength, float CollisionHeight, float CollisionWidth, float PivotX, float PivotZ) 
+        public BrawlNPCConfig(int Id, string Name, string Description, string ModelPath, int NPCType, int Faction, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues, float CollisionLength, float CollisionHeight, float CollisionWidth, float PivotX, float PivotZ) 
         {
             this.Id = Id;
             this.Name = Name;
             this.Description = Description;
             this.ModelPath = ModelPath;
             this.NPCType = NPCType;
+            this.Faction = Faction;
             this.BaseHp = BaseHp;
             this.HpGrowthPerLevel = HpGrowthPerLevel;
             this.MoveSpeedTier = MoveSpeedTier;
@@ -50,9 +51,13 @@ namespace ET
         /// </summary>
         public readonly string ModelPath;
         /// <summary>
-        /// NPC类型<br/>1 暂定预留<br/>2 <br/>3 <br/>4 <br/>5 <br/>6 <br/>7 
+        /// NPC类型<br/>1 作战单位<br/>2 阻挡物<br/>3 <br/>4 <br/>5 <br/>6 <br/>7 出生点
         /// </summary>
         public readonly int NPCType;
+        /// <summary>
+        /// 阵营<br/>0 中立敌对（和双方都敌对）<br/>1 红方（和蓝方敌对）<br/>2 蓝方（和红方敌对）<br/>3 中立友善（双方都友善）
+        /// </summary>
+        public readonly int Faction;
         /// <summary>
         /// 1 级基础生命值<br/>
         /// </summary>

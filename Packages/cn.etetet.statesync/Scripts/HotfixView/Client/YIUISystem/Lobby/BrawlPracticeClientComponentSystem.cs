@@ -14,12 +14,16 @@ namespace ET.Client
         private static void Update(this BrawlPracticeClientComponent self)
         {
             BrawlPracticeMovementViewHelper.Update(self.Session);
+            BrawlSkillJoystickHelper.Update(self.Session);
+            BrawlProjectileViewHelper.Update(self.Session);
         }
 
         [EntitySystem]
         private static void Destroy(this BrawlPracticeClientComponent self)
         {
             BrawlPracticeMovementViewHelper.Stop(self.Session);
+            BrawlSkillJoystickHelper.CancelAll(self.Session);
+            BrawlProjectileViewHelper.Clear(self.Session);
             self.Session = null;
         }
     }

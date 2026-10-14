@@ -83,11 +83,12 @@ namespace ET.Client
                     return;
                 }
                 session.StatusText.text = practice
-                    ? $"练习赛 · {hero.Name}\nWASD / 左下摇杆移动 · 服务器权威 · 暂无战斗"
+                    ? $"练习赛 · {hero.Name}\n点按普攻随移动方向 · 拖动瞄准 · 拖回取消"
                     : $"训练场 · {hero.Name}\n本地试用 / 暂无移动与战斗";
                 session.LoadingBackground.enabled = false;
                 session.ExitButton.interactable = true;
                 session.Loading = false;
+                if (practice) BrawlSkillViewHelper.Create(session, self.HeroMenuFont, hero, self.Fiber().GetSingleton<BrawlSkillConfigCategory>());
             }
             catch (Exception exception)
             {
@@ -370,6 +371,9 @@ namespace ET.Client
             try
             {
                 if (session.ExitButton != null) session.ExitButton.interactable = false;
+                if (session.NormalAttackButton != null) session.NormalAttackButton.interactable = false;
+                if (session.SuperSkillButton != null) session.SuperSkillButton.interactable = false;
+                BrawlSkillJoystickHelper.CancelAll(session);
                 if (session.StatusText != null) session.StatusText.text = "正在返回大厅……";
                 BrawlPracticeClientComponent movement = session.MovementClient;
                 movement?.Dispose();
@@ -416,6 +420,9 @@ namespace ET.Client
                     // 留给大厅统一销毁，避免同帧再次进入时复用到等待 Destroy 的组件。
                 }
                 if (session.ExitButton != null) session.ExitButton.onClick.RemoveAllListeners();
+                if (session.NormalAttackButton != null) session.NormalAttackButton.onClick.RemoveAllListeners();
+                session.SkillAimPreview = null;
+                BrawlProjectileViewHelper.Clear(session);
                 if (session.Overlay != null) UnityEngine.Object.Destroy(session.Overlay);
                 session.SceneHandle = null;
             }

@@ -16,12 +16,15 @@
 - `Luban/Config/Defines/BrawlMode.xml` 注册玩法表，供双端运行时读取玩法人数、开关和时限；Name、Description 仍仅导出客户端。玩法 102、关卡 10201 的服务器练习赛由 statesync 包实现。
 - `SceneAsset` 分组为 c；`StyleId` 支持 c（仅客户端显示风格）或留空（兼容旧表），其余字段分组留空。编辑器保存保留原有分组，不强行覆盖。关卡表只保存格子索引，不保存 CellSize。
 - `BrawlGlobal.xlsx` 为竖向单例表，A1 为 `##var#column`，每个参数占一行，E 列为值；BrawlGlobal.xml 使用 mode="one" 注册，无 ID。CellSize 为 int，当前约定 1 米，分组留空供双端使用；运行时通过 BrawlGlobalConfigCategory.CellSize 读取。新增参数后使用原 ExcelExporter 导出。
-- 英雄 CollisionRadius / CollisionHeight 为 float，双端共享，单位米；当前约定半径 0.3、完整高度 1.2。练习赛地形移动和出生校验读取半径，高度暂未用于碰撞。NPC 的长宽高及 Pivot 偏移留给后续单位碰撞，现阶段不参与阻挡；详细约定与待办见项目根目录 `Book/Brawl开发交接.md`。
+- 英雄 CollisionRadius / CollisionHeight 为 float，双端共享，单位米；当前约定半径 0.3、完整高度 1.2。练习赛移动和出生校验读取半径，高度暂未用于平面碰撞。NPC Width=0 为圆柱（Length 为直径）；Width>0 为轴对齐矩形（Length/Width 为完整 X/Z 尺寸）；PivotX/Z 为相对 Unit 原点偏移，单位米。statesync 仅对挂阻挡组件的 NPC 消费这些几何数据，不乘格长/模型缩放。
+- BrawlUnitComponentBlock.xml 注册阻挡组件表，Id/CanBeDestroyed 双端共享，Name 仅客户端。NPC.ComponentTypes/ComponentValues 按下标配对，类型 1 为阻挡，值为该表行 ID；墙当前引用 1、木桶引用 2、劫匪为空。用户明确 CanBeDestroyed 保留在阻挡组件，不拆独立可摧毁组件。是否挂载决定是否阻挡，bool 用于后续摧毁玩法。
 - MapGrid、SpawnPoints、NPCIds、NPCPoints 使用英文逗号分隔整数；空单元格表示空数组。当前允许空数组作为未完成草稿，不代表可开局地图。ItemSpawnPoints 已删除。
 - 可摧毁墙通过 NPC 摆放，不再属于地形。地形编号以 BrawlTileType 为准：Ground=0、Wall=1、Grass=2、BulletPassableObstacle=3、Water=4；这是用户调整后的编号，不再沿用历史编号空缺。
 - NPCIds 与 NPCPoints 等长、按下标配对；NPCPoints 是格子索引，每格最多一个 NPC，与 MapGrid 独立。已有地图不自动添加 NPC。
 - BrawlNPC.xml 注册 NPC 源表；模型地址采用不带扩展名的 Prefab 文件名，匹配主包 DefaultPackage 的 BrawlPrefabs 收集规则。
 - 公共格子枚举在 `Scripts/Model/Share/Level/`。每局运行时必须复制配置数组，不能修改共享配置。
+
+- BrawlSkill.xml 注册 BrawlSkill.xlsx 内的 BrawlSkill/BrawlProjectile 两个分页，生成双端配置。技能算法和服务器弹丸放 statesync；不手写生成类。当前仅消费雪莉单轮发射需要的字段，其它行允许保持草稿。导出若出现空 Id 行，先检查表尾纯空格残留，不修改实际技能数值绕过校验。
 
 ## 编辑器
 

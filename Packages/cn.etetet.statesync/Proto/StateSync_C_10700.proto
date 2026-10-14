@@ -47,10 +47,12 @@ message BrawlPracticeUnitInfo
     int64 UnitId = 1;
     int32 Kind = 2;
     int32 ConfigId = 3;
-    int32 TeamId = 4;
+    int32 Faction = 4;
     float X = 5;
     float Y = 6;
     float Z = 7;
+    float FacingX = 8;
+    float FacingZ = 9;
 }
 
 // ResponseType G2C_BrawlPracticeEnter
@@ -93,6 +95,9 @@ message C2G_BrawlMoveInput // ISessionMessage
     int64 Sequence = 2;
     float X = 3;
     float Z = 4;
+    // X/Z 是移动意图；FacingX/Z 是独立的人物面向，不是技能摇杆瞄准方向。
+    float FacingX = 5;
+    float FacingZ = 6;
 }
 
 message BrawlMoveState
@@ -100,6 +105,10 @@ message BrawlMoveState
     int64 UnitId = 1;
     float X = 2;
     float Z = 3;
+    float MoveX = 4;
+    float MoveZ = 5;
+    float FacingX = 6;
+    float FacingZ = 7;
 }
 
 message G2C_BrawlMoveSnapshot // IMessage
@@ -109,4 +118,35 @@ message G2C_BrawlMoveSnapshot // IMessage
     int64 Tick = 3;
     int64 LastInputSequence = 4;
     repeated BrawlMoveState Units = 5;
+}
+
+// 普攻释放意图；X/Z 为本次施放方向，独立于移动/人物面向。准备拖动不发送此消息。
+message C2G_BrawlNormalAttack // ISessionMessage
+{
+    int64 EntryId = 1;
+    int64 Sequence = 2;
+    float X = 3;
+    float Z = 4;
+}
+
+message BrawlProjectileState
+{
+    int64 ProjectileId = 1;
+    int32 ConfigId = 2;
+    int64 OwnerUnitId = 3;
+    float X = 4;
+    float Y = 5;
+    float Z = 6;
+    float Radius = 7;
+    int32 Faction = 8;
+}
+
+// 房间所有在场弹丸的完整快照，缺席表示已移除；Sequence 区分同 Tick 多次释放。
+message G2C_BrawlProjectileSnapshot // IMessage
+{
+    int64 EntryId = 1;
+    int64 RoomId = 2;
+    int64 Sequence = 3;
+    int64 Tick = 4;
+    repeated BrawlProjectileState Projectiles = 5;
 }

@@ -44,10 +44,12 @@ namespace ET.Client
                     if (kind != BrawlPracticeUnitKind.Player || info.ConfigId != heroId)
                         throw new InvalidOperationException("服务器返回的玩家英雄不一致。");
                     foundPlayer = true;
+                    session.FacingDirection = new Vector2(info.FacingX, info.FacingZ);
                 }
                 session.PracticeUnits.Add(new BrawlPracticeUnitView
                 {
-                    UnitId = info.UnitId, ConfigId = info.ConfigId, Kind = kind, TeamId = info.TeamId,
+                    UnitId = info.UnitId, ConfigId = info.ConfigId, Kind = kind, Faction = (BrawlFaction)info.Faction,
+                    FacingDirection = new Vector2(info.FacingX, info.FacingZ),
                     Position = new Vector3(info.X, info.Y, info.Z), ModelPath = address,
                 });
             }

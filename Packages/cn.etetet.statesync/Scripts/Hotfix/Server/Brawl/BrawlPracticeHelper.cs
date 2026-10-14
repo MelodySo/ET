@@ -36,7 +36,8 @@ namespace ET.Server
                 throw new InvalidOperationException("玩家或 Bot 英雄配置不存在。");
             int cellSize = fiber.GetSingleton<BrawlGlobalConfigCategory>().CellSize;
             if (cellSize <= 0) throw new InvalidOperationException("CellSize 必须大于零。");
-            ValidateLevel(level, mode.TeamSize * mode.TeamCount, fiber.GetSingleton<BrawlNPCConfigCategory>());
+            ValidateLevel(level, mode.TeamSize * mode.TeamCount, fiber.GetSingleton<BrawlNPCConfigCategory>(),
+                fiber.GetSingleton<BrawlUnitComponentBlockConfigCategory>());
             ValidateHeroSpawn(level, cellSize, level.SpawnPoints[0], playerHero);
             ValidateHeroSpawn(level, cellSize, level.SpawnPoints[1], botHero);
 
@@ -52,12 +53,21 @@ namespace ET.Server
                 Scene room = EntitySceneFactory.CreateScene(state, IdGenerater.Instance.GenerateId(), SceneType.BrawlPractice, "BrawlPractice");
                 state.Room = room;
                 UnitComponent units = room.AddComponent<UnitComponent>();
-                Unit hero = CreateUnit(units, request.HeroId, BrawlPracticeUnitKind.Player, 1, player.Id,
+                room.AddComponent<BrawlProjectileRoomComponent>();
+                Unit hero = CreateUnit(units, request.HeroId, BrawlPracticeUnitKind.Player, BrawlFaction.Red, player.Id,
                     level.SpawnPoints[0], level.ColumnCount, cellSize);
                 state.MyUnitId = hero.Id;
-                CreateUnit(units, BotHeroId, BrawlPracticeUnitKind.Bot, 2, 0, level.SpawnPoints[1], level.ColumnCount, cellSize);
+                CreateUnit(units, BotHeroId, BrawlPracticeUnitKind.Bot, BrawlFaction.Blue, 0, level.SpawnPoints[1], level.ColumnCount, cellSize);
                 for (int i = 0; i < level.NPCIds.Length; ++i)
-                    CreateUnit(units, level.NPCIds[i], BrawlPracticeUnitKind.NPC, 0, 0, level.NPCPoints[i], level.ColumnCount, cellSize);
+                    CreateUnit(units, level.NPCIds[i], BrawlPracticeUnitKind.NPC, BrawlFaction.NeutralHostile, 0, level.NPCPoints[i], level.ColumnCount, cellSize);
+                // NPC 的尺寸与偏移可能伸入相邻出生格；不能只按格子索引判断重叠。
+                foreach (Entity child in units.Children.Values)
+                {
+                    Unit unit = (Unit)child;
+                    BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
+                    if (move != null && !BrawlUnitMovementHelper.CanOccupy(units, unit.Id, unit.Position.xz, move.Radius))
+                        throw new InvalidOperationException($"英雄 {unit.ConfigId} 的出生位置与阻挡 NPC 重叠。");
+                }
                 FillSnapshot(state, response);
                 Log.Info($"Brawl practice created: room={room.Id} player={player.Id} level={level.Id} hero={request.HeroId} bot={BotHeroId} units={response.Units.Count}");
             }
@@ -85,7 +95,8 @@ namespace ET.Server
                 throw new InvalidOperationException($"出生格 {point} 容纳不下英雄 {hero.Id}，碰撞半径为 {hero.CollisionRadius} 米。");
         }
 
-        private static void ValidateLevel(BrawlLevelConfig level, int playerCount, BrawlNPCConfigCategory npcs)
+        private static void ValidateLevel(BrawlLevelConfig level, int playerCount, BrawlNPCConfigCategory npcs,
+            BrawlUnitComponentBlockConfigCategory blocks)
         {
             if (level.RowCount < 1 || level.RowCount > 100 || level.ColumnCount < 1 || level.ColumnCount > 100 ||
                 level.MapGrid == null || level.MapGrid.Length != level.RowCount * level.ColumnCount ||
@@ -96,7 +107,14 @@ namespace ET.Server
             foreach (int point in level.SpawnPoints) ValidatePoint(level, occupied, point);
             for (int i = 0; i < level.NPCIds.Length; ++i)
             {
-                if (npcs.GetOrDefault(level.NPCIds[i]) == null) throw new InvalidOperationException($"NPC 配置不存在：{level.NPCIds[i]}");
+                BrawlNPCConfig npc = npcs.GetOrDefault(level.NPCIds[i]);
+                if (npc == null) throw new InvalidOperationException($"NPC 配置不存在：{level.NPCIds[i]}");
+                if (!BrawlFactionHelper.IsValid(npc.Faction)) throw new InvalidOperationException($"NPC {npc.Id} 的 Faction 非法。");
+                if (npc.NPCType == (int)BrawlNPCType.Combatant &&
+                    (!math.isfinite(npc.CollisionLength) || npc.CollisionLength <= 0 || !math.isfinite(npc.CollisionWidth) ||
+                     npc.CollisionWidth < 0 || !math.isfinite(npc.PivotX) || !math.isfinite(npc.PivotZ)))
+                    throw new InvalidOperationException($"NPC {npc.Id} 的作战碰撞尺寸非法。");
+                BrawlNPCBlockHelper.Validate(npc, blocks);
                 ValidatePoint(level, occupied, level.NPCPoints[i]);
             }
         }
@@ -109,7 +127,7 @@ namespace ET.Server
                 throw new InvalidOperationException($"出生格必须在平地或草丛：{point}");
         }
 
-        private static Unit CreateUnit(UnitComponent units, int configId, BrawlPracticeUnitKind kind, int teamId,
+        private static Unit CreateUnit(UnitComponent units, int configId, BrawlPracticeUnitKind kind, BrawlFaction faction,
             long playerId, int point, int columns, int cellSize)
         {
             // ConfigId 在本模式中指向 BrawlHero/BrawlNPC，不调用原 MMO 的 Unit.Config()。
@@ -119,7 +137,8 @@ namespace ET.Server
             unit.Rotation = quaternion.identity;
             BrawlPracticeUnitComponent data = unit.AddComponent<BrawlPracticeUnitComponent>();
             data.Kind = kind;
-            data.TeamId = teamId;
+            data.Faction = faction;
+            data.PreviousPosition = unit.Position.xz;
             data.OwnerPlayerId = playerId;
             if (kind != BrawlPracticeUnitKind.NPC)
             {
@@ -128,6 +147,17 @@ namespace ET.Server
                 BrawlMoveComponent move = unit.AddComponent<BrawlMoveComponent>();
                 move.Speed = hero.MoveSpeedTier;
                 move.Radius = hero.CollisionRadius;
+                data.CollisionLength = hero.CollisionRadius * 2;
+            }
+            else
+            {
+                BrawlNPCConfig npc = units.Fiber().GetSingleton<BrawlNPCConfigCategory>().Get(configId);
+                data.Faction = (BrawlFaction)npc.Faction;
+                data.NPCType = (BrawlNPCType)npc.NPCType;
+                data.CollisionLength = npc.CollisionLength;
+                data.CollisionWidth = npc.CollisionWidth;
+                data.CollisionPivot = new float2(npc.PivotX, npc.PivotZ);
+                BrawlNPCBlockHelper.Attach(unit, npc, units.Fiber().GetSingleton<BrawlUnitComponentBlockConfigCategory>());
             }
             return unit;
         }
@@ -147,10 +177,13 @@ namespace ET.Server
                 info.UnitId = unit.Id;
                 info.ConfigId = unit.ConfigId;
                 info.Kind = (int)data.Kind;
-                info.TeamId = data.TeamId;
+                info.Faction = (int)data.Faction;
                 info.X = unit.Position.x;
                 info.Y = unit.Position.y;
                 info.Z = unit.Position.z;
+                BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
+                info.FacingX = move == null ? 0 : move.FacingDirection.x;
+                info.FacingZ = move == null ? 1 : move.FacingDirection.y;
                 response.Units.Add(info);
             }
         }

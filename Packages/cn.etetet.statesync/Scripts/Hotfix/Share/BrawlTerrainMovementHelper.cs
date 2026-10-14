@@ -42,7 +42,7 @@ namespace ET
             return position;
         }
 
-        private static float MoveAxis(BrawlLevelConfig level, float cellSize, float2 position, float delta, float radius, bool xAxis)
+        public static float MoveAxis(BrawlLevelConfig level, float cellSize, float2 position, float delta, float radius, bool xAxis)
         {
             float current = xAxis ? position.x : position.y;
             if (delta == 0) return current;

@@ -22,6 +22,10 @@ namespace ET.Server
             if (state == null || state.EntryId != message.EntryId || message.Sequence <= state.LastInputSequence) return;
             float2 direction = new float2(message.X, message.Z);
             if (!math.all(math.isfinite(direction)) || math.any(math.abs(direction) > 1)) return;
+            float2 facing = new float2(message.FacingX, message.FacingZ);
+            if (!math.all(math.isfinite(facing)) || math.any(math.abs(facing) > 1)) return;
+            facing = math.normalizesafe(facing);
+            if (math.lengthsq(facing) == 0) return;
             long now = state.GetSingleton<TimeInfo>().ClientNow();
             if (now - state.InputWindowTime >= BrawlMovementSettings.TickMilliseconds)
             {
@@ -36,6 +40,7 @@ namespace ET.Server
             BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
             // 输入只表达方向和停止；死区由客户端处理，服务端统一按全速意图移动。
             move.DesiredDirection = math.normalizesafe(direction);
+            move.FacingDirection = facing;
             state.LastInputTime = now;
             state.LastInputSequence = message.Sequence;
         }
@@ -59,17 +64,19 @@ namespace ET.Server
                 foreach (Entity child in units.Children.Values)
                 {
                     Unit unit = (Unit)child;
-                    // NPC 本轮没有移动组件，完全不参与移动和阻挡查询。
+                    unit.GetComponent<BrawlPracticeUnitComponent>().PreviousPosition = unit.Position.xz;
+                    // NPC 本轮没有移动组件，但挂载阻挡组件的 NPC 参与英雄移动限位。
                     BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
                     if (move == null) continue;
                     if (unit.Id == state.MyUnitId && now - state.LastInputTime > BrawlMovementSettings.InputTimeoutMilliseconds)
                         move.DesiredDirection = default;
                     float2 previous = unit.Position.xz;
-                    float2 next = BrawlTerrainMovementHelper.Move(level, state.CellSize, previous,
+                    float2 next = BrawlUnitMovementHelper.Move(units, level, state.CellSize, unit.Id, previous,
                         move.DesiredDirection * move.Speed * BrawlMovementSettings.TickSeconds, move.Radius);
                     move.Velocity = (next - previous) / BrawlMovementSettings.TickSeconds;
                     if (math.any(next != previous)) unit.Position = new float3(next.x, unit.Position.y, next.y);
                 }
+                BrawlProjectileHelper.Tick(state);
             }
             using G2C_BrawlMoveSnapshot snapshot = G2C_BrawlMoveSnapshot.Create();
             snapshot.EntryId = state.EntryId;
@@ -79,11 +86,16 @@ namespace ET.Server
             foreach (Entity child in units.Children.Values)
             {
                 Unit unit = (Unit)child;
-                if (unit.GetComponent<BrawlMoveComponent>() == null) continue;
+                BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();
+                if (move == null) continue;
                 BrawlMoveState info = BrawlMoveState.Create();
                 info.UnitId = unit.Id;
                 info.X = unit.Position.x;
                 info.Z = unit.Position.z;
+                info.MoveX = move.DesiredDirection.x;
+                info.MoveZ = move.DesiredDirection.y;
+                info.FacingX = move.FacingDirection.x;
+                info.FacingZ = move.FacingDirection.y;
                 snapshot.Units.Add(info);
             }
             // 练习房间当前只有本连接一名真实玩家；以后多人房间改为广播给成员。

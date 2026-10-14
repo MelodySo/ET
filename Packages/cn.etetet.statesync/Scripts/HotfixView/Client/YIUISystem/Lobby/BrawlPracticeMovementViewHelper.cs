@@ -15,14 +15,8 @@ namespace ET.Client
             if (session.JoystickBase != null) session.JoystickBase.gameObject.SetActive(!session.Loading);
             if (!session.Loading)
             {
-                Vector2 direction = Vector2.zero;
-                if (Application.isFocused)
-                {
-                    direction.x = (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0);
-                    direction.y = (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0);
-                    direction = direction.sqrMagnitude > 0 ? Vector2.ClampMagnitude(direction, 1) : session.JoystickDirection;
-                }
-                else BrawlJoystickHelper.Reset(session);
+                if (!Application.isFocused) BrawlJoystickHelper.Reset(session);
+                Vector2 direction = BrawlMovementInputHelper.Read(session);
                 bool startedOrStopped = (direction.sqrMagnitude > 0) != (session.LastSentDirection.sqrMagnitude > 0);
                 if (now >= session.NextInputTime || startedOrStopped) SendInput(session, direction, now);
             }
@@ -62,6 +56,8 @@ namespace ET.Client
                     if (view.UnitId != info.UnitId) continue;
                     if (first) view.Samples.Add(new BrawlPositionSample { Tick = message.Tick - BrawlMovementSettings.InterpolationDelayTicks, Position = view.Position });
                     view.Position = new Vector3(info.X, view.Position.y, info.Z);
+                    view.MoveDirection = new Vector2(info.MoveX, info.MoveZ);
+                    view.FacingDirection = new Vector2(info.FacingX, info.FacingZ);
                     view.Samples.Add(new BrawlPositionSample { Tick = message.Tick, Position = view.Position });
                     if (view.Samples.Count > BrawlMovementSettings.MaxSnapshotHistory) view.Samples.RemoveAt(0);
                     break;
@@ -79,6 +75,8 @@ namespace ET.Client
             message.Sequence = ++session.InputSequence;
             message.X = direction.x;
             message.Z = direction.y;
+            message.FacingX = session.FacingDirection.x;
+            message.FacingZ = session.FacingDirection.y;
             sender.Send(message);
             session.LastSentDirection = direction;
         }
@@ -88,6 +86,16 @@ namespace ET.Client
             BrawlJoystickHelper.Reset(session);
             try { SendInput(session, Vector2.zero, Time.unscaledTime); }
             catch (Exception exception) { Log.Warning($"Brawl stop input failed: {exception.Message}"); }
+        }
+
+        /// <summary>未来技能控制人物面向的入口；技能摇杆准备过程不调用。暂不操作模型/Animator。</summary>
+        public static void SetFacingDirection(BrawlTrainingSession session, Vector2 facing)
+        {
+            if (float.IsNaN(facing.x) || float.IsInfinity(facing.x) || float.IsNaN(facing.y) || float.IsInfinity(facing.y) ||
+                facing.sqrMagnitude <= 0) return;
+            session.FacingDirection = facing.normalized;
+            if (!session.Loading && !session.Closing && !session.CancelRequested)
+                SendInput(session, BrawlMovementInputHelper.Read(session), Time.unscaledTime);
         }
     }
 }

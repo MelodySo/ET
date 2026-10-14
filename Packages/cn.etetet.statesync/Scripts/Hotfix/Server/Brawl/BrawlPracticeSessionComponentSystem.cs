@@ -12,6 +12,7 @@ namespace ET.Server
             self.Tick = 0;
             self.LastInputTime = 0;
             self.LastInputSequence = 0;
+            self.LastAttackSequence = 0;
             self.InputWindowTime = 0;
             self.InputWindowCount = 0;
             self.InputRateWindowTime = 0;

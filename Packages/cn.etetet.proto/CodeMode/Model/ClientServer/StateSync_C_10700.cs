@@ -137,13 +137,17 @@ namespace ET
         [MemoryPackOrder(2)]
         public int ConfigId { get; set; }
         [MemoryPackOrder(3)]
-        public int TeamId { get; set; }
+        public int Faction { get; set; }
         [MemoryPackOrder(4)]
         public float X { get; set; }
         [MemoryPackOrder(5)]
         public float Y { get; set; }
         [MemoryPackOrder(6)]
         public float Z { get; set; }
+        [MemoryPackOrder(7)]
+        public float FacingX { get; set; }
+        [MemoryPackOrder(8)]
+        public float FacingZ { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -262,6 +266,13 @@ namespace ET
         public float X { get; set; }
         [MemoryPackOrder(3)]
         public float Z { get; set; }
+        /// <summary>
+        /// X/Z 是移动意图；FacingX/Z 是独立的人物面向，不是技能摇杆瞄准方向。
+        /// </summary>
+        [MemoryPackOrder(4)]
+        public float FacingX { get; set; }
+        [MemoryPackOrder(5)]
+        public float FacingZ { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -283,6 +294,14 @@ namespace ET
         public float X { get; set; }
         [MemoryPackOrder(2)]
         public float Z { get; set; }
+        [MemoryPackOrder(3)]
+        public float MoveX { get; set; }
+        [MemoryPackOrder(4)]
+        public float MoveZ { get; set; }
+        [MemoryPackOrder(5)]
+        public float FacingX { get; set; }
+        [MemoryPackOrder(6)]
+        public float FacingZ { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -315,6 +334,88 @@ namespace ET
         }
     }
 
+    // 普攻释放意图；X/Z 为本次施放方向，独立于移动/人物面向。准备拖动不发送此消息。
+    [MemoryPackable]
+    [Message(Opcode.C2G_BrawlNormalAttack)]
+    public partial class C2G_BrawlNormalAttack : MessageObject, ISessionMessage
+    {
+        public static C2G_BrawlNormalAttack Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<C2G_BrawlNormalAttack>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long EntryId { get; set; }
+        [MemoryPackOrder(1)]
+        public long Sequence { get; set; }
+        [MemoryPackOrder(2)]
+        public float X { get; set; }
+        [MemoryPackOrder(3)]
+        public float Z { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.BrawlProjectileState)]
+    public partial class BrawlProjectileState : MessageObject
+    {
+        public static BrawlProjectileState Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlProjectileState>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long ProjectileId { get; set; }
+        [MemoryPackOrder(1)]
+        public int ConfigId { get; set; }
+        [MemoryPackOrder(2)]
+        public long OwnerUnitId { get; set; }
+        [MemoryPackOrder(3)]
+        public float X { get; set; }
+        [MemoryPackOrder(4)]
+        public float Y { get; set; }
+        [MemoryPackOrder(5)]
+        public float Z { get; set; }
+        [MemoryPackOrder(6)]
+        public float Radius { get; set; }
+        [MemoryPackOrder(7)]
+        public int Faction { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    // 房间所有在场弹丸的完整快照，缺席表示已移除；Sequence 区分同 Tick 多次释放。
+    [MemoryPackable]
+    [Message(Opcode.G2C_BrawlProjectileSnapshot)]
+    public partial class G2C_BrawlProjectileSnapshot : MessageObject, IMessage
+    {
+        public static G2C_BrawlProjectileSnapshot Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2C_BrawlProjectileSnapshot>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long EntryId { get; set; }
+        [MemoryPackOrder(1)]
+        public long RoomId { get; set; }
+        [MemoryPackOrder(2)]
+        public long Sequence { get; set; }
+        [MemoryPackOrder(3)]
+        public long Tick { get; set; }
+        [MemoryPackOrder(4)]
+        public List<BrawlProjectileState> Projectiles { get; set; } = new();
+
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
     public static partial class Opcode
     {
         public const ushort RouterSync = 10701;
@@ -331,5 +432,8 @@ namespace ET
         public const ushort C2G_BrawlMoveInput = 10712;
         public const ushort BrawlMoveState = 10713;
         public const ushort G2C_BrawlMoveSnapshot = 10714;
+        public const ushort C2G_BrawlNormalAttack = 10715;
+        public const ushort BrawlProjectileState = 10716;
+        public const ushort G2C_BrawlProjectileSnapshot = 10717;
     }
 }

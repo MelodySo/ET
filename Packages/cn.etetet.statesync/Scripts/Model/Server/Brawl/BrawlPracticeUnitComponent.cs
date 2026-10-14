@@ -4,7 +4,12 @@ namespace ET.Server
     public sealed class BrawlPracticeUnitComponent : Entity, IAwake
     {
         public BrawlPracticeUnitKind Kind;
-        public int TeamId;
+        public BrawlFaction Faction;
+        public BrawlNPCType NPCType;
+        public float CollisionLength;
+        public float CollisionWidth;
+        public Unity.Mathematics.float2 CollisionPivot;
+        public Unity.Mathematics.float2 PreviousPosition;
         public long OwnerPlayerId;
     }
 }

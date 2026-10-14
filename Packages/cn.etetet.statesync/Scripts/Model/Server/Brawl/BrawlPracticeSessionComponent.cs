@@ -15,6 +15,7 @@ namespace ET.Server
         public long Tick;
         public long LastInputTime;
         public long LastInputSequence;
+        public long LastAttackSequence;
         public long InputWindowTime;
         public int InputWindowCount;
         public long InputRateWindowTime;

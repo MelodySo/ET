@@ -10,8 +10,10 @@ namespace ET.Client
         public long UnitId;
         public int ConfigId;
         public BrawlPracticeUnitKind Kind;
-        public int TeamId;
+        public BrawlFaction Faction;
         public Vector3 Position;
+        public Vector2 MoveDirection;
+        public Vector2 FacingDirection;
         public string ModelPath;
         public GameObject Model;
         public readonly List<BrawlPositionSample> Samples = new();

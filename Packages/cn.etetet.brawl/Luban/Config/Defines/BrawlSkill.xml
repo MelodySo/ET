@@ -1,0 +1,8 @@
+<module name="ET">
+  <table name="BrawlSkillConfigCategory" value="BrawlSkillConfig" index="Id" mode="map"
+         input="BrawlSkill@Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlSkill.xlsx"
+         readSchemaFromFile="true" comment="荒野对战技能" />
+  <table name="BrawlProjectileConfigCategory" value="BrawlProjectileConfig" index="Id" mode="map"
+         input="BrawlProjectile@Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlSkill.xlsx"
+         readSchemaFromFile="true" comment="荒野对战弹丸" />
+</module>

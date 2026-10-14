@@ -24,6 +24,17 @@ namespace ET.Client
         public EntityRef<ClientSenderComponent> PracticeSender;
         public EntityRef<BrawlPracticeClientComponent> MovementClient;
         public long InputSequence;
+        public long AttackSequence;
+        public long LastProjectileSnapshotSequence;
+        public Vector2 LastMoveDirection = Vector2.up;
+        public Vector2 FacingDirection = Vector2.up;
+        public BrawlSkillJoystick NormalAttackJoystick;
+        public BrawlSkillJoystick SuperSkillJoystick;
+        public IBrawlSkillAimPreview SkillAimPreview;
+        public readonly Dictionary<long, BrawlProjectileView> Projectiles = new();
+        public readonly List<long> RemovedProjectiles = new();
+        public Button NormalAttackButton;
+        public Button SuperSkillButton;
         public long LastAcknowledgedInput;
         public long LastServerTick;
         public double RenderTick;
