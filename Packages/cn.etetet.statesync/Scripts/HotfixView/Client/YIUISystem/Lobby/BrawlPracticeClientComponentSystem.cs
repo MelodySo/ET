@@ -26,6 +26,7 @@ namespace ET.Client
             BrawlPracticeMovementViewHelper.Stop(self.Session);
             BrawlSkillJoystickHelper.CancelAll(self.Session);
             BrawlProjectileViewHelper.Clear(self.Session);
+            BrawlAIPlayVerification.Abort(self.Session);
             self.Session = null;
         }
     }

@@ -74,6 +74,7 @@ namespace ET.Server
                     if (move == null) continue;
                     PropertyComponent properties = unit.GetComponent<PropertyComponent>();
                     move.Speed = properties.GetFloat(PropertyId.MoveSpeed);
+                    BrawlAIHelper.Tick(unit, state.LevelId, state.CellSize, state.MyUnitId, state.Tick * BrawlMovementSettings.TickMilliseconds);
                     bool controlled = BrawlUnitLifeHelper.CannotAct(unit);
                     if (unit.Id == state.MyUnitId && now - state.LastInputTime > BrawlMovementSettings.InputTimeoutMilliseconds)
                         move.DesiredDirection = default;

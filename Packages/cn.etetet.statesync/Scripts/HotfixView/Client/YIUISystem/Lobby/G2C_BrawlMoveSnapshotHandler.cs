@@ -7,7 +7,13 @@ namespace ET.Client
         {
             // 进入前或退出后收到的快照合法地没有接收者。
             BrawlPracticeClientComponent client = scene.GetComponent<BrawlPracticeClientComponent>();
-            if (client != null) BrawlPracticeMovementViewHelper.Receive(client.Session, message);
+            if (client != null)
+            {
+                BrawlTrainingSession session = client.Session;
+                long previousTick = session.LastServerTick;
+                BrawlPracticeMovementViewHelper.Receive(session, message);
+                if (session.LastServerTick > previousTick) BrawlAIPlayVerification.Notify(session);
+            }
             await ETTask.CompletedTask;
         }
     }

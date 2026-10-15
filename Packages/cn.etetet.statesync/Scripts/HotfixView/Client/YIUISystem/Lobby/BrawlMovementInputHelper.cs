@@ -6,6 +6,7 @@ namespace ET.Client
     {
         public static Vector2 Read(BrawlTrainingSession session)
         {
+            if (session.AIProbe != null) return session.AIProbe.Direction;
             if (!Application.isFocused) return Vector2.zero;
             Vector2 keyboard = new(
                 (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0),

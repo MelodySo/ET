@@ -19,6 +19,7 @@ namespace ET.Client
         public EntityRef<BrawlCameraComponent> CameraController;
         public GameObject NPCRoot;
         public int CellSize;
+        public BrawlAIPlayProbe AIProbe; // Optional, explicitly started verification only.
         public bool IsPractice;
         public long PracticeEntryId;
         public long PracticeRoomId;

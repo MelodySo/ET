@@ -246,7 +246,14 @@ namespace ET
 
         private void OnExportButtonClicked()
         {
-            Client.ExportScriptableObjectEditor.ExportScriptableObject();
+            if (this.TreeView?.GetCurrentScriptableObject() is IBTAssetExporter exporter)
+            {
+                exporter.ExportBehaviorTree();
+            }
+            else
+            {
+                Client.ExportScriptableObjectEditor.ExportScriptableObject();
+            }
             this.ShowText("Export Finish!");
         }
 

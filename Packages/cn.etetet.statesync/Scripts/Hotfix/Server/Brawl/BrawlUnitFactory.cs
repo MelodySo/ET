@@ -79,6 +79,8 @@ namespace ET.Server
             }
             unit.AddComponent<StateComponent>();
             BrawlUnitLifeHelper.OnSpawn(unit, now);
+            if (kind == BrawlPracticeUnitKind.Bot && configId == units.Fiber().GetSingleton<BrawlAIConfigCategory>().HeroId)
+                unit.AddComponent<BrawlAIComponent>();
             units.Scene().GetComponent<BrawlLifecycleRoomComponent>().RosterDirty = true;
             return unit;
         }
