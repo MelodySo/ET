@@ -5,6 +5,7 @@ namespace ET.Server
     public sealed class BrawlSkillCastComponent : Entity, IAwake
     {
         public BrawlProjectileLaunch[] Launches;
+        public BrawlCollisionRuleConfig[] Rules;
         public int NextIndex;
         public long StartedAt;
         public long NextNormalCastAt;

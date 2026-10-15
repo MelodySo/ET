@@ -15,6 +15,8 @@ namespace ET.Client
         public GameObject RuntimeRoot;
         public GameObject TerrainRoot;
         public GameObject Hero;
+        public Camera BattleCamera;
+        public EntityRef<BrawlCameraComponent> CameraController;
         public GameObject NPCRoot;
         public int CellSize;
         public bool IsPractice;
@@ -26,6 +28,16 @@ namespace ET.Client
         public long InputSequence;
         public long AttackSequence;
         public long LastProjectileSnapshotSequence;
+        public long LastProjectileEventId;
+        public IBrawlProjectilePresentation ProjectilePresentation;
+        public GameObject ProjectileTemplateRoot;
+        public readonly Dictionary<string, GameObject> ProjectileTemplates = new();
+        public readonly Dictionary<int, BrawlProjectileConfig> ProjectileVisualConfigs = new();
+        public readonly List<BrawlProjectileEffectView> ProjectileEffects = new();
+        public readonly List<BrawlProjectileNotice> PendingProjectileEvents = new();
+        public readonly HashSet<int> ClearedGrass = new();
+        public readonly Dictionary<int, long> PendingClearedGrass = new();
+        public readonly List<int> AppliedClearedGrass = new();
         public Vector2 LastMoveDirection = Vector2.up;
         public Vector2 FacingDirection = Vector2.up;
         public BrawlSkillJoystick NormalAttackJoystick;

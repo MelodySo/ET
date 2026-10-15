@@ -34,17 +34,17 @@ namespace ET.Client
                         string address = BrawlTrainingHelper.TerrainAddress(style, level.MapGrid[i]);
                         if (string.IsNullOrWhiteSpace(address)) continue;
                         Transform tile = session.TerrainRoot.transform.Find($"Tile_{i}_{address}");
-                        if (tile == null || tile.localPosition != BrawlTrainingHelper.CellPosition(i, level.ColumnCount, session.CellSize)) throw new Exception("Terrain position mismatch");
+                        if (tile == null || tile.localPosition != BrawlTrainingHelper.CellPosition(i, level, session.CellSize)) throw new Exception("Terrain position mismatch");
                     }
                     if (session.RuntimeRoot.transform.childCount != 5) throw new Exception("Unexpected runtime objects");
-                    if (session.Hero == null || session.Hero.transform.localPosition != BrawlTrainingHelper.CellPosition(level.SpawnPoints[0], level.ColumnCount, session.CellSize))
+                    if (session.Hero == null || session.Hero.transform.localPosition != BrawlTrainingHelper.CellPosition(level.SpawnPoints[0], level, session.CellSize))
                         throw new Exception("Hero spawn mismatch");
                     int npcCount = level.NPCIds?.Length ?? 0;
                     if (session.NPCRoot == null || session.NPCRoot.transform.childCount != npcCount) throw new Exception("NPC count mismatch");
                     for (int i = 0; i < npcCount; ++i)
                     {
                         Transform npc = session.NPCRoot.transform.Find($"NPC_{i}_{level.NPCIds[i]}");
-                        if (npc == null || npc.localPosition != BrawlTrainingHelper.CellPosition(level.NPCPoints[i], level.ColumnCount, session.CellSize))
+                        if (npc == null || npc.localPosition != BrawlTrainingHelper.CellPosition(level.NPCPoints[i], level, session.CellSize))
                             throw new Exception("NPC position mismatch");
                     }
                     if (!session.ExitButton.interactable || session.LobbyGroup.interactable) throw new Exception("Training UI state mismatch");

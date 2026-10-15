@@ -1,5 +1,11 @@
 # cn.etetet.statesync
 
+## 关卡中心原点（2026-10-15）
+
+- 所有 Brawl 关卡世界原点为几何中心，格中心 X/Z = (column/row - (ColumnCount/RowCount - 1)/2) * CellSize。网格索引保持左下角起算，不修改 Excel。
+- 统一转换在 BrawlTerrainMovementHelper.GridOffset/CellPosition；地形显示、本地训练人物、服务端出生/复活点、NPC、地图移动碰撞及弹丸地形碰撞均已适配。坐标协议不变，双端需同时更新并重新进入关卡。
+- 编辑器尺寸调整仍保留左下角数据，并非中心锚定扩图；手工场景物体不自动平移。本节覆盖历史左下角世界原点描述。
+
 ## 概述
 
 状态同步包，包含 `ET.Model`、`ET.Hotfix` 对应的 DotNet 工程以及状态同步相关脚本、协议和资源。
@@ -136,3 +142,23 @@
 - 登录仍使用原有按钮，首次合法登录自动注册；账号规则和错误提示由 login 包提供。
 - LoginPanelComponent.LoginInProgress 防止重复点击；失败显示提示且允许重试，不触发 LoginFinish。
 - 不修改 YIUIGen 生成代码，业务界面逻辑修改 YIUISystem / YIUIComponent。
+
+## 统一碰撞规则与通知（2026-10-15最新）
+
+- 以Book/Brawl开发交接.md“统一碰撞规则、弹丸结束通知”为准，覆盖历史两套Mask和NPC阻挡组件规则。
+- 单位BrawlPracticeUnitComponent携带UnitLayerMask/BlocksMovement，NPC读取表、英雄初始化Hero|Battle。死亡立即不阻挡。BrawlNPCBlockHelper不再挂组件1，只支持复活点组件2；旧类型代码暂保留未使用。
+- 弹丸从CollisionRuleGroupId解析规则快照；标签全部满足、排除任一拒绝、阵营关系独立匹配，同组匹配结果取或且一次命中只执行一次事件组。普攻组1、大招组2来自表而非代码固定判断。
+- 地形墙/草使用同一规则；房间ClearedGrass记录草清除，不改共享配置。地图、编辑器、出生点唯一来源均不改。
+- BrawlProjectileNotice/BrawlProjectileEvent通知Impact和End，End细分Blocked/HitLimit/Range/Lifetime；每次接触一次Impact、每弹丸一次End。协议新增Events和完整ClearedGrass集合。客户端复制值数据、按EventId去重并等RenderTick回调IBrawlProjectilePresentation；本轮无特效实现，草模型也暂不隐藏。
+- 源表配置与协议已正式导出；编译0错误、14个原有HybridCLR警告，Unity错误日志为空。测试仅编译未运行。
+
+## 弹丸客户端表现（2026-10-15）
+
+- BrawlProjectileVisualHelper加载ModelPath/ImpactEffectPath/ExpireEffectPath，BrawlProjectilePresentation为无状态适配器，调用显式传入BrawlTrainingSession。会话保存模板/配置/粒子实例，退出时清理。
+- Impact逐接触播放；只有Range/Lifetime播放Expire，Blocked/HitLimit不播放。飞行位置/方向来自服务器；不使用客户端物理处理命中。
+- 特效预制体不附带自主移动/定时销毁演示脚本；一次性特效要求ParticleSystem，以全部活动粒子结束回收。草模型和发射/人物动画仍未实现。
+
+## 通用Brawl相机
+
+- BrawlCameraComponent是Scene组件，持有Camera/Target与配置参数，System在LateUpdate按固定透视规则跟随目标。BrawlTrainingHelper公共入口创建并绑定，Roster变更后跟随新主角，退出释放。未来玩法复用该组件，不按模式ID分支。
+- 参数来自客户端BrawlGlobal五个Camera字段；BrawlCameraInputHelper把移动/技能拖动方向转换到相机水平朝向。输入只旋转至XZ，不参与服务器相机计算。

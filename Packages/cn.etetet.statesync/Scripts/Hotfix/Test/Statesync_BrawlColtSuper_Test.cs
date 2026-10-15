@@ -11,11 +11,13 @@ namespace ET.Test
         {
             await ETTask.CompletedTask;
             Fiber fiber = context.Fiber;
+            BrawlCollisionRuleConfigCategory oldRules = fiber.GetSingleton<BrawlCollisionRuleConfigCategory>();
             BrawlProjectileConfigCategory old = fiber.GetSingleton<BrawlProjectileConfigCategory>();
-            BrawlProjectileConfig config = new(40102, 0.06f, 7, 5, 1, 0, 10, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f);
+            BrawlProjectileConfig config = new(40102, 0.06f, 0, 0, 10, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f, 2);
             BrawlSkillConfig skill = new(40102, 40102, 12, 2, 1, 0, 0.08333f, 1, 0, 1, 1, 1, 12, 1, 0, 0, 0);
             try
             {
+                fiber.AddSingleton(BrawlCollisionTestHelper.Category());
                 fiber.AddSingleton(new BrawlProjectileConfigCategory(new Dictionary<int, BrawlProjectileConfig> { [40102] = config }));
                 using Scene scene = EntitySceneFactory.CreateScene(fiber.Root, IdGenerater.Instance.GenerateId(), SceneType.BrawlPractice, "ColtSuperTest");
                 UnitComponent units = scene.AddComponent<UnitComponent>();
@@ -59,7 +61,7 @@ namespace ET.Test
                     if (index == 1) second = shot;
                     float x = index % 2 == 0 ? 3.56f : 4.44f;
                     if (!Near(shot.Position.x, x) || shot.Position.y != 4 || shot.RemainingDistance != 12 || shot.EffectValue != 320 ||
-                        shot.SuperChargeOnHit != 0.1f || shot.TargetMask != (BrawlProjectileTargetMask)5)
+                        shot.SuperChargeOnHit != 0.1f || shot.Rules.Length != 4)
                         return Fail(101207, "Super launch conditions do not match configured revolver geometry and projectile.");
                     ++index;
                 }
@@ -68,20 +70,19 @@ namespace ET.Test
                 BrawlPracticeUnitComponent wallData = wall.AddComponent<BrawlPracticeUnitComponent>();
                 wallData.Kind = BrawlPracticeUnitKind.NPC; wallData.NPCType = BrawlNPCType.Obstacle; wallData.Faction = BrawlFaction.NeutralHostile;
                 BrawlNPCBlockHelper.Attach(wall,
-                    new BrawlNPCConfig(101, 2, 0, 1, 0, 0, new[] { 1 }, new[] { 1 }, 1, 1, 1, 0, 0, 0.2f, 0),
-                    new BrawlUnitComponentBlockConfigCategory(new Dictionary<int, BrawlUnitComponentBlockConfig> { [1] = new(1, true) }));
+                    new BrawlNPCConfig(101, 2, 0, 1, 0, 0, Array.Empty<int>(), Array.Empty<int>(), 1, 1, 1, 0, 0, 0.2f, 0, 40, true));
                 wall.AddComponent<StateComponent>(); wall.AddComponent<BrawlSpawnComponent>(); wall.AddComponent<BrawlDeathComponent>();
                 wall.AddComponent<PropertyComponent, Dictionary<PropertyId, double>>(new() { [PropertyId.Health] = 1 });
                 BrawlProjectileCollisionHelper.Advance(first, units, level, 1, 0.3f);
-                if (!first.Finished || !wall.GetComponent<StateComponent>().Has(StateId.Dead) || !Near(properties.GetDouble(PropertyId.SuperAmmo), 0.5))
-                    return Fail(101208, "Super pellet must destroy wall, stop, and recharge from actual damage.");
+                if (first.Finished || !wall.GetComponent<StateComponent>().Has(StateId.Dead) || !Near(properties.GetDouble(PropertyId.SuperAmmo), 0.5))
+                    return Fail(101208, "Super pellet must destroy wall, penetrate, and recharge from actual damage.");
                 BrawlProjectileCollisionHelper.Advance(second, units, level, 1, 0.3f);
                 if (second.Finished || second.Position.y <= 6) return Fail(101209, "Later pellet remained blocked by dead wall.");
                 if (BrawlSkillCastHelper.TryStart(owner, skill, config, (BrawlSkillSlot)99, new float2(0, 1), 0.6f, 1000) ||
                     !Near(properties.GetDouble(PropertyId.SuperAmmo), 0.5)) return Fail(101210, "Invalid skill slot was accepted or consumed resources.");
                 return ErrorCode.ERR_Success;
             }
-            finally { fiber.AddSingleton(old); }
+            finally { fiber.AddSingleton(old); fiber.AddSingleton(oldRules); }
         }
         private static bool Near(double a, double b) => Math.Abs(a - b) < 0.00001;
         private static int Fail(int code, string message) { Log.Console(message); return code; }

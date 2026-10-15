@@ -14,9 +14,9 @@ namespace ET.Server
                 StateComponent states = obstacle.GetComponent<StateComponent>();
                 if (states != null && (states.Has(StateId.Dead) || states.Has(StateId.Spawning))) continue;
                 // 阻挡是可选能力；英雄和未配置阻挡的 NPC 不参与。
-                BrawlUnitComponentBlock block = obstacle.GetComponent<BrawlUnitComponentBlock>();
-                if (block == null) continue;
-                if (BrawlBlockGeometryHelper.Overlaps(position, radius, obstacle.Position.xz + block.Pivot, block.Length, block.Width))
+                BrawlPracticeUnitComponent block = obstacle.GetComponent<BrawlPracticeUnitComponent>();
+                if (!block.BlocksMovement) continue;
+                if (BrawlBlockGeometryHelper.Overlaps(position, radius, obstacle.Position.xz + block.CollisionPivot, block.CollisionLength, block.CollisionWidth))
                     return false;
             }
             return true;
@@ -48,10 +48,10 @@ namespace ET.Server
                 if (obstacle.Id == movingUnitId) continue;
                 StateComponent states = obstacle.GetComponent<StateComponent>();
                 if (states != null && (states.Has(StateId.Dead) || states.Has(StateId.Spawning))) continue;
-                BrawlUnitComponentBlock block = obstacle.GetComponent<BrawlUnitComponentBlock>();
-                if (block == null) continue;
+                BrawlPracticeUnitComponent block = obstacle.GetComponent<BrawlPracticeUnitComponent>();
+                if (!block.BlocksMovement) continue;
                 target = BrawlBlockGeometryHelper.ClampAxis(position, target - current, radius,
-                    obstacle.Position.xz + block.Pivot, block.Length, block.Width, xAxis);
+                    obstacle.Position.xz + block.CollisionPivot, block.CollisionLength, block.CollisionWidth, xAxis);
             }
             return target;
         }

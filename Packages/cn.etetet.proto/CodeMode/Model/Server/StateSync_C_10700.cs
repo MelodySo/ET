@@ -526,6 +526,10 @@ namespace ET
         public float Radius { get; set; }
         [MemoryPackOrder(7)]
         public int Faction { get; set; }
+        [MemoryPackOrder(8)]
+        public float DirectionX { get; set; }
+        [MemoryPackOrder(9)]
+        public float DirectionZ { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -553,6 +557,63 @@ namespace ET
         [MemoryPackOrder(4)]
         public List<BrawlProjectileState> Projectiles { get; set; } = new();
 
+        [MemoryPackOrder(5)]
+        public List<BrawlProjectileEvent> Events { get; set; } = new();
+
+        /// <summary>
+        /// 房间内已清除草格的完整集合；不修改客户端共享关卡配置。
+        /// </summary>
+        [MemoryPackOrder(6)]
+        public List<int> ClearedGrass { get; set; } = new();
+
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    // 独立事件ID去重；Tick用于客户端插值时间线。TerrainIndex=-1表示单位目标或结束事件。
+    [MemoryPackable]
+    [Message(Opcode.BrawlProjectileEvent)]
+    public partial class BrawlProjectileEvent : MessageObject
+    {
+        public static BrawlProjectileEvent Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlProjectileEvent>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long EventId { get; set; }
+        [MemoryPackOrder(1)]
+        public long Tick { get; set; }
+        [MemoryPackOrder(2)]
+        public long ProjectileId { get; set; }
+        [MemoryPackOrder(3)]
+        public int ConfigId { get; set; }
+        [MemoryPackOrder(4)]
+        public long OwnerUnitId { get; set; }
+        [MemoryPackOrder(5)]
+        public long TargetUnitId { get; set; }
+        [MemoryPackOrder(6)]
+        public int TerrainIndex { get; set; }
+        [MemoryPackOrder(7)]
+        public int Kind { get; set; }
+        [MemoryPackOrder(8)]
+        public int EndReason { get; set; }
+        [MemoryPackOrder(9)]
+        public float X { get; set; }
+        [MemoryPackOrder(10)]
+        public float Y { get; set; }
+        [MemoryPackOrder(11)]
+        public float Z { get; set; }
+        [MemoryPackOrder(12)]
+        public float NormalX { get; set; }
+        [MemoryPackOrder(13)]
+        public float NormalZ { get; set; }
+        [MemoryPackOrder(14)]
+        public bool Blocked { get; set; }
+        [MemoryPackOrder(15)]
+        public bool Effective { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);
@@ -582,5 +643,6 @@ namespace ET
         public const ushort C2G_BrawlCastSkill = 10719;
         public const ushort BrawlProjectileState = 10720;
         public const ushort G2C_BrawlProjectileSnapshot = 10721;
+        public const ushort BrawlProjectileEvent = 10722;
     }
 }

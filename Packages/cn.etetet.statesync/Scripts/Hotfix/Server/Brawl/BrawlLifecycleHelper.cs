@@ -17,7 +17,7 @@ namespace ET.Server
                 bool red = i < mode.TeamSize;
                 BrawlFaction faction = red ? BrawlFaction.Red : BrawlFaction.Blue;
                 Unit point = BrawlUnitFactory.Create(units, red ? global.RedRespawnPointNpcId : global.BlueRespawnPointNpcId,
-                    BrawlPracticeUnitKind.NPC, faction, 0, Position(level.SpawnPoints[i], level.ColumnCount, state.CellSize));
+                    BrawlPracticeUnitKind.NPC, faction, 0, Position(level.SpawnPoints[i], level, state.CellSize));
                 BrawlRespawnPointComponent component = point.GetComponent<BrawlRespawnPointComponent>();
                 if (component == null) throw new InvalidOperationException("Respawn point NPC requires a respawn point component.");
                 point.GetComponent<BrawlPracticeUnitComponent>().Faction = faction;
@@ -94,6 +94,10 @@ namespace ET.Server
             return 0;
         }
 
-        public static float3 Position(int point, int columns, int cellSize) => new float3(point % columns * cellSize, 0, point / columns * cellSize);
+        public static float3 Position(int point, BrawlLevelConfig level, int cellSize)
+        {
+            float2 position = BrawlTerrainMovementHelper.CellPosition(level, point, cellSize);
+            return new float3(position.x, 0, position.y);
+        }
     }
 }

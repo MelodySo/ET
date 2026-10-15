@@ -7,6 +7,7 @@ namespace ET.Client
     public sealed class BrawlProjectileView
     {
         public GameObject Model;
+        public bool Ended;
         public BrawlFaction Faction;
         public long SpawnTick;
         public long DespawnTick = -1;

@@ -81,6 +81,7 @@ namespace ET.Test
             unit.Position = new float3(x, 0, 4);
             BrawlPracticeUnitComponent data = unit.AddComponent<BrawlPracticeUnitComponent>();
             data.Kind = kind; data.Faction = faction; data.NPCType = BrawlNPCType.Combatant;
+            data.UnitLayerMask = BrawlUnitLayer.Battle;
             data.CollisionLength = 0.6f; data.PreviousPosition = unit.Position.xz;
             unit.AddComponent<StateComponent>(); unit.AddComponent<BrawlSpawnComponent>(); unit.AddComponent<BrawlDeathComponent>();
             unit.AddComponent<PropertyComponent, Dictionary<PropertyId, double>>(new() { [PropertyId.Health] = 5000, [PropertyId.BaseMaxHealth] = 5000 });
@@ -98,7 +99,7 @@ namespace ET.Test
             shot.OwnerUnitId = owner.Id; shot.Faction = owner.GetComponent<BrawlPracticeUnitComponent>().Faction;
             shot.Position = owner.Position.xz; shot.Direction = new float2(1, 0);
             shot.Speed = 10; shot.Radius = 0.04f; shot.RemainingDistance = 9;
-            shot.TargetMask = BrawlProjectileTargetMask.Enemy;
+            shot.Rules = BrawlCollisionTestHelper.Rules(2);
             shot.EffectValue = 10; shot.HitEvent1 = BrawlHitEventType.Damage; shot.SuperChargeOnHit = 0.25f;
             return shot;
         }

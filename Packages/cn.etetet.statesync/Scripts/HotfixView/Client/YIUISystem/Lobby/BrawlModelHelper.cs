@@ -8,7 +8,7 @@ namespace ET.Client
         public static async ETTask<GameObject> InstantiateModel(BrawlTrainingSession session, string address, Transform parent,
             string objectName, Vector3 position)
         {
-            if (session.CancelRequested) return null;
+            if (session.CancelRequested || session.Closing) return null;
             if (!session.ModelHandles.TryGetValue(address, out AssetHandle handle))
             {
                 handle = YooAssets.GetPackage("DefaultPackage").LoadAssetAsync<GameObject>(address);
@@ -17,7 +17,7 @@ namespace ET.Client
             }
             // 多个新单位同时请求相同资源时，也必须等待已有句柄完成。
             await handle.Task;
-            if (session.CancelRequested) return null;
+            if (session.CancelRequested || session.Closing) return null;
             if (handle.Status != EOperationStatus.Succeed || handle.AssetObject is not GameObject prefab)
                 throw new InvalidOperationException($"模型 {address} 加载失败：{handle.LastError}");
             GameObject instance = UnityEngine.Object.Instantiate(prefab, parent, false);

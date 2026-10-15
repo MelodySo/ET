@@ -21,7 +21,7 @@ public sealed class BrawlLevelStyleConfigCategoryFactory_Config : IConfigFactory
     {
         return new BrawlLevelStyleConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlLevelStyleConfig>()
         {
-            [ 1 ] = new ET.BrawlLevelStyleConfig(1, @"赏金猎人 ", @"Wall_Tile_Wights", @"Grass_Tile_A Bounty", @"", @"", @""),
+            [ 1 ] = new ET.BrawlLevelStyleConfig(1, @"赏金猎人 ", @"Wall_Tile_X", @"Grass_Tile_A Bounty", @"", @"", @""),
             [ 2 ] = new ET.BrawlLevelStyleConfig(2, @"乱斗足球", @"", @"", @"", @"", @""),
             [ 3 ] = new ET.BrawlLevelStyleConfig(3, @"宝石争霸 ", @"", @"", @"", @"", @""),
             [ 4 ] = new ET.BrawlLevelStyleConfig(4, @"金库攻防 ", @"", @"", @"", @"", @""),

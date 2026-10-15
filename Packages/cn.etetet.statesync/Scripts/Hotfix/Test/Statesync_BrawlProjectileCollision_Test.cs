@@ -51,19 +51,18 @@ namespace ET.Test
             obstacleData.Kind = BrawlPracticeUnitKind.NPC;
             obstacleData.NPCType = BrawlNPCType.Obstacle;
             obstacleData.Faction = BrawlFaction.NeutralHostile;
-            BrawlNPCConfig config = new(2, 2, 0, 1, 0, 0, new[] { 1 }, new[] { 1 }, 1, 1, 0, 0, 0, 0, 0);
-            BrawlNPCBlockHelper.Attach(obstacle, config, new BrawlUnitComponentBlockConfigCategory(
-                new Dictionary<int, BrawlUnitComponentBlockConfig> { [1] = new(1, true) }));
+            BrawlNPCConfig config = new(2, 2, 0, 1, 0, 0, Array.Empty<int>(), Array.Empty<int>(), 1, 1, 0, 0, 0, 0, 0, 40, true);
+            BrawlNPCBlockHelper.Attach(obstacle, config);
             projectile = Shot(projectiles, owner);
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 1);
             if (!Stopped(projectile, 2.45f, 0)) return Fail(100507, "Neutral barrel must block as an obstacle, not count as an enemy.");
-            BrawlUnitComponentBlock block = obstacle.GetComponent<BrawlUnitComponentBlock>();
-            block.Width = 1;
-            block.Pivot = new float2(0.25f, 0);
+            BrawlPracticeUnitComponent block = obstacleData;
+            block.CollisionWidth = 1;
+            block.CollisionPivot = new float2(0.25f, 0);
             projectile = Shot(projectiles, owner);
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 1);
             if (!Stopped(projectile, 2.7f, 0)) return Fail(100508, "Rectangular obstacle pivot was ignored.");
-            obstacle.RemoveComponent<BrawlUnitComponentBlock>();
+            obstacleData.UnitLayerMask = BrawlUnitLayer.None;
             obstacleData.NPCType = BrawlNPCType.Gem;
             projectile = Shot(projectiles, owner);
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 1);
@@ -77,14 +76,14 @@ namespace ET.Test
             if (!Stopped(projectile, 4.65f, 1)) return Fail(100510, "Hostile-neutral combat NPC was not hit.");
 
             projectile = Shot(projectiles, owner);
-            projectile.BlockMask = BrawlProjectileBlockMask.None;
+            projectile.Rules = BrawlCollisionTestHelper.Rules(2);
             projectile.MaxHitCount = 0;
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0.5f);
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0.1f);
             if (projectile.HitCount != 1 || projectile.Finished || math.abs(projectile.Position.x - 6) > 0.0001f)
                 return Fail(100511, "Penetration hit the same unit repeatedly or stopped without a termination condition.");
             projectile = Shot(projectiles, owner);
-            projectile.BlockMask = BrawlProjectileBlockMask.None;
+            projectile.Rules = BrawlCollisionTestHelper.Rules(2);
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 1);
             if (!Stopped(projectile, 4.65f, 1)) return Fail(100512, "Effective hit count must terminate independently of blocking.");
 
@@ -108,7 +107,7 @@ namespace ET.Test
             projectile = Shot(projectiles, owner);
             projectile.HitEvent1 = BrawlHitEventType.Damage;
             projectile.EffectValue = 330;
-            projectile.BlockMask = BrawlProjectileBlockMask.None;
+            projectile.Rules = BrawlCollisionTestHelper.Rules(2);
             projectile.MaxHitCount = 0;
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0);
             BrawlProjectileCollisionHelper.Advance(projectile, units, level, 1, 0);
@@ -130,6 +129,7 @@ namespace ET.Test
             BrawlPracticeUnitComponent data = unit.AddComponent<BrawlPracticeUnitComponent>();
             data.Kind = BrawlPracticeUnitKind.Player;
             data.Faction = faction;
+            data.UnitLayerMask = BrawlUnitLayer.Hero | BrawlUnitLayer.Battle;
             data.CollisionLength = 0.6f;
             data.PreviousPosition = position;
             return unit;
@@ -145,8 +145,8 @@ namespace ET.Test
             projectile.Speed = 10;
             projectile.Radius = 0.05f;
             projectile.RemainingDistance = 20;
-            projectile.BlockMask = BrawlProjectileBlockMask.IndestructibleWall | BrawlProjectileBlockMask.DestructibleWall | BrawlProjectileBlockMask.Enemy;
-            projectile.TargetMask = BrawlProjectileTargetMask.Enemy;
+            projectile.Rules = BrawlCollisionTestHelper.Rules(1);
+
             projectile.MaxHitCount = 1;
             return projectile;
         }

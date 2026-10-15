@@ -77,7 +77,8 @@ namespace ET.Client
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(joystick.Area, pointer.position,
                     pointer.pressEventCamera, out Vector2 point)) return false;
             Vector2 offset = point - joystick.PressPoint;
-            BrawlSkillAimHelper.Sample(joystick.Aim, new float2(offset.x, offset.y), HandleRange * DeadZone);
+            Vector2 worldOffset = BrawlCameraInputHelper.ToWorld(session.BattleCamera, offset);
+            BrawlSkillAimHelper.Sample(joystick.Aim, new float2(worldOffset.x, worldOffset.y), HandleRange * DeadZone);
             joystick.Handle.anchoredPosition = Vector2.ClampMagnitude(offset, HandleRange);
             UpdatePreview(session, joystick);
             return true;

@@ -11,9 +11,11 @@ namespace ET.Server
         }
 
         public static void Start(Unit unit, BrawlProjectileLaunch[] launches, int configId, float2 direction,
-            float height, long now, long cooldown, BrawlSkillSlot slot = BrawlSkillSlot.NormalAttack)
+            float height, long now, long cooldown, BrawlSkillSlot slot = BrawlSkillSlot.NormalAttack, BrawlCollisionRuleConfig[] rules = null)
         {
             BrawlSkillCastComponent cast = unit.GetComponent<BrawlSkillCastComponent>();
+            cast.Rules = rules ?? BrawlCollisionRuleHelper.Resolve(unit.Fiber().GetSingleton<BrawlCollisionRuleConfigCategory>(),
+                unit.Fiber().GetSingleton<BrawlProjectileConfigCategory>().Get(configId).CollisionRuleGroupId);
             cast.Launches = launches; cast.NextIndex = 0; cast.StartedAt = now;
             if (slot == BrawlSkillSlot.Super) cast.NextSuperCastAt = checked(now + cooldown);
             else cast.NextNormalCastAt = checked(now + cooldown);
@@ -40,8 +42,8 @@ namespace ET.Server
                 BrawlProjectileLaunch launch = cast.Launches[cast.NextIndex++];
                 BrawlProjectile projectile = projectiles.AddChild<BrawlProjectile>();
                 projectile.ConfigId = config.Id; projectile.OwnerUnitId = unit.Id; projectile.Faction = cast.Faction;
-                projectile.BlockMask = (BrawlProjectileBlockMask)config.BlockMask;
-                projectile.TargetMask = (BrawlProjectileTargetMask)config.TargetMask;
+                projectile.Rules = cast.Rules;
+                projectile.Lifetime = config.Lifetime;
                 projectile.MaxHitCount = config.MaxHitCount; projectile.EffectValue = launch.EffectValue;
                 projectile.SuperChargeOnHit = launch.SuperChargeOnHit;
                 projectile.HitEvent1 = (BrawlHitEventType)config.HitEvent1;

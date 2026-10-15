@@ -58,6 +58,8 @@ namespace ET.Client
                     if (view.UnitId == session.MyUnitId) session.Hero = view.Model;
                 }
             }
+            BrawlCameraComponent cameraController = session.CameraController;
+            cameraController?.SetTarget(session.Hero != null ? session.Hero.transform : null);
         }
 
         public static async ETTask LoadModel(BrawlTrainingSession session, BrawlPracticeUnitView view)

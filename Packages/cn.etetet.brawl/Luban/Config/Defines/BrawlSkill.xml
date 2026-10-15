@@ -5,4 +5,7 @@
   <table name="BrawlProjectileConfigCategory" value="BrawlProjectileConfig" index="Id" mode="map"
          input="BrawlProjectile@Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlSkill.xlsx"
          readSchemaFromFile="true" comment="荒野对战弹丸" />
+  <table name="BrawlCollisionRuleConfigCategory" value="BrawlCollisionRuleConfig" index="Id" mode="map"
+         input="BrawlCollisionRule@Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlSkill.xlsx"
+         readSchemaFromFile="true" comment="荒野对战弹丸碰撞规则；同组多行合并" />
 </module>

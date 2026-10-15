@@ -13,7 +13,7 @@ namespace ET
 {
     public sealed partial class BrawlGlobalConfig : ET.Object
     {
-        public BrawlGlobalConfig(int CellSize, int MaxLevel, float HeroSpawnProtectionDuration, float HeroSpawnDuration, float HeroDeathDuration, int RedRespawnPointNpcId, int BlueRespawnPointNpcId) 
+        public BrawlGlobalConfig(int CellSize, int MaxLevel, float HeroSpawnProtectionDuration, float HeroSpawnDuration, float HeroDeathDuration, int RedRespawnPointNpcId, int BlueRespawnPointNpcId, float CameraDistance, float CameraPitch, float CameraYaw, float CameraFieldOfView, float CameraTargetHeight) 
         {
             this.CellSize = CellSize;
             this.MaxLevel = MaxLevel;
@@ -22,6 +22,11 @@ namespace ET
             this.HeroDeathDuration = HeroDeathDuration;
             this.RedRespawnPointNpcId = RedRespawnPointNpcId;
             this.BlueRespawnPointNpcId = BlueRespawnPointNpcId;
+            this.CameraDistance = CameraDistance;
+            this.CameraPitch = CameraPitch;
+            this.CameraYaw = CameraYaw;
+            this.CameraFieldOfView = CameraFieldOfView;
+            this.CameraTargetHeight = CameraTargetHeight;
             EndInit();
         }
 
@@ -53,6 +58,26 @@ namespace ET
         /// 蓝方复活点NPC配置ID
         /// </summary>
         public readonly int BlueRespawnPointNpcId;
+        /// <summary>
+        /// 通用战斗相机到观察点的直线距离（米），大于0
+        /// </summary>
+        public readonly float CameraDistance;
+        /// <summary>
+        /// 通用战斗相机X轴俯角（度），大于0且小于90
+        /// </summary>
+        public readonly float CameraPitch;
+        /// <summary>
+        /// 通用战斗相机Y轴水平角（度），0朝世界正Z
+        /// </summary>
+        public readonly float CameraYaw;
+        /// <summary>
+        /// 透视相机垂直FOV（度），大于0且小于179
+        /// </summary>
+        public readonly float CameraFieldOfView;
+        /// <summary>
+        /// 观察点相对主角原点的世界Y偏移（米）
+        /// </summary>
+        public readonly float CameraTargetHeight;
 
         public  void ResolveRef()
         {

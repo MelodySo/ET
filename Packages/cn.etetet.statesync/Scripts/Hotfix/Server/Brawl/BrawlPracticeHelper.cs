@@ -37,7 +37,7 @@ namespace ET.Server
             int cellSize = fiber.GetSingleton<BrawlGlobalConfigCategory>().CellSize;
             if (cellSize <= 0) throw new InvalidOperationException("CellSize 必须大于零。");
             ValidateLevel(level, mode.TeamSize * mode.TeamCount, fiber.GetSingleton<BrawlNPCConfigCategory>(),
-                fiber.GetSingleton<BrawlUnitComponentBlockConfigCategory>(), fiber.GetSingleton<BrawlRespawnPointConfigCategory>());
+                fiber.GetSingleton<BrawlRespawnPointConfigCategory>());
             ValidateHeroSpawn(level, cellSize, level.SpawnPoints[0], playerHero);
             ValidateHeroSpawn(level, cellSize, level.SpawnPoints[1], botHero);
 
@@ -57,7 +57,7 @@ namespace ET.Server
                 BrawlLifecycleHelper.Initialize(state, mode, level, player.Id, BotHeroId);
                 for (int i = 0; i < level.NPCIds.Length; ++i)
                     BrawlUnitFactory.Create(units, level.NPCIds[i], BrawlPracticeUnitKind.NPC, BrawlFaction.NeutralHostile, 0,
-                        BrawlLifecycleHelper.Position(level.NPCPoints[i], level.ColumnCount, cellSize));
+                        BrawlLifecycleHelper.Position(level.NPCPoints[i], level, cellSize));
                 // NPC 的尺寸与偏移可能伸入相邻出生格；不能只按格子索引判断重叠。
                 foreach (Entity child in units.Children.Values)
                 {
@@ -90,13 +90,13 @@ namespace ET.Server
         {
             if (!math.isfinite(hero.CollisionRadius) || hero.CollisionRadius <= 0)
                 throw new InvalidOperationException($"英雄 {hero.Id} 的 CollisionRadius 必须为有限正数（米）。");
-            float2 position = new float2(point % level.ColumnCount, point / level.ColumnCount) * cellSize;
+            float2 position = BrawlTerrainMovementHelper.CellPosition(level, point, cellSize);
             if (!BrawlTerrainMovementHelper.CanOccupy(level, cellSize, position, hero.CollisionRadius))
                 throw new InvalidOperationException($"出生格 {point} 容纳不下英雄 {hero.Id}，碰撞半径为 {hero.CollisionRadius} 米。");
         }
 
         private static void ValidateLevel(BrawlLevelConfig level, int playerCount, BrawlNPCConfigCategory npcs,
-            BrawlUnitComponentBlockConfigCategory blocks, BrawlRespawnPointConfigCategory points)
+            BrawlRespawnPointConfigCategory points)
         {
             if (level.RowCount < 1 || level.RowCount > 100 || level.ColumnCount < 1 || level.ColumnCount > 100 ||
                 level.MapGrid == null || level.MapGrid.Length != level.RowCount * level.ColumnCount ||
@@ -118,7 +118,7 @@ namespace ET.Server
                     (!math.isfinite(npc.CollisionLength) || npc.CollisionLength <= 0 || !math.isfinite(npc.CollisionWidth) ||
                      npc.CollisionWidth < 0 || !math.isfinite(npc.PivotX) || !math.isfinite(npc.PivotZ)))
                     throw new InvalidOperationException($"NPC {npc.Id} 的作战碰撞尺寸非法。");
-                BrawlNPCBlockHelper.Validate(npc, blocks, points);
+                BrawlNPCBlockHelper.Validate(npc, points);
                 ValidatePoint(level, occupied, level.NPCPoints[i]);
             }
         }

@@ -9,7 +9,7 @@ namespace ET.Test
         public override async ETTask<int> Handle(TestContext context)
         {
             await ETTask.CompletedTask;
-            BrawlProjectileConfig config = new(1, 0.05f, 7, 1, 1, 0, 8, 300, 30, 1, 0, 0, 0, 0, 0, 0.1f);
+            BrawlProjectileConfig config = new(1, 0.05f, 1, 0, 8, 300, 30, 1, 0, 0, 0, 0, 0, 0.1f, 1);
             IBrawlSkillEmitter emitter = BrawlSkillEmitterHelper.Create(BrawlEmitterType.Shotgun);
             BrawlProjectileLaunch[] launches = emitter.Emit(Skill(5), config, 1);
             if (launches.Length != 5) return Fail(100301, "Shotgun count does not match configuration.");

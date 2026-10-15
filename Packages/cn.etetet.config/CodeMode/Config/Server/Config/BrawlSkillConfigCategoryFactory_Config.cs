@@ -22,8 +22,8 @@ public sealed class BrawlSkillConfigCategoryFactory_Config : IConfigFactory
         return new BrawlSkillConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlSkillConfig>()
         {
             [ 10101 ] = new ET.BrawlSkillConfig(10101, 10101, 5, 1, 1, 0f, 0f, 3, 1.5f, 0.5f, 1, 2, 7.67f, 30f, 0, 0f, 0f),
-            [ 10102 ] = new ET.BrawlSkillConfig(10102, 10101, 5, 0, 0, 0f, 0f, 1, 1.5f, 0.5f, 1, 0, 0f, 0f, 0, 0f, 0f),
-            [ 10103 ] = new ET.BrawlSkillConfig(10103, 10101, 5, 0, 0, 0f, 0f, 0, 1.5f, 0.5f, 1, 0, 0f, 0f, 0, 0f, 0f),
+            [ 10102 ] = new ET.BrawlSkillConfig(10102, 10102, 5, 1, 1, 0f, 0f, 1, 1.5f, 0.5f, 1, 2, 7.67f, 45f, 0, 0f, 0f),
+            [ 10103 ] = new ET.BrawlSkillConfig(10103, 10103, 5, 0, 0, 0f, 0f, 0, 1.5f, 0.5f, 1, 0, 0f, 0f, 0, 0f, 0f),
             [ 10104 ] = new ET.BrawlSkillConfig(10104, 10101, 5, 0, 0, 0f, 0f, 0, 1.5f, 0.5f, 1, 0, 0f, 0f, 0, 0f, 0f),
             [ 20101 ] = new ET.BrawlSkillConfig(20101, 10101, 5, 1, 2, 0.3f, 0f, 3, 1.5f, 0.5f, 1, 0, 0f, 0f, 0, 0f, 0f),
             [ 100101 ] = new ET.BrawlSkillConfig(100101, 100101, 1, 4, 0, 0f, 0f, 1, 0f, 0f, 1, 1, 0f, 0f, 1, 0f, 0f),

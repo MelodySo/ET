@@ -52,6 +52,7 @@ namespace ET.Client
                     throw new InvalidOperationException($"英雄 {hero.Id} 缺少 ModelPath，请检查英雄表并导出。");
                 BrawlNPCConfig[] npcs = practice ? null : ResolveNPCs(level, self.Fiber().GetSingleton<BrawlNPCConfigCategory>());
 
+                BrawlProjectileConfigCategory projectileConfigs = practice ? self.Fiber().GetSingleton<BrawlProjectileConfigCategory>() : null;
                 // 资源收集使用 AddressByFileName，同时兼容表内的项目相对路径和短名称。
                 string address = Path.GetFileNameWithoutExtension(level.SceneAsset.Replace('\\', '/'));
                 session.SceneHandle = YooAssets.GetPackage("DefaultPackage").LoadSceneAsync(address, LoadSceneMode.Additive);
@@ -69,7 +70,14 @@ namespace ET.Client
                 if (!session.SceneHandle.ActivateScene()) throw new InvalidOperationException("无法激活训练场场景。");
 
                 CreatePreview(session, level);
+                session.CameraController = self.Root().AddComponent<BrawlCameraComponent, Camera, BrawlGlobalConfigCategory>(
+                    session.BattleCamera, self.Fiber().GetSingleton<BrawlGlobalConfigCategory>());
                 await LoadTerrain(session, level, style);
+                if (practice && !session.CancelRequested)
+                {
+                    await BrawlProjectileVisualHelper.Preload(session, projectileConfigs);
+                    if (!session.CancelRequested && !session.Closing) session.ProjectilePresentation = new BrawlProjectilePresentation();
+                }
                 if (!session.CancelRequested)
                 {
                     if (practice) await LoadPracticeUnits(session);
@@ -82,6 +90,9 @@ namespace ET.Client
                     await Cleanup(session);
                     return;
                 }
+                BrawlCameraComponent cameraController = session.CameraController;
+                cameraController.SetTarget(session.Hero != null ? session.Hero.transform : null);
+                cameraController.Follow();
                 session.StatusText.text = practice
                     ? $"练习赛 · {hero.Name}\n点按普攻随移动方向 · 拖动瞄准 · 拖回取消"
                     : $"训练场 · {hero.Name}\n本地试用 / 暂无移动与战斗";
@@ -156,7 +167,11 @@ namespace ET.Client
                 throw new InvalidOperationException("玩家出生点必须在平地或草丛上。");
         }
 
-        public static Vector3 CellPosition(int index, int columns, int cellSize) => new(index % columns * cellSize, 0, index / columns * cellSize);
+        public static Vector3 CellPosition(int index, BrawlLevelConfig level, int cellSize)
+        {
+            Unity.Mathematics.float2 position = BrawlTerrainMovementHelper.CellPosition(level, index, cellSize);
+            return new Vector3(position.x, 0, position.y);
+        }
 
         private static BrawlNPCConfig[] ResolveNPCs(BrawlLevelConfig level, BrawlNPCConfigCategory category)
         {
@@ -186,7 +201,7 @@ namespace ET.Client
             BrawlNPCConfig[] npcs)
         {
             session.Hero = await BrawlModelHelper.InstantiateModel(session, hero.ModelPath, session.RuntimeRoot.transform,
-                $"TrainingHero_{hero.Id}", CellPosition(level.SpawnPoints[0], level.ColumnCount, session.CellSize));
+                $"TrainingHero_{hero.Id}", CellPosition(level.SpawnPoints[0], level, session.CellSize));
             if (session.CancelRequested) return;
             // 保留 Prefab 的专属武器和控制器，不驱动动画参数；禁止根运动改变出生位置。
             foreach (Animator animator in session.Hero.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
@@ -196,7 +211,7 @@ namespace ET.Client
             {
                 if (session.CancelRequested) return;
                 GameObject npc = await BrawlModelHelper.InstantiateModel(session, npcs[i].ModelPath, session.NPCRoot.transform,
-                    $"NPC_{i}_{npcs[i].Id}", CellPosition(level.NPCPoints[i], level.ColumnCount, session.CellSize));
+                    $"NPC_{i}_{npcs[i].Id}", CellPosition(level.NPCPoints[i], level, session.CellSize));
                 if (session.CancelRequested) return;
                 foreach (Animator animator in npc.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
             }
@@ -233,7 +248,7 @@ namespace ET.Client
                 string address = TerrainAddress(style, level.MapGrid[index]);
                 if (string.IsNullOrWhiteSpace(address)) continue;
                 await BrawlModelHelper.InstantiateModel(session, address, session.TerrainRoot.transform, $"Tile_{index}_{address}",
-                    CellPosition(index, level.ColumnCount, session.CellSize));
+                    CellPosition(index, level, session.CellSize));
                 // 保留 Prefab 原有旋转和缩放。
             }
         }
@@ -255,19 +270,12 @@ namespace ET.Client
             session.RuntimeRoot = new GameObject("BrawlTrainingRuntime");
             SceneManager.MoveGameObjectToScene(session.RuntimeRoot, session.SceneHandle.SceneObject);
 
-            GameObject cameraObject = new("TrainingCamera", typeof(Camera));
+            GameObject cameraObject = new("BrawlCamera", typeof(Camera));
             cameraObject.transform.SetParent(session.RuntimeRoot.transform, false);
-            Vector3 center = new((level.ColumnCount - 1) * session.CellSize * 0.5f, 0, (level.RowCount - 1) * session.CellSize * 0.5f);
-            float extent = Mathf.Max(level.RowCount, level.ColumnCount) * session.CellSize;
-            cameraObject.transform.position = center + new Vector3(0, extent, -extent);
-            cameraObject.transform.LookAt(center);
             Camera preview = cameraObject.GetComponent<Camera>();
             preview.clearFlags = CameraClearFlags.SolidColor;
             preview.backgroundColor = new Color(0.12f, 0.17f, 0.23f);
-            preview.nearClipPlane = 0.1f;
-            preview.farClipPlane = extent * 5 + 100;
-            preview.orthographic = true;
-            preview.orthographicSize = Mathf.Max(level.RowCount * 0.5f, level.ColumnCount / Mathf.Max(0.1f, preview.aspect) * 0.5f) * session.CellSize + 2;
+            session.BattleCamera = preview;
 
             GameObject lightObject = new("TrainingLight", typeof(Light));
             lightObject.transform.SetParent(session.RuntimeRoot.transform, false);
@@ -350,6 +358,10 @@ namespace ET.Client
                 if (session.SuperSkillButton != null) session.SuperSkillButton.interactable = false;
                 BrawlSkillJoystickHelper.CancelAll(session);
                 if (session.StatusText != null) session.StatusText.text = "正在返回大厅……";
+                BrawlCameraComponent cameraController = session.CameraController;
+                cameraController?.Dispose();
+                session.CameraController = default;
+                session.BattleCamera = null;
                 BrawlPracticeClientComponent movement = session.MovementClient;
                 movement?.Dispose();
                 session.MovementClient = default;

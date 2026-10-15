@@ -19,7 +19,7 @@ public sealed class BrawlGlobalConfigCategoryFactory_Config : IConfigFactory
 
     public ASingleton Create()
     {
-        return new BrawlGlobalConfigCategory(new ET.BrawlGlobalConfig(1, 12, 3f, 2f, 3f, 2001, 2002));
+        return new BrawlGlobalConfigCategory(new ET.BrawlGlobalConfig(1, 12, 3f, 2f, 3f, 2001, 2002, 40f, 45f, 0f, 15f, 0.5f));
     }
 }
 }

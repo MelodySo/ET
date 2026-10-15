@@ -13,13 +13,14 @@ namespace ET
 {
     public sealed partial class BrawlProjectileConfig : ET.Object
     {
-        public BrawlProjectileConfig(int Id, string Description, float Radius, int BlockMask, int TargetMask, int MaxHitCount, float Lifetime, float Speed, int Value, int ValueGrowthPerLevel, int HitEvent1, int HitEvent1Param1, int HitEvent1Param2, int HitEvent2, int HitEvent2Param1, int HitEvent2Param2, float SuperChargeOnHit) 
+        public BrawlProjectileConfig(int Id, string Description, string ModelPath, string ImpactEffectPath, string ExpireEffectPath, float Radius, int MaxHitCount, float Lifetime, float Speed, int Value, int ValueGrowthPerLevel, int HitEvent1, int HitEvent1Param1, int HitEvent1Param2, int HitEvent2, int HitEvent2Param1, int HitEvent2Param2, float SuperChargeOnHit, int CollisionRuleGroupId) 
         {
             this.Id = Id;
             this.Description = Description;
+            this.ModelPath = ModelPath;
+            this.ImpactEffectPath = ImpactEffectPath;
+            this.ExpireEffectPath = ExpireEffectPath;
             this.Radius = Radius;
-            this.BlockMask = BlockMask;
-            this.TargetMask = TargetMask;
             this.MaxHitCount = MaxHitCount;
             this.Lifetime = Lifetime;
             this.Speed = Speed;
@@ -32,6 +33,7 @@ namespace ET
             this.HitEvent2Param1 = HitEvent2Param1;
             this.HitEvent2Param2 = HitEvent2Param2;
             this.SuperChargeOnHit = SuperChargeOnHit;
+            this.CollisionRuleGroupId = CollisionRuleGroupId;
             EndInit();
         }
 
@@ -44,17 +46,21 @@ namespace ET
         /// </summary>
         public readonly string Description;
         /// <summary>
+        /// 模型路径
+        /// </summary>
+        public readonly string ModelPath;
+        /// <summary>
+        /// 碰撞到有效目标或阻挡物时的特效
+        /// </summary>
+        public readonly string ImpactEffectPath;
+        /// <summary>
+        /// 到达射程终点、寿命结束时的特效
+        /// </summary>
+        public readonly string ExpireEffectPath;
+        /// <summary>
         /// 碰撞半径（现在默认子弹都是球体方便计算）
         /// </summary>
         public readonly float Radius;
-        /// <summary>
-        /// 可被阻挡的目标<br/>0 无<br/>1 不可摧毁墙<br/>2 可摧毁墙体<br/>4 敌方<br/>8 友方<br/>16 可摧毁草
-        /// </summary>
-        public readonly int BlockMask;
-        /// <summary>
-        /// 生效目标<br/>0 无<br/>1 敌方<br/>2 友方<br/>4 可摧毁墙体<br/>8 可摧毁草
-        /// </summary>
-        public readonly int TargetMask;
         /// <summary>
         /// 耐久度，即生效几次再销毁，一般需要碰到有效目标才算
         /// </summary>
@@ -103,6 +109,10 @@ namespace ET
         /// 每枚弹丸对有效目标实际扣血后获得的大招格数；0不充能，与技能类型无关
         /// </summary>
         public readonly float SuperChargeOnHit;
+        /// <summary>
+        /// 碰撞规则组ID，引用BrawlCollisionRule.GroupId。1=墙阻挡/敌方作战单位生效并阻挡；2=不可摧毁墙阻挡/可摧毁场景物和敌方作战单位生效并穿透。仅源表设计，待代码接入。
+        /// </summary>
+        public readonly int CollisionRuleGroupId;
 
         public  void ResolveRef()
         {

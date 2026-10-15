@@ -5,10 +5,18 @@ namespace ET
     /// <summary>纯 XZ 网格几何，不查询 Unity 物理、NPC 或模型缩放；玩家与 Bot 共用。</summary>
     public static class BrawlTerrainMovementHelper
     {
+        // 左下格中心相对关卡几何中心的偏移；网格索引仍从左下角开始。
+        public static float2 GridOffset(BrawlLevelConfig level, float cellSize) =>
+            new float2(level.ColumnCount - 1, level.RowCount - 1) * (cellSize * 0.5f);
+
+        public static float2 CellPosition(BrawlLevelConfig level, int index, float cellSize) =>
+            new float2(index % level.ColumnCount, index / level.ColumnCount) * cellSize - GridOffset(level, cellSize);
+
         public static bool IsBlocked(int tile) => tile == (int)BrawlTileType.Wall || tile == (int)BrawlTileType.Water;
 
         public static bool CanOccupy(BrawlLevelConfig level, float cellSize, float2 position, float radius)
         {
+            position += GridOffset(level, cellSize);
             float half = cellSize * 0.5f;
             float epsilon = BrawlMovementSettings.ContactTolerance;
             float2 minimum = new float2(-half + radius);
@@ -44,8 +52,11 @@ namespace ET
 
         public static float MoveAxis(BrawlLevelConfig level, float cellSize, float2 position, float delta, float radius, bool xAxis)
         {
+            float2 offset = GridOffset(level, cellSize);
+            float axisOffset = xAxis ? offset.x : offset.y;
+            position += offset;
             float current = xAxis ? position.x : position.y;
-            if (delta == 0) return current;
+            if (delta == 0) return current - axisOffset;
             float half = cellSize * 0.5f;
             float limit = (xAxis ? level.ColumnCount : level.RowCount) * cellSize - half - radius;
             float target = math.clamp(current + delta, -half + radius, limit);
@@ -71,7 +82,7 @@ namespace ET
                 if (delta > 0 && current <= near + epsilon) target = math.min(target, math.max(current, near));
                 else if (delta < 0 && current >= far - epsilon) target = math.max(target, math.min(current, far));
             }
-            return target;
+            return target - axisOffset;
         }
     }
 }

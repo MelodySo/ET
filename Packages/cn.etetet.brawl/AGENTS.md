@@ -55,3 +55,14 @@
 - BrawlUnitComponentReborn.xlsx通过同名Defines XML生成BrawlRespawnPointConfig/Category，组件类型2，仅绑定英雄复活点；当前只有Id/Name。逻辑在statesync，关卡SpawnPoints是复活点唯一来源，不往NPCIds重复放出生点。
 
 参见 `Test.md`。所有命令使用 pwsh，唯一编译命令 `dotnet build ET.sln`。不要手工生成 .meta 或编辑 .csproj。
+
+## 碰撞配置迁移（2026-10-15最新）
+
+- BrawlSkill.xml新增BrawlCollisionRule分页注册。最新弹丸表删除BlockMask/TargetMask，使用CollisionRuleGroupId；四个已支持弹丸10101/10102/40101/40102均已接入。ModelPath/ImpactEffectPath/ExpireEffectPath仅导出，表现暂不消费。
+- NPC新增UnitLayerMask/BlocksMovement；墙桶40/true、劫匪6/false、水晶出生点0/false。旧组件1不再挂载，复活点组件2不变；旧阻挡配置表暂保留，无运行时引用。
+- 地形墙、草保留MapGrid来源，不迁移成NPC、不改编辑器。草运行时清除记录在房间私有集合，禁止修改配置数组。复活点仍仅由SpawnPoints创建。
+- 详细规则与验证见Book/Brawl开发交接.md最新章节。
+
+## 通用战斗相机配置
+
+- BrawlGlobal竖表A9:E13新增CameraDistance、CameraPitch、CameraYaw、CameraFieldOfView、CameraTargetHeight，均float、c组。距离指到观察点的直线距离，FOV是垂直角。所有Brawl玩法共用，不按地图尺寸缩放。

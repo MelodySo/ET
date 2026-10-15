@@ -24,9 +24,9 @@ namespace ET.Test
                     { [99] = new(99, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0) }));
                 fiber.AddSingleton(new BrawlNPCConfigCategory(new Dictionary<int, BrawlNPCConfig>
                 {
-                    [2] = new(2, 1, 0, 5000, 500, 2, new int[0], new int[0], 0.6f, 1, 0, 0, 0, 3, 5),
-                    [3] = new(3, 7, 3, 1, 0, 0, new[] { 2 }, new[] { 1 }, 1, 1, 1, 0, 0, 0, 0),
-                    [4] = new(4, 2, 0, 1, 0, 0, new[] { 1 }, new[] { 1 }, 1, 1, 1, 0, 0, 0.2f, 0),
+                    [2] = new(2, 1, 0, 5000, 500, 2, new int[0], new int[0], 0.6f, 1, 0, 0, 0, 3, 5, 6, false),
+                    [3] = new(3, 7, 3, 1, 0, 0, new[] { 2 }, new[] { 1 }, 1, 1, 1, 0, 0, 0, 0, 0, false),
+                    [4] = new(4, 2, 0, 1, 0, 0, new int[0], new int[0], 1, 1, 1, 0, 0, 0.2f, 0, 40, true),
                 }));
                 fiber.AddSingleton(new BrawlRespawnPointConfigCategory(new Dictionary<int, BrawlRespawnPointConfig> { [1] = new(1) }));
                 fiber.AddSingleton(new BrawlUnitComponentBlockConfigCategory(new Dictionary<int, BrawlUnitComponentBlockConfig> { [1] = new(1, true) }));

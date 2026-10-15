@@ -6,6 +6,7 @@ namespace ET.Server
         {
             Scene room = state.Room;
             BrawlProjectileRoomComponent projectiles = room.GetComponent<BrawlProjectileRoomComponent>();
+            projectiles.CurrentTick = state.Tick;
             UnitComponent units = room.GetComponent<UnitComponent>();
             BrawlLevelConfig level = state.Fiber().GetSingleton<BrawlLevelConfigCategory>().Get(state.LevelId);
             foreach (Entity child in projectiles.Children.Values)
@@ -53,9 +54,25 @@ namespace ET.Server
                 info.Y = projectile.Height;
                 info.Z = projectile.Position.y;
                 info.Radius = projectile.Radius;
+                info.DirectionX = projectile.Direction.x;
+                info.DirectionZ = projectile.Direction.y;
                 snapshot.Projectiles.Add(info);
             }
+            foreach (BrawlProjectileNotice notice in projectiles.Notices)
+            {
+                BrawlProjectileEvent info = BrawlProjectileEvent.Create();
+                info.EventId = notice.EventId; info.Tick = notice.Tick;
+                info.ProjectileId = notice.ProjectileId; info.ConfigId = notice.ConfigId;
+                info.OwnerUnitId = notice.OwnerUnitId; info.TargetUnitId = notice.TargetUnitId;
+                info.TerrainIndex = notice.TerrainIndex; info.Kind = (int)notice.Kind; info.EndReason = (int)notice.EndReason;
+                info.X = notice.X; info.Y = notice.Y; info.Z = notice.Z;
+                info.NormalX = notice.NormalX; info.NormalZ = notice.NormalZ;
+                info.Blocked = notice.Blocked; info.Effective = notice.Effective;
+                snapshot.Events.Add(info);
+            }
+            foreach (int index in projectiles.ClearedGrass) snapshot.ClearedGrass.Add(index);
             state.GetParent<Session>().Send(snapshot);
+            projectiles.Notices.Clear();
         }
     }
 }

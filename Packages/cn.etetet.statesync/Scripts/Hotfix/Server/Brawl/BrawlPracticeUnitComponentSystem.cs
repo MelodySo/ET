@@ -8,6 +8,8 @@ namespace ET.Server
         {
             self.Kind = default;
             self.Faction = default;
+            self.UnitLayerMask = default;
+            self.BlocksMovement = false;
             self.NPCType = default;
             self.CollisionLength = 0;
             self.CollisionWidth = 0;

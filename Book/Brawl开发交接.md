@@ -1,8 +1,19 @@
 # Brawl Demo 开发交接
 
+## 关卡中心原点（2026-10-15 最新）
+
+- 世界原点改为关卡几何中心，覆盖后文历史左下角坐标公式。格中心 X=(column-(ColumnCount-1)/2)*CellSize，Z 同理；Y 不变。偶数地图中心在格间，奇数地图中心在中央格。
+- 例如 20×20、格长1：格中心从 -9.5 到 9.5，地图外边界 -10 到 10。网格索引、出生格/NPC格索引、Excel 和协议不改。
+- BrawlTerrainMovementHelper 提供共用 GridOffset/CellPosition。客户端地形/本地训练人物、服务器NPC/出生验证/复活点、移动边界及地形碰撞、弹丸候选格查询及碰撞中心统一转换；NPC/英雄之间的世界坐标相对几何不需要另加偏移。
+- BrawlTrainingVerification 原有入口保留并改用新坐标签名。相机跟随主角，无旧中心偏移。用户手工摆放场景物体不自动平移。
+- 编辑器扩缩行列仍按原规则保留左下角数据；中心锚定扩图未实现。如需保持中心附近格子的世界位置，应另行设计奇偶尺寸变化和裁剪规则。
+- 客户端和服务端必须同时更新，重启服务端并退出旧关卡重新进入。此次不进行 Unity Play/自动化游戏测试。首次构建因旧服务器占用 DLL 失败；用户停止服务器后重新执行 `dotnet build ET.sln` 已成功：0 警告、0 错误，耗时 24.16 秒（2026-10-15）。
+
 更新日期：2026-10-15。此文件用于新会话恢复上下文，不代表授权立即实施所有待办。
 
 ## 快速恢复：当前实现与下一阶段
+
+- 最新已接入统一碰撞规则、NPC标签/移动阻挡、房间草清除逻辑及弹丸碰撞/结束通知。雪莉和柯尔特普攻、大招均使用新规则；详见紧接下方“统一碰撞规则、弹丸结束通知”，旧Mask和雪莉大招草稿说明已过期。客户端弹丸表现已接入，见最上方弹丸表现章节。
 
 - 柯尔特大招40102已接通，复用左轮发射器，12枚弹丸、消耗一格大招储量、命中回充及摧毁墙体。以“柯尔特大招释放”章节为准，下方充能阶段的“大招仍未实现”仅适用于历史记录及当前雪莉草稿大招。
 
@@ -20,6 +31,71 @@
 - 最新用户已授权文档完成后直接编码；属性组件、弹丸等级成长、HitEvent=1扣血和生命状态同步已接入，构建状态见下方“属性与扣血实现”。本版不处理单位死亡/复活、护盾、柯尔特连发、CD/弹药/装填、瞄准范围mesh和动画。
 - 下方属性/伤害方案保留设计缘由；其“尚未实现/建议”措辞为前一轮讨论记录，实际落地差异以紧接着的最新实现章节为准。
 - 移动与面向已完成部分见“技能摇杆与独立面向”；属性枚举、修正项及伤害流程见“属性系统方案”和“弹丸数值与扣血方案”。后续开发先读这三处，勿从早期技能草案重新推导需求。
+
+## 最新增量：通用Brawl透视跟随相机（2026-10-15）
+
+- 用户要求所有Brawl玩法采用同一规则：透视、固定距离/角度/垂直FOV，始终跟随主角。新增Scene级BrawlCameraComponent及System，不依赖玩法ID或练习赛分支。当前训练场/练习赛公共入口均已接入；未来新增玩法应绑定同一组件，不复制相机算法。
+- 原TrainingCamera改名BrawlCamera，移除正交投影、按地图尺寸定位和缩放的逻辑。相机在LateUpdate跟随角色渲染位置，不跟随角色转身，不做额外平滑、边界限位或自动缩放。
+- BrawlGlobal.xlsx新增客户端参数（c组）：CameraDistance=18米（相机到观察点直线距离）、CameraPitch=45度（X轴俯角）、CameraYaw=0度（Y轴水平角，朝世界+Z）、CameraFieldOfView=45度（垂直FOV）、CameraTargetHeight=0.5米（相对角色原点的世界Y偏移）。值只是参考截图的初始调校，未宣称还原原游戏真实参数；用户可改表导出后重进场景调试。
+- 相机旋转Quaternion.Euler(Pitch,Yaw,0)，观察点=角色世界位置+up*TargetHeight，相机位置=观察点-旋转后的forward*Distance。距离>0、俯角(0,90)、FOV(0,179)，所有参数必须有限；非法配置报错，不静默替换。
+- 目标Transform由场景入口绑定，练习赛随MyUnitId/英雄模型更换重新绑定。死亡销毁至新模型加载完成期间保持最后镜头；出生阶段隐藏的英雄模型仍可被跟随。退出/加载失败释放相机组件并恢复原大厅相机。
+- 移动键盘/摇杆以及技能拖动方向统一经BrawlCameraInputHelper映射至相机水平朝向的XZ坐标，默认Yaw=0与旧操作相同；点击施法仍使用当前/最后移动方向，拖回死区取消规则不变。预览接口传递世界方向。
+- 对等高等深的箱子，45度俯角是顶面/正面视觉大小接近的初始选择；透视下还受观察位置、箱子尺寸和FOV影响，不保证所有屏幕位置投影面积严格相等。
+- 验证：ExcelExporter成功；dotnet build ET.sln通过，0错误、14个已有HybridCLR警告，60.97秒。日志Temp/BrawlCamera-export.log、Temp/BrawlCamera-build.log。未启动Play或服务器；用户手测移动跟随、转身不转镜头、死亡重生切换及返回大厅恢复相机。
+- 本轮只新增全局相机配置，未覆盖用户调换的墙模型路径；统一ExcelExporter会同时导出当前源表中的模型修正。池化和客户端草移除仍属于已记录的后续待办，本轮不顺带实现。
+
+## 讨论记录：特效池暂缓、草清除表现待接（2026-10-15）
+
+- 用户已手测当前弹丸表现基本正常。明确暂不实现对象池，本节仅记录方案，不代表授权立即池化。
+- 当前BrawlTrainingSession持有资源句柄、模板、弹丸与一次性特效列表，BrawlProjectileVisualHelper集中管理。已有资源/模板缓存，但每次仍Instantiate，结束Destroy；历史“回收”是销毁清理，不是返回对象池。
+- 已查ET.ObjectPool：用于普通C#对象和IPool，Fetch/Recycle/Clear，不直接管理Unity预制体与粒子。YIUI有集合/引用池及AutoRecycleObjPool，但后者固定约一秒回收，不能直接承担不同持续时间的战斗特效生命周期。当前未找到可直接接入的完整战斗GameObject特效池。
+- 后续建议场景级特效池组件，按资源地址分池；取出时重置Transform、粒子、拖尾和活动状态；返回时停止并清空粒子/拖尾、禁用实例；退出场景统一销毁池和释放资源句柄。飞行物按服务器结束，一次性特效按粒子结束返回池。遵循ModelView存数据、HotfixView执行逻辑，避免静态可变全局集合。
+- 用户表示已在源配置中调换此前配反的不可摧毁墙与可摧毁墙模型。本轮未改写或导出这些配置；后续以最新源表为准，不按旧文档模型名覆盖。
+- 大招清草目前服务器已有：地形草按Grass|Destroyable匹配碰撞规则；有效接触且带正值Damage事件时，把格子索引加入房间ClearedGrass，后续弹丸跳过该草格。无NPC、无HP/死亡计时、不提供大招充能，也不改共享MapGrid。
+- 当前客户端已接收ClearedGrass，并在RenderTick到达后调用OnGrassCleared，但该回调为空，所以画面草仍存在。这是尚未接完的客户端地形表现，不需要把草改刷为NPC。
+- 待实现方案：LoadTerrain时保存草格索引到GameObject的映射；OnGrassCleared按索引移除/隐藏该草模型并删除映射；场景退出清理映射。加载与快照时序需保证已清除草不被异步加载重新显示；完整ClearedGrass列表可用于状态补齐。复用已有同步，不增加草Unit或重新刷地图。先直接移除草，不擅自添加草专属破碎特效或重生规则。
+
+## 最新增量：弹丸飞行、击中与自然消失表现（2026-10-15）
+
+本节覆盖历史“客户端仍用Sphere、不加载特效”的描述。发射烟雾、人物动作、瞄准范围与草模型移除仍未实现。
+
+- 客户端根据弹丸配置 ModelPath 加载飞行预制体；空值保留碰撞直径大小的Sphere兜底。有模型时保留美术资源自身缩放，不用逻辑碰撞半径缩放特效。
+- ImpactEffectPath：每个服务器Impact通知播放一次，包括只阻挡不生效的墙、穿透的每个有效目标。继续沿用EventId去重、RenderTick延迟呈现，不由Unity Collider判定命中。
+- ExpireEffectPath：仅EndReason为Range/Lifetime时播放；Blocked/HitLimit只停止飞行表现，退出场景清理不播放消失特效。
+- BrawlProjectileState增加DirectionX/DirectionZ，飞行模型以本地+Z对齐服务器方向；击中特效按XZ接触法线定向。配置和协议已经重新导出，客户端/服务器须使用同一版并重启。
+- BrawlProjectileVisualHelper预加载配置资源，场景内使用未激活模板克隆。飞行粒子循环至服务器结束；击中/消失粒子不循环，所有活动子粒子系统结束后回收。一次性特效必须包含ParticleSystem。退出练习场销毁模板、飞行物、特效并释放已有资源句柄。
+- 客户端禁用克隆上的Collider/Rigidbody物理碰撞和粒子碰撞/触发模块，避免与服务器权威逻辑重复。用户已移除ProjectileMover与AutoDestroyPS演示脚本，运行时代码不再按脚本名称处理；后续资源也不应附带自主移动、碰撞生成特效或定时销毁脚本。
+- AddressByFileName使用真实文件名。本轮将四种弹丸的12个资源地址下划线改为空格，对应现有预制体：10101使用Projectile 10 / Hit 10 / Flash 10；10102使用6；40101使用1；40102使用14。仅修改资源地址，不调整技能数值。源表备份Temp/BrawlSkill.before-vfx-addresses.xlsx。
+- 实现入口：BrawlProjectilePresentation、BrawlProjectileVisualHelper、BrawlProjectileViewHelper；BrawlTrainingSession管理模板、配置和一次性特效。进入场景预加载完成后才接收弹丸表现。
+- 验证：配置/协议导出成功；dotnet build ET.sln通过，0错误、14个已有HybridCLR警告，30.92秒，日志Temp/BrawlProjectileVfx-build-final.log。首次ET0004已通过无状态表现适配器修复。Unity Refresh成功，Console错误查询为空；新增meta由Unity自动生成。未运行游戏测试。
+- 手测：两位英雄普攻撞墙/命中敌人出现击中特效；大招穿透连续目标时逐次播放击中特效且继续飞行；朝空地发射只在射程终点出现消失特效；切回大厅不遗留粒子。未启动Play或服务器，视觉效果由用户测试。
+
+## 最新增量：统一碰撞规则、弹丸结束通知（2026-10-15）
+
+本节优先于下方历史BlockMask/TargetMask、阻挡组件及“大招命中即销毁”的描述。
+
+- 已将雪莉10101/10102、柯尔特40101/40102接到CollisionRuleGroupId。BrawlSkill.xml注册BrawlCollisionRule分页，正式导出三端配置；最新源表已删除旧BlockMask/TargetMask列。其它未完成技能不补配置，缺失规则组时拒绝施放且不扣资源。
+- BrawlUnitLayer位值：Hero1、Monster2、Battle4、Tile8、Grass16、Destroyable32。英雄创建时赋Hero|Battle=5；NPC从UnitLayerMask/BlocksMovement读取。墙/木桶40且阻挡移动，劫匪6且不阻挡移动，水晶/出生点0。阵营沿用已有关系，不用标签推导敌友。
+- BrawlNPCBlockHelper现只校验/初始化NPC标签、几何和可选复活点组件，不再挂旧阻挡组件；类型1引用会明确报错。旧阻挡组件类型/配置文件暂保留但运行流程不再使用。移动限位直接读取BlocksMovement和Unit几何，死亡/Spawning单位不阻挡，英雄互相可重叠。原圆柱直径、矩形完整尺寸及Pivot规则不变。
+- 碰撞规则由配置读取，不硬编码组号。Required要求全部位、Excluded任一位排除、Relation=1敌对/2非敌对/3不限。同组匹配行的BlockProjectile和ApplyHitEvents分别取或；多个匹配行不会重复执行HitEvent组。施放前校验规则存在、位值合法、条件不矛盾、Lifetime非负有限，再扣弹药/大招储量。规则数组保存到施放计划并传给每枚弹丸。
+- 普攻组1：所有Tile仅阻挡；敌方Battle生效并阻挡。大招组2：Tile且无Destroyable只阻挡；Tile|Destroyable、Grass|Destroyable和敌方Battle生效且穿透。两种大招MaxHitCount=0，仍被不可摧毁地形墙挡住。有效命中次数与实际扣血区分；无敌目标仍匹配/产生接触，但不扣血或充能。
+- 最新导出参数：雪莉大招10102速度9、基础数值288、每级32、SuperChargeOnHit0.1、单轮5枚、7.67米/45度。柯尔特40102仍12枚/0.08333秒间隔/12米/宽1、速度10、数值320/32、回充0.1。两种大招复用各自已有发射器；雪莉描述中的击退尚未实现。
+- 地图编辑器和地图摆放不改。不可摧毁墙、草仍来自MapGrid；草在查询时视为Grass|Destroyable，墙视为Tile，阵营NeutralHostile。地形候选和单位候选共享规则与最近接触排序。水、空地、可穿弹障碍沿用当前不参与弹丸碰撞的行为。
+- 房间BrawlProjectileRoomComponent.ClearedGrass保存已清除草格索引，不改共享关卡配置；匹配生效且带正值Damage事件的弹丸可直接清草，无单位HP/死亡流程，不提供大招充能。逐弹丸HitTerrain去重；后续弹丸忽略已清除草。退出房间一起清理，不实现草重生。
+- 保留XZ连续扫掠、目标相对运动、圆/精确圆角扩张矩形、出生重叠检查、同距离墙优先。每枚弹丸每个单位/地形格最多处理一次；先近后远执行，死单位跳过。阻挡、MaxHitCount正上限、射程终点、Lifetime正值到期均可结束；Lifetime=0不计时。短寿命会裁剪本步路径，避免在寿命之后命中目标。
+- 新增BrawlProjectileNotice值记录和BrawlProjectileEvent协议。Kind=Impact1/End2；结束原因None0/Blocked1/HitLimit2/Range3/Lifetime4。事件包含房间内递增EventId、Tick、弹丸ID/配置ID/所有者ID、目标ID或TerrainIndex（无地形为-1）、位置、XZ法线、Blocked/Effective。Impact位置为弹丸接触表面的位置；End位置为弹丸中心，出生内部重叠法线约定取反飞行方向。
+- 同次接触只产生一次Impact，最终结束再产生一次End，Ended后不重复发送。End的Blocked/HitLimit只用于停止飞行/删除，不应额外播放自然消失特效；Range/Lifetime才可播放ExpireEffectPath。房间退出直接清理，不播放自然消失。终点仍保留一帧位置快照后删除，避免客户端提前消失。
+- G2C_BrawlProjectileSnapshot新增Events和完整ClearedGrass列表。客户端先检查EntryId/RoomId/Sequence，再按EventId去重；复制协议为独立值记录（不持有池化消息），等RenderTick到达再调用IBrawlProjectilePresentation.OnProjectileEvent/OnGrassCleared。入口为BrawlTrainingSession.ProjectilePresentation，默认null；客户端保存ClearedGrass供未来表现读取。新旧协议不兼容，需要双方重启使用同一次生成结果。
+- 用户明确本轮不做客户端表现：仍显示原Sphere；ModelPath/ImpactEffectPath/ExpireEffectPath已随源表导出但不加载播放，没有发射烟雾、动画、击中特效、消失特效，也不移除客户端草模型。服务器草已清除但画面仍可见属于本轮范围，不是地图未同步。后续接表现时使用通知和已清草集合。
+- 复活点来源不变：SpawnPoints按队伍顺序加载为NPC并绑定玩家，不往NPCIds重复刷。NPC原地重生和英雄复活流程保持不变。
+- 测试：新增Statesync_BrawlCollisionRules_Test及自建规则配置helper，覆盖阵营/标签、缺失组、草→木桶→敌人→地形墙的穿透顺序、非敌方穿过、死亡立即不阻挡、私有地形状态、事件去重、射程/寿命/命中次数结束及重复规则不重复伤害。迁移旧几何、NPC移动阻挡、发射器、大招、充能和生命周期配置测试；仅编译，未执行游戏测试。
+- 验证：ExcelExporter、Proto2CS成功；dotnet build ET.sln通过，0错误、14个已有HybridCLR警告，153.64秒。日志Temp/BrawlCollisionRules-export.log、Temp/BrawlCollisionRules-proto.log、Temp/BrawlCollisionRules-build.log。Unity Refresh请求超时，但随后工程引用已自动生成、Ping非Play/非编译、Console错误查询为空。没有手改csproj/meta，没有启动服务器或Play。
+
+手测顺序：
+1. 重启新服务器与客户端，分别用雪莉/柯尔特普攻打两种墙，弹丸被挡且不扣墙血；命中敌方作战单位扣血、消失并回充。
+2. 充满大招后释放：雪莉5枚扇形45度、柯尔特12枚连发。击碎木桶/可摧毁墙后同一枚弹丸继续飞行，经过敌人可继续命中，碰到地形墙停止。
+3. 检查死亡墙体立即解除移动阻挡，模型仍按DeathDuration稍后移除。复活后的阵营、标签、移动阻挡和弹药/充能规则应保持正常。
+4. 空地发射应在射程终点消失；无新增特效。草清除本轮需看客户端ClearedGrass/通知或调试服务器集合，画面草仍保留。
 
 ## 最新增量：柯尔特大招释放（2026-10-15）
 

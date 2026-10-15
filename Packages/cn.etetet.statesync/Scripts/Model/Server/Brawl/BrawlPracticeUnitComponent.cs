@@ -5,6 +5,8 @@ namespace ET.Server
     {
         public BrawlPracticeUnitKind Kind;
         public BrawlFaction Faction;
+        public BrawlUnitLayer UnitLayerMask;
+        public bool BlocksMovement;
         public BrawlNPCType NPCType;
         public float CollisionLength;
         public float CollisionWidth;

@@ -25,6 +25,7 @@ namespace ET.Server
             long now = units.Scene().GetComponent<BrawlLifecycleRoomComponent>().SimulationTime;
             if (kind != BrawlPracticeUnitKind.NPC)
             {
+                data.UnitLayerMask = BrawlUnitLayer.Hero | BrawlUnitLayer.Battle;
                 unit.AddComponent<BrawlSkillCastComponent>();
                 unit.AddComponent<BrawlAmmoComponent>();
                 unit.AddComponent<BrawlSuperChargeComponent>();
@@ -73,7 +74,7 @@ namespace ET.Server
                 data.CollisionPivot = new float2(npc.PivotX, npc.PivotZ);
                 death.Duration = BrawlUnitLifeHelper.Milliseconds(npc.DeathDuration);
                 death.RespawnDelay = BrawlUnitLifeHelper.Milliseconds(npc.RespawnDelay);
-                BrawlNPCBlockHelper.Attach(unit, npc, units.Fiber().GetSingleton<BrawlUnitComponentBlockConfigCategory>(),
+                BrawlNPCBlockHelper.Attach(unit, npc,
                     units.Fiber().GetSingleton<BrawlRespawnPointConfigCategory>());
             }
             unit.AddComponent<StateComponent>();

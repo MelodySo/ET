@@ -11,8 +11,10 @@ namespace ET.Server
             self.ConfigId = 0;
             self.OwnerUnitId = 0;
             self.Faction = default;
-            self.BlockMask = default;
-            self.TargetMask = default;
+            self.Rules = System.Array.Empty<BrawlCollisionRuleConfig>();
+            self.Lifetime = 0;
+            self.Age = 0;
+            self.HitTerrain.Clear();
             self.MaxHitCount = 0;
             self.HitCount = 0;
             self.EffectValue = 0;

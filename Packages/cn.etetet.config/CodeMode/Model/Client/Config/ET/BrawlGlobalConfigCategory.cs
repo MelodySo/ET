@@ -53,6 +53,26 @@ public partial class BrawlGlobalConfigCategory : Singleton<BrawlGlobalConfigCate
     /// 蓝方复活点NPC配置ID
     /// </summary>
     public int BlueRespawnPointNpcId => _data.BlueRespawnPointNpcId;
+    /// <summary>
+    /// 通用战斗相机到观察点的直线距离（米），大于0
+    /// </summary>
+    public float CameraDistance => _data.CameraDistance;
+    /// <summary>
+    /// 通用战斗相机X轴俯角（度），大于0且小于90
+    /// </summary>
+    public float CameraPitch => _data.CameraPitch;
+    /// <summary>
+    /// 通用战斗相机Y轴水平角（度），0朝世界正Z
+    /// </summary>
+    public float CameraYaw => _data.CameraYaw;
+    /// <summary>
+    /// 透视相机垂直FOV（度），大于0且小于179
+    /// </summary>
+    public float CameraFieldOfView => _data.CameraFieldOfView;
+    /// <summary>
+    /// 观察点相对主角原点的世界Y偏移（米）
+    /// </summary>
+    public float CameraTargetHeight => _data.CameraTargetHeight;
 
     public void ResolveRef()
     {

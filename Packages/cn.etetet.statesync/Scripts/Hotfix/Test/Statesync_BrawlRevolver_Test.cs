@@ -11,7 +11,7 @@ namespace ET.Test
         {
             await ETTask.CompletedTask;
             BrawlSkillConfig skill = new(40101, 40101, 6, 2, 1, 0, 0.16f, 3, 1.6f, 0.8f, 1, 1, 9, 0.7f, 0, 0, 0);
-            BrawlProjectileConfig config = new(40101, 0.04f, 7, 1, 1, 0, 10, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f);
+            BrawlProjectileConfig config = new(40101, 0.04f, 1, 0, 10, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f, 1);
             IBrawlSkillEmitter emitter = BrawlSkillEmitterHelper.Create(BrawlEmitterType.Revolver);
             BrawlProjectileLaunch[] launches = emitter.Emit(skill, config, 2);
             if (launches.Length != 6) return Fail(100901, "Revolver count must come from config.");
@@ -30,9 +30,11 @@ namespace ET.Test
             catch (ArgumentException) { }
 
             Fiber fiber = context.Fiber;
+            BrawlCollisionRuleConfigCategory oldRules = fiber.GetSingleton<BrawlCollisionRuleConfigCategory>();
             BrawlProjectileConfigCategory previousConfig = fiber.GetSingleton<BrawlProjectileConfigCategory>();
             try
             {
+                fiber.AddSingleton(BrawlCollisionTestHelper.Category());
                 fiber.AddSingleton(new BrawlProjectileConfigCategory(new Dictionary<int, BrawlProjectileConfig> { [config.Id] = config }));
                 using Scene scene = EntitySceneFactory.CreateScene(fiber.Root, IdGenerater.Instance.GenerateId(), SceneType.BrawlPractice, "RevolverTest");
                 UnitComponent units = scene.AddComponent<UnitComponent>();
@@ -81,7 +83,7 @@ namespace ET.Test
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 3000);
                 if (projectiles.Children.Count != 7) return Fail(100910, "Cancelled burst resumed after state removal.");
             }
-            finally { fiber.AddSingleton(previousConfig); }
+            finally { fiber.AddSingleton(previousConfig); fiber.AddSingleton(oldRules); }
             return ErrorCode.ERR_Success;
         }
 

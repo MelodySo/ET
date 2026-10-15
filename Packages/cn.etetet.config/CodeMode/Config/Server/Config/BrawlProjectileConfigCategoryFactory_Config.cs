@@ -21,15 +21,15 @@ public sealed class BrawlProjectileConfigCategoryFactory_Config : IConfigFactory
     {
         return new BrawlProjectileConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlProjectileConfig>()
         {
-            [ 10101 ] = new ET.BrawlProjectileConfig(10101, 0.05f, 7, 1, 1, 0f, 8f, 300, 30, 1, 0, 0, 0, 0, 0, 0.1f),
-            [ 10102 ] = new ET.BrawlProjectileConfig(10102, 0f, 0, 1, 0, 0f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f),
-            [ 10103 ] = new ET.BrawlProjectileConfig(10103, 0f, 0, 1, 0, 0f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f),
-            [ 10104 ] = new ET.BrawlProjectileConfig(10104, 0f, 0, 1, 0, 0f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f),
-            [ 20101 ] = new ET.BrawlProjectileConfig(20101, 0.05f, 7, 1, 1, 0f, 8f, 0, 0, 1, 0, 0, 0, 0, 0, 0f),
-            [ 100101 ] = new ET.BrawlProjectileConfig(100101, 1f, 7, 1, 0, 0f, 6f, 820, 82, 1, 0, 0, 0, 0, 0, 0f),
-            [ 30101 ] = new ET.BrawlProjectileConfig(30101, 0.3f, 0, 1, 0, 1f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f),
-            [ 40101 ] = new ET.BrawlProjectileConfig(40101, 0.04f, 7, 1, 1, 0f, 10f, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f),
-            [ 40102 ] = new ET.BrawlProjectileConfig(40102, 0.06f, 7, 5, 1, 0f, 10f, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f)
+            [ 10101 ] = new ET.BrawlProjectileConfig(10101, 0.05f, 1, 0f, 8f, 300, 30, 1, 0, 0, 0, 0, 0, 0.1f, 1),
+            [ 10102 ] = new ET.BrawlProjectileConfig(10102, 0.06f, 0, 0f, 9f, 288, 32, 1, 0, 0, 0, 0, 0, 0.1f, 2),
+            [ 10103 ] = new ET.BrawlProjectileConfig(10103, 0f, 0, 0f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f, 0),
+            [ 10104 ] = new ET.BrawlProjectileConfig(10104, 0f, 0, 0f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f, 0),
+            [ 20101 ] = new ET.BrawlProjectileConfig(20101, 0.05f, 1, 0f, 8f, 0, 0, 1, 0, 0, 0, 0, 0, 0f, 0),
+            [ 100101 ] = new ET.BrawlProjectileConfig(100101, 1f, 0, 0f, 6f, 820, 82, 1, 0, 0, 0, 0, 0, 0f, 0),
+            [ 30101 ] = new ET.BrawlProjectileConfig(30101, 0.3f, 0, 1f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f, 0),
+            [ 40101 ] = new ET.BrawlProjectileConfig(40101, 0.04f, 1, 0f, 10f, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f, 1),
+            [ 40102 ] = new ET.BrawlProjectileConfig(40102, 0.06f, 0, 0f, 10f, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f, 2)
         });
     }
 }

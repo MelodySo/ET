@@ -195,6 +195,8 @@ message BrawlProjectileState
     float Z = 6;
     float Radius = 7;
     int32 Faction = 8;
+    float DirectionX = 9;
+    float DirectionZ = 10;
 }
 
 // 房间所有在场弹丸的完整快照，缺席表示已移除；Sequence 区分同 Tick 多次释放。
@@ -205,4 +207,28 @@ message G2C_BrawlProjectileSnapshot // IMessage
     int64 Sequence = 3;
     int64 Tick = 4;
     repeated BrawlProjectileState Projectiles = 5;
+    repeated BrawlProjectileEvent Events = 6;
+    // 房间内已清除草格的完整集合；不修改客户端共享关卡配置。
+    repeated int32 ClearedGrass = 7;
+}
+
+// 独立事件ID去重；Tick用于客户端插值时间线。TerrainIndex=-1表示单位目标或结束事件。
+message BrawlProjectileEvent
+{
+    int64 EventId = 1;
+    int64 Tick = 2;
+    int64 ProjectileId = 3;
+    int32 ConfigId = 4;
+    int64 OwnerUnitId = 5;
+    int64 TargetUnitId = 6;
+    int32 TerrainIndex = 7;
+    int32 Kind = 8;
+    int32 EndReason = 9;
+    float X = 10;
+    float Y = 11;
+    float Z = 12;
+    float NormalX = 13;
+    float NormalZ = 14;
+    bool Blocked = 15;
+    bool Effective = 16;
 }

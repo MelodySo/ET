@@ -13,7 +13,7 @@ namespace ET
 {
     public sealed partial class BrawlNPCConfig : ET.Object
     {
-        public BrawlNPCConfig(int Id, int NPCType, int Faction, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues, float CollisionLength, float CollisionHeight, float CollisionWidth, float PivotX, float PivotZ, float DeathDuration, float RespawnDelay) 
+        public BrawlNPCConfig(int Id, int NPCType, int Faction, int BaseHp, int HpGrowthPerLevel, int MoveSpeedTier, int[] ComponentTypes, int[] ComponentValues, float CollisionLength, float CollisionHeight, float CollisionWidth, float PivotX, float PivotZ, float DeathDuration, float RespawnDelay, int UnitLayerMask, bool BlocksMovement) 
         {
             this.Id = Id;
             this.NPCType = NPCType;
@@ -30,6 +30,8 @@ namespace ET
             this.PivotZ = PivotZ;
             this.DeathDuration = DeathDuration;
             this.RespawnDelay = RespawnDelay;
+            this.UnitLayerMask = UnitLayerMask;
+            this.BlocksMovement = BlocksMovement;
             EndInit();
         }
 
@@ -58,7 +60,7 @@ namespace ET
         /// </summary>
         public readonly int MoveSpeedTier;
         /// <summary>
-        /// 组件类型数组<br/>1 阻挡<br/>2 复活点<br/>3<br/>4<br/>5<br/>6
+        /// 组件类型数组<br/>1 原阻挡组件（迁移到UnitLayerMask/BlocksMovement，本次移除墙桶引用）<br/>2 复活点
         /// </summary>
         public readonly int[] ComponentTypes;
         /// <summary>
@@ -93,6 +95,14 @@ namespace ET
         /// 死亡后重生时间<br/>（0代表不会再重生）
         /// </summary>
         public readonly float RespawnDelay;
+        /// <summary>
+        /// 逻辑标签位：Hero=1，Monster=2，Battle=4，Tile=8，Grass=16，Destroyable=32。组合按位或；40=可摧毁墙/木桶，6=劫匪，0=不参与当前战斗碰撞。
+        /// </summary>
+        public readonly int UnitLayerMask;
+        /// <summary>
+        /// 活着时是否阻挡英雄移动；死亡后不阻挡。与弹丸碰撞规则独立。
+        /// </summary>
+        public readonly bool BlocksMovement;
 
         public  void ResolveRef()
         {
