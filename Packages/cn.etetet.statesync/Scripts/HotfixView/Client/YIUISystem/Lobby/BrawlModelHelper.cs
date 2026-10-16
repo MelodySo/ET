@@ -23,6 +23,13 @@ namespace ET.Client
             GameObject instance = UnityEngine.Object.Instantiate(prefab, parent, false);
             instance.name = objectName;
             instance.transform.localPosition = position;
+            try { BrawlCharacterAnimationHelper.Bind(session, instance); }
+            catch
+            {
+                BrawlCharacterAnimationHelper.Release(session, instance);
+                UnityEngine.Object.Destroy(instance);
+                throw;
+            }
             return instance;
         }
 

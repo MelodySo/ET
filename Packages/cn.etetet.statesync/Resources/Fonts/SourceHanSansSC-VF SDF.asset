@@ -120,9 +120,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
   m_Name: SourceHanSansSC-VF SDF
   m_EditorClassIdentifier: 
-  hashCode: 1955701130
+  hashCode: 535905993
   material: {fileID: -8297355061565721830}
-  materialHashCode: -1291110422
+  materialHashCode: -1527853239
   m_Version: 1.1.0
   m_SourceFontFileGUID: 468d50dc8ba75254ba64b783080687b6
   m_SourceFontFile_EditorRef: {fileID: 12800000, guid: 468d50dc8ba75254ba64b783080687b6,

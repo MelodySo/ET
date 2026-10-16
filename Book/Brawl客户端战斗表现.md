@@ -1,13 +1,13 @@
 # Brawl 客户端战斗表现
 
-更新日期：2026-10-15。本文记录已确认方案、待讨论项与实施顺序；第四节另记录本轮已完成的 Animator 资源，运行时表现代码尚未接入。
+更新日期：2026-10-15。本文记录已确认方案、实施结果与待办。最新客户端待机／移动实现见第九节；第四节保留前次资源阶段记录。
 
 ## 当前工作限制与协作边界
 
-- 最新授权：可以修改资源、文档/Markdown，但仍不修改代码和配置。此次只创建自有 Animator/Override/Mask/槽位 Clip，并替换 `PBRDefault` 角色 Prefab 的 Animator Controller 引用；用户明确排除 `PBRMaskTint`。
-- 不进行配置/协议导出、编译或 Play 游戏测试。此次允许通过 UnityBridge 定向导入和只读检查这些资源，`.meta` 由 Unity 自动生成。
-- 用户正在让 dot 实现公牛 AI 与寻路，不介入或覆盖这部分工作，不主动给另一会话发送指令。
-- 本文的运行时代办不构成实施授权；解除代码限制后仍需检查最新代码及其他会话改动。
+- 最新授权：允许修改所需客户端代码、动画资源和本文档；此前“只讨论、不修改代码”的限制已解除。
+- 已实现固定武器映射、独立运行时 Override、待机／四向移动与轻量表现状态；后续授权新增扇形、矩形和圆形施法前预览（第十节）；不修改服务端、协议、Excel、AI／寻路、预测与碰撞。
+- 不启动服务器、不进入 Unity Play；实际观感由用户测试。PBRMaskTint、购买包控制器、原始 FBX 导入设置与武器启用状态保持不变。
+- 另一个会话的公牛 AI 与寻路工作保持原样，不主动给另一会话发送指令。
 - 摄像机、既有弹丸飞行/命中/消失特效等继续记录在 [Brawl开发交接.md](Brawl开发交接.md)，不搬迁、不重写。本文只说明新的角色/技能表现如何衔接。
 
 ## 一、资源核查记录与固定武器原则
@@ -24,7 +24,7 @@
 
 已确认的通用原则：角色当前拿什么武器，就先固定使用该武器及对应动作；不实现装备、运行时换武器或动态武器选择系统。
 
-武器选择有一处需在实施前确认：用户同时认可“雪莉使用现成霰弹枪＋Rifle02Stance”的候选方案，而核查时实际启用的是手枪。保留这两条记录；后续确认是否对雪莉进行一次固定资源调整，不擅自切换，也不扩展成换武器系统。
+历史候选记录（本轮已确定保留现有手枪，无需再次确认）：用户同时认可“雪莉使用现成霰弹枪＋Rifle02Stance”的候选方案，而核查时实际启用的是手枪。保留这两条记录；后续确认是否对雪莉进行一次固定资源调整，不擅自切换，也不扩展成换武器系统。
 
 ## 二、已确认的客户端职责
 
@@ -41,7 +41,7 @@
 | 全身接管 | 眩晕、击飞、击倒等 | 接管时停止不允许并行的普通动作 |
 | 附加效果 | 无敌等 | 优先颜色/闪烁/特效，不必独占动画状态 |
 
-客户端表现状态由每个单位/视图持有，不建立全局可变静态状态。具体组件和类划分等解除代码限制后再结合最新 ET 结构确定。
+客户端表现状态由每个单位/视图持有，不建立全局可变静态状态。本轮的数据归属与代码位置见第九节。
 
 ## 三、移动与朝向规则
 
@@ -200,7 +200,7 @@
 
 ## 八、后续建议顺序与验收重点
 
-以下运行时代码仍仅为排期建议，代码限制解除前不得执行；共享 Animator 资源骨架已按本轮单独授权创建：
+以下为历史排期建议；本轮明确只执行待机／移动基础，实际范围以第九节为准：
 
 1. 确认雪莉最终固定武器；在已创建的 Animator/Mask/槽位基础上补全每个英雄的运行时动画映射。
 2. 雪莉待机、四向移动、普通朝向、基础死亡动作，保留已有服务器权威位移。
@@ -215,3 +215,89 @@
 - 2026-10-15：首次整理用户确认的角色状态、动画分层、技能指示器和朝向规则；记录代码/配置暂停限制。
 - 首次整理只创建本文档，未改代码、配置、资源或原交接文档；未编译、未运行测试。
 - 2026-10-15 后续资源授权：新增三层 Animator、默认 Override、上半身 Mask、24 个独立槽位；只替换 21 个 PBRDefault Prefab 的 Controller 引用。代码/配置仍未改动，MaskTint 不在本轮范围内；未运行游戏测试。
+
+## 九、客户端角色移动表现实现（2026-10-15）
+
+### 本轮完成范围与接入位置
+
+- 沿用现有 BrawlModelHelper / BrawlTrainingSession 资源加载、句柄缓存和清理流程；没有新增资源加载框架、Excel 字段或协议。
+- ModelView 的 `BrawlCharacterAnimationView` 保存 Animator、模板、独立运行时 Override、速度采样、显示速度、面向和未来技能锁向标志。会话 `CharacterAnimations` 持有实例，练习赛 `BrawlPracticeUnitView.Animation` 引用该数据。
+- HotfixView 的 `BrawlCharacterAnimationHelper` 执行绑定、重置、更新、释放。`BrawlModelHelper.InstantiateModel` 在加载后绑定，覆盖本地训练场静态待机与练习赛玩家／Bot。武器上的 Animator 不当作角色 Animator；无三层角色契约的墙、木桶等正常跳过，所有模型 Animator 仍关闭 Root Motion。
+- 每个角色创建 `new AnimatorOverrideController(template.runtimeAnimatorController)`，从模板取得原始 BrawlSlot 键，再一次 `ApplyOverrides`。共享默认 Override 和角色模板均不在运行时修改，不每帧替换 Clip。
+- `BrawlPracticeMovementViewHelper.Update` 在写入插值位置后采样世界显示位移／本帧 unscaled delta。顶墙、断流停在最后快照时，无位移就回待机；不使用摇杆或协议 MoveDirection 判断是否播放跑动。
+- 正常移动时面向实际显示位移，停止保留最后朝向；以实际显示朝向的逆旋转把世界移动方向转为 MoveX/Z，保留模型原始旋转偏移。转身为纯视觉平滑，不能修改权威方向、位置、速度、碰撞。技能准备瞄准仍不调用转身。
+- MoveX/Z 平滑时间 0.08 秒、转身速度 720 度／秒、静止阈值 0.02 米／秒，均为 Helper 内纯视觉调校常量。播放倍率按实际显示速度／角色配置 MoveSpeedTier 归一化，限制在 0.1–2；静止恢复倍率 1，避免冻结待机。此倍率不是动画测量出的真实步幅，脚滑仍需观感调校。
+- 首次加载、出生隐藏／显示切换、重建视图、插值时间线追赶重置均清空采样。帧间隔超过 0.25 秒或单帧位移超过参考速度×0.25 秒时，按不连续位置重置处理，避免把跳点播放成奔跑。未来明确的位置重置入口应主动调用 Reset；当前无新增瞬移协议。
+- Reset 明确归零两个动作层权重、清除全部旧 Trigger、恢复移动参数与动作倍率，并在 Animator 激活时切回 Move／Empty。Empty 无 Motion 和 Write Defaults Off 不承担姿态清理职责。
+- 当前只播放 Locomotion；出生仍沿用服务器 Spawning 隐藏人物，死亡仍沿用服务器名单保留／移除模型。没有实现死亡、受控或攻击动画，也没有客户端战斗结果判定。
+- `SetFacing` 只是未来成功施法表现事件的接入口；尚无调用方，不以请求、瞄准或弹丸数量推断成功动作。FacingLocked 与显示速度独立，后续连发结束／中断需由确认事件解除。
+- 服务器移除角色、视图重建、加载取消、会话退出时释放运行时 Override；模型与资源句柄继续由原流程销毁／释放。
+
+### 固定武器映射资源
+
+- 编辑器入口：`Brawl/Animation/Build Character Locomotion Mappings`，代码在 `Packages/cn.etetet.brawl/Scripts/Editor/Share/BrawlCharacterAnimationEditor.cs`。
+- 工具检查 PBRDefault 的实际启用对象，左右双持归同类；对应购买包原控制器读取 Clip，不按英雄名字选武器。多种不同武器同时启用会报错，要求人工确认。
+- 模板位置：`Packages/cn.etetet.brawl/Assets/Animation/BrawlCharacter/Characters/<Prefab名>.overrideController`，各 Prefab 的角色 Animator 直接引用模板，YooAsset 随 Prefab 依赖加载，无新增收集规则。
+- 本轮替换 `Idle / MoveForward / MoveBackward / MoveLeft / MoveRight` 五个槽位为相应套装的 `IdleBattle01 / RunFWD / RunBWD / RunLeft / RunRight`，均需为循环、非 RM Clip。
+- 其余 19 个动作槽位仍保留默认编辑占位映射，层权重关闭，不能据此宣称所有英雄的攻击／死亡握持已经完成。后续动作接入前必须补充对应映射和退出规则。
+- 雪莉 BasicFemaleDefault 保留 Pistol／HandGunStance；公牛 SalarymanDefault 使用现有 Shotgun／Rifle02Stance。未切换任何武器。
+- 具体逐模型报告生成到 `Temp/BrawlCharacterAnimation-mappings.txt`，包含实际武器、源控制器和五个 Clip 文件名。
+
+### 验证范围与剩余事项
+
+- 编辑器映射菜单执行成功：21 个角色各有五个有效循环移动 Clip；每个模板保留 24 个独立 BrawlSlot 键；临时创建两个运行时 Override 并修改其中一个，确认另一实例与模板不受影响。报告为 `Temp/BrawlCharacterAnimation-mappings.txt`。
+- 21 个 PBRDefault Prefab 最终均只有一行 Controller 引用变更；去除了 Unity SavePrefabAsset 产生的无关序列化升级。工具已改为仅替换控制器引用文本后由 Unity 导入。MaskTint、默认共享 Override、基础 controller、原始动画与武器状态没有修改。
+- 新脚本及映射资源的 `.meta` 由 Unity 生成，工程引用已自动刷新，没有手改 `.csproj`；ModelView 只保存数据，HotfixView 执行表现，未新增包依赖或全局可变静态状态。异步加载后的组件从现有 EntityRef 重新获取，未新增跨 await 的 Entity 持有。
+- `dotnet build ET.sln` 通过：0 错误、14 个已有 HybridCLR CS0649 警告，耗时 82.79 秒。日志 `Temp/BrawlCharacterAnimation-build.log`。`git diff --check` 通过；没有提交 Git。
+- 编辑器中途退出后已重新打开；按用户要求未继续排查机器资源／崩溃原因。资源验证与编译均在重启后完成，没有启动服务器或进入 Play。
+- 未运行服务器、Unity Play、联网战斗或自动化游戏用例。所有英雄握持、转身速度、脚滑、侧跑过渡仍需用户观察。
+- 后续：成功施法通知、技能锁向时间线、攻击／装填／死亡／受控动作、瞄准指示器、音效及枪口特效按前文规则另行实现；不增加冲刺／跳跃玩法。
+
+### Unity 手动验证
+
+1. 完成编译后由用户启动现有服务器，从 Init 登录，选择雪莉进入服务器练习赛。出生显示后应播放手枪战斗待机；公牛 Bot 应采用霰弹枪待机／跑动套装。
+2. WASD／移动摇杆分别直行、斜行、转弯、停止；人物应朝实际位移方向平滑转身，停下保留最后面向。转身期间可出现侧跑／后退混合，正常转向完成后回前跑。当前没有技能锁向，不能用技能拖动来测试持续侧跑。
+3. 持续推向不可通过的墙：无实际位移时短暂过渡后待机；沿墙斜推发生滑动时按实际滑动方向移动。松手保持待机，不应原地持续跑。
+4. 观察 Bot：其现有 AI 产生位移就跑、停止或顶墙不产生位移就待机。AI 决策和寻路问题仍由另一个会话处理；本轮动画不改变路径。
+5. 拖动普攻／大招摇杆但不释放：人物不因瞄准自动转身。释放也尚无新增射击动画；保持本轮动作层权重 0。
+6. 死亡并等待服务器复活：旧模型移除、新模型出生隐藏后出现，不能继承旧速度和 Trigger。退出再进、切换雪莉／其他英雄、本地训练场待机，检查武器套装及无残留模型／Override。
+7. Play 时选中角色 Animator：Locomotion/UpperBody/FullBody 权重为 1/0/0，MoveX/Z 静止趋零，LocomotionSpeed 静止为 1，Apply Root Motion 为关闭；玩家和 Bot 的 controller 名含各自实例名与 Runtime。
+## 十、施法前范围指示区域（2026-10-15）
+
+本轮继续授权实现技能预览：扇形、矩形接现有技能，圆形实现绘制能力但不新增技能或修改配置。
+
+- 参考资源位于 `Assets/WalldoffStudios/AimIndicators`。本轮借鉴平面形状、透明填充与轮廓思路，自行实现 Brawl Shader／表现代码，不引用 WalldoffStudios 的运行时类、Joystick、Controller 或 Physics 遮挡截断。
+- `BrawlSkillRangeType.Rectangle=1`：Param1 为前向长度，Param2 为完整宽度，起点在人物脚下，左右各一半宽度。`Sector=2`：Param1 为半径，Param2 为完整夹角（度），方向位于角平分线。`Circle=3`：Param1 为半径，中心使用传入 Origin；本轮没有圆形技能、选点施法或投掷落点规则。
+- 当 `SkillCastRangeType=0` 时读取 SkillRangeType／SkillRangeParam1/2，和当前雪莉／柯尔特发射器一致。独立施放范围类型1支持矩形，读取实际生成字段 SkillCastParam1/2；类型2在该枚举中是抛物线，不是扇形，本轮隐藏，不误画。其他未知、非法、非有限或非正尺寸也隐藏。
+- 普攻／大招各持有一个 `BrawlSkillAimVisual`，会话管理四顶点 Mesh、MeshRenderer 和 MaterialPropertyBlock。只有形状／尺寸变化时重建四顶点承载面，Shader 裁出轮廓；拖动只更新世界位置与旋转，没有每帧新建 Mesh 或 Material。运行时 Mesh 随会话释放，材质随原模型资源句柄管理。
+- `IBrawlSkillAimPreview` 沿用 ShowOrUpdate／Hide 入口，签名新增显式 BrawlTrainingSession 参数，与既有弹丸表现的无状态适配器模式一致。实现为 `BrawlSkillAimPreview` → `BrawlSkillAimVisualHelper`，ModelView 仅保存资源数据，HotfixView 处理逻辑。
+- 加载入口仍为 BrawlTrainingHelper，通过 BrawlModelHelper／DefaultPackage 预加载 `BrawlSkillAimPreview` Prefab；路径为 `Packages/cn.etetet.brawl/Bundles/Prefabs/Presentation/BrawlSkillAimPreview.prefab`。材质在同目录，Shader 在 `Packages/cn.etetet.brawl/Assets/Shaders/BrawlSkillAimPreview.shader`。既有 BrawlPrefabs/CollectPrefab 收集器自动带上依赖，无新增配置、无 Shader.Find 打包依赖风险。
+- 自有材质使用 URP Unlit、透明混合、ZWrite Off、ZTest LEqual、双面渲染，平面抬高0.04米减少地面闪烁。普攻浅蓝白，大招金色；材质默认边线0.06米、填充透明度0.14、边线透明度0.85，可在材质中调校。普通场景遮挡仍生效，不承诺穿透所有场景物体显示。
+- 预览立即响应相机转换后的本地瞄准方向，原点每帧使用插值后角色显示位置；不转人物、不发准备协议、不产生伤害或碰撞，不把预览可见当作服务器允许施法。
+- 沿用既有手势：按住并拖出死区显示，回死区／松手／取消／失焦隐藏；没有拖出死区的点按仍按既有移动方向释放，不额外显示常驻范围。支持普攻／大招独立实例。
+- 接收到当前英雄 Dead／Spawning、模型隐藏或 MyUnitId 更换时取消旧手势和预览，旧实体的拖动不会在新实体上继续释放；退出时释放资源。本轮只依据已收到的状态清理界面，服务器仍最终验证技能。
+- 完整显示配置范围，不做遇墙截断，不缩短半径抵消弹丸尺寸。不创建 Collider、不做射线碰撞，也未改变权威移动、弹道、AI、寻路和其他会话内容。
+
+验证：Unity 资源菜单成功并输出 BRAWL_SKILL_AIM_ASSET_PASS，URP Shader 无导入错误，材质／Prefab 引用和无 Collider 契约检查通过；新增 meta 与工程引用由 Unity 生成。dotnet build ET.sln 成功，0 错误、14 个已有 HybridCLR CS0649 警告，耗时65.07秒，日志 Temp/BrawlSkillAim-build.log。git diff --check 通过。没有启动服务器、进入 Unity Play 或执行联网游戏测试，三种形状的实际画面尚未实测。
+
+用户手测：
+1. 雪莉普攻／大招拖出死区：看到不同配置角度的扇形；旋转拖动方向时指示区域即时跟随，人物不因准备瞄准转身。
+2. 柯尔特普攻／大招拖出死区：显示对应长度、宽度的矩形；前端随配置范围变化，不能把宽度误当半宽。
+3. 一边移动一边瞄准，原点应跟着画面人物，不跳到最新服务器位置；回死区、松手和切到其他窗口都隐藏。
+4. 拖动时被击杀、等待重生、退出重进，检查没有残留范围和旧拖动。墙前瞄准不做范围截断；场景遮挡遵循材质深度测试。
+5. 圆形暂时没有业务入口，不为了验证改 Excel 或新增技能。未来 SkillRangeType=3 且 SkillCastRangeType=0 时，按 SkillRangeParam1 半径绘制原点圆；目标中心选择规则需随对应技能另行接入。
+## 十一、按动画原生步幅匹配移动速度（2026-10-16）
+
+本节覆盖第九节的“非RM移动Clip、实际速度除以MoveSpeedTier、倍率限制0.1–2”方案。用户反馈滑步后，改用动画根位移速度作为倍率分母。
+
+- 移动层已有 `LocomotionSpeed`，绑定到 `Locomotion.Move` 的状态速度参数；不修改全局 Animator.speed，也不改变攻击层速度。
+- 非RM四向动画的 AnimationClip.averageSpeed 为0；对应RM版本有有效根位移速度，周期与原非RM动作相同、均循环。21个自有角色Override的四个移动槽位改为相应RM版本，Idle与其余预留动作不变；购买包FBX／导入设置不改。
+- 游戏运行时仍始终 `applyRootMotion=false`。采用RM版本是为了读取原始步幅速度并播放对应动作，角色位置仍由现有服务器快照插值驱动，没有移动预测或动画位移反馈。
+- `n` 仍为插值后实际显示位移／帧时间，单位米／秒；`m` 来自四向移动Clip的原始平均根位移速度，经当前移动Clip权重混合、Avatar.humanScale和实例Transform缩放换算为水平米／秒；`LocomotionSpeed=n/m`。不再用英雄配置移速当分母，也不再限制为0.1–2。
+- 从Animator读取的是Clip混合权重，不使用已经受播放倍率影响的Animator平均速度作分母，避免反馈振荡。Idle不参与移动权重归一化，避免起步时移动权重小导致除数接近0；尚未有有效Clip权重时按当前局部移动方向混合四向速度。静止倍率恢复1，MoveX/Z仍平滑归零。
+- BrawlCharacterAnimationView保存四向原始速度、复用的AnimatorClipInfo列表及NativeMoveSpeed／PlaybackSpeed。旧ReferenceMoveSpeed改名PositionResetSpeed，仅保留位置跳变判断用途，不参与播放倍率。
+- 编辑器菜单 `Brawl/Animation/Inspect Motion Speeds` 输出 `Temp/BrawlAnimation-motion-speeds.txt`；`Verify Root Motion Scale` 在临时预览场景中手动求值，不进入Play、不修改场景实例，输出 `Temp/BrawlAnimation-motion-scale.txt`。
+- 实测雪莉 BasicFemaleDefault 与公牛 SalarymanDefault 前跑：Clip速度约7.9009，Avatar.humanScale约0.5142、实例缩放1，实际根位移采样约4.0650米／秒。不能直接把7.9009当该模型的米／秒。该值不是代码常量，其他角色与方向从各自资源读取。
+- 起停混合、急转身、重定向脚型仍可能有残余脚滑；此方案匹配周期平均步幅，不等于脚部IK或逐帧足底锁定。
+
+验证：21个角色的84个移动槽位均已切换为同套、同周期的循环RM动画。雪莉／公牛临时预览采样4.0650米／秒，按Clip×Avatar×Transform计算4.0626米／秒，误差约0.06%；关闭Root Motion后连续求值一周期，模型位置保持不变。没有进入Play或启动服务器。dotnet build ET.sln 本次未完整通过：dotnet.exe进程38792占用Bin/ET.Core.dll，复制重试10次后报MSB3027／MSB3021；共2个复制错误，24个警告（含重试与原HybridCLR警告），耗时40.30秒。日志Temp/BrawlAnimation-speed-build.log。未擅自停止服务器，需用户停止后补跑完整构建。游戏观感仍由用户验证：直线匀速时脚步应明显更贴地；滑墙减速时步频随实际速度降低；顶墙无位移时回待机；Bot复用同样规则。检查Animator的Apply Root Motion仍关闭，LocomotionSpeed随n/m变化，松手后为1。

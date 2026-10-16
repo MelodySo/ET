@@ -76,6 +76,8 @@ namespace ET.Client
                 if (practice && !session.CancelRequested)
                 {
                     await BrawlProjectileVisualHelper.Preload(session, projectileConfigs);
+                    if (!session.CancelRequested && !session.Closing) await BrawlSkillAimVisualHelper.Initialize(session);
+                    if (!session.CancelRequested && !session.Closing) session.SkillAimPreview = new BrawlSkillAimPreview();
                     if (!session.CancelRequested && !session.Closing) session.ProjectilePresentation = new BrawlProjectilePresentation();
                 }
                 if (!session.CancelRequested)
@@ -387,6 +389,8 @@ namespace ET.Client
             catch (Exception exception) { Log.Error(exception); }
             finally
             {
+                BrawlSkillAimVisualHelper.Clear(session);
+                BrawlCharacterAnimationHelper.Clear(session);
                 foreach (AssetHandle modelHandle in session.ModelHandles.Values)
                     if (modelHandle.IsValid) modelHandle.Release();
                 session.ModelHandles.Clear();

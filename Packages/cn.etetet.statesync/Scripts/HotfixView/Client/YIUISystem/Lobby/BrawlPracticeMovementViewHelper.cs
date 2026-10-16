@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ET.Client
 {
-    /// <summary>只发送意图与插值服务器快照，不做本地移动预测，也不驱动 Animator。</summary>
+    /// <summary>只发送意图与插值服务器快照，不做本地移动预测，在插值后驱动纯客户端动画。</summary>
     public static class BrawlPracticeMovementViewHelper
     {
         public static void Update(BrawlTrainingSession session)
@@ -36,6 +36,7 @@ namespace ET.Client
                     position = Vector3.Lerp(first.Position, second.Position, t);
                 }
                 view.Model.transform.localPosition = position;
+                BrawlCharacterAnimationHelper.Update(view.Animation, delta);
             }
         }
 
@@ -85,7 +86,8 @@ namespace ET.Client
                     break;
                 }
             }
-            if (first || message.Tick - session.RenderTick > BrawlMovementSettings.MaxCatchUpTicks)
+            bool resetTimeline = first || message.Tick - session.RenderTick > BrawlMovementSettings.MaxCatchUpTicks;
+            if (resetTimeline)
                 session.RenderTick = message.Tick - BrawlMovementSettings.InterpolationDelayTicks;
             foreach (BrawlMoveState info in message.Units)
             {
@@ -93,6 +95,7 @@ namespace ET.Client
                 foreach (BrawlPracticeUnitView view in session.PracticeUnits)
                 {
                     if (view.UnitId != info.UnitId) continue;
+                    if (resetTimeline) BrawlCharacterAnimationHelper.Reset(view.Animation);
                     if (first) view.Samples.Add(new BrawlPositionSample { Tick = message.Tick - BrawlMovementSettings.InterpolationDelayTicks, Position = view.Position });
                     view.Position = new Vector3(info.X, view.Position.y, info.Z);
                     view.MoveDirection = new Vector2(info.MoveX, info.MoveZ);

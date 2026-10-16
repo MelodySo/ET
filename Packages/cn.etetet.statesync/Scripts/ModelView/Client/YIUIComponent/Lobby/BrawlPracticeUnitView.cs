@@ -26,6 +26,7 @@ namespace ET.Client
         public Vector2 FacingDirection;
         public string ModelPath;
         public GameObject Model;
+        public BrawlCharacterAnimationView Animation;
         public bool Removed;
         public bool ModelLoading;
         public bool ModelLoadFailed;

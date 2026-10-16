@@ -61,7 +61,15 @@ namespace ET.Client
 
         private static bool CanInteract(BrawlTrainingSession session)
         {
-            return !session.Loading && !session.Closing && !session.CancelRequested && Application.isFocused;
+            if (session.Loading || session.Closing || session.CancelRequested || !Application.isFocused ||
+                session.Hero == null || !session.Hero.activeInHierarchy || session.SkillAimUnitId != session.MyUnitId) return false;
+            foreach (BrawlPracticeUnitView view in session.PracticeUnits)
+            {
+                if (view.UnitId != session.MyUnitId) continue;
+                return !(view.States.TryGetValue(StateId.Dead, out bool dead) && dead) &&
+                    !(view.States.TryGetValue(StateId.Spawning, out bool spawning) && spawning);
+            }
+            return false;
         }
 
         private static void Add(EventTrigger trigger, EventTriggerType type, UnityEngine.Events.UnityAction<BaseEventData> action)
@@ -86,6 +94,11 @@ namespace ET.Client
 
         public static void Update(BrawlTrainingSession session)
         {
+            if (session.SkillAimUnitId != session.MyUnitId)
+            {
+                CancelAll(session);
+                session.SkillAimUnitId = session.MyUnitId;
+            }
             if (!CanInteract(session)) { CancelAll(session); return; }
             // 英雄在准备瞄准时仍可移动，预留表现原点每帧跟随英雄。
             UpdatePreview(session, session.NormalAttackJoystick);
@@ -98,12 +111,12 @@ namespace ET.Client
             bool visible = joystick.Aim.Active && math.lengthsq(joystick.Aim.Direction) > 0;
             if (!visible)
             {
-                if (joystick.PreviewVisible) session.SkillAimPreview?.Hide(joystick.Slot);
+                if (joystick.PreviewVisible) session.SkillAimPreview?.Hide(session, joystick.Slot);
                 joystick.PreviewVisible = false;
                 return;
             }
             joystick.PreviewVisible = true;
-            session.SkillAimPreview?.ShowOrUpdate(new BrawlSkillAimPreviewData
+            session.SkillAimPreview?.ShowOrUpdate(session, new BrawlSkillAimPreviewData
             {
                 Slot = joystick.Slot, SkillId = joystick.SkillId, Config = joystick.Config,
                 Origin = session.Hero != null ? session.Hero.transform.position : Vector3.zero,
@@ -114,8 +127,8 @@ namespace ET.Client
         public static void SetPreview(BrawlTrainingSession session, IBrawlSkillAimPreview preview)
         {
             // 替换表现实现前隐藏旧实例，不将范围对象留在场景里。
-            if (session.NormalAttackJoystick?.PreviewVisible == true) session.SkillAimPreview?.Hide(BrawlSkillSlot.NormalAttack);
-            if (session.SuperSkillJoystick?.PreviewVisible == true) session.SkillAimPreview?.Hide(BrawlSkillSlot.Super);
+            if (session.NormalAttackJoystick?.PreviewVisible == true) session.SkillAimPreview?.Hide(session, BrawlSkillSlot.NormalAttack);
+            if (session.SuperSkillJoystick?.PreviewVisible == true) session.SkillAimPreview?.Hide(session, BrawlSkillSlot.Super);
             session.SkillAimPreview = preview;
             Update(session);
         }
@@ -131,7 +144,7 @@ namespace ET.Client
             if (joystick == null) return;
             BrawlSkillAimHelper.Reset(joystick.Aim);
             joystick.PointerId = null;
-            if (joystick.PreviewVisible) session.SkillAimPreview?.Hide(joystick.Slot);
+            if (joystick.PreviewVisible) session.SkillAimPreview?.Hide(session, joystick.Slot);
             joystick.PreviewVisible = false;
             if (joystick.Handle == null) return;
             joystick.Handle.anchoredPosition = Vector2.zero;

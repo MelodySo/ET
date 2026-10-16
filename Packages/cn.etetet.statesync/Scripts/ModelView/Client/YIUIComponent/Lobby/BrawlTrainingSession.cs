@@ -44,6 +44,8 @@ namespace ET.Client
         public BrawlSkillJoystick NormalAttackJoystick;
         public BrawlSkillJoystick SuperSkillJoystick;
         public IBrawlSkillAimPreview SkillAimPreview;
+        public readonly Dictionary<BrawlSkillSlot, BrawlSkillAimVisual> SkillAimVisuals = new();
+        public long SkillAimUnitId;
         public readonly Dictionary<long, BrawlProjectileView> Projectiles = new();
         public readonly List<long> RemovedProjectiles = new();
         public Button NormalAttackButton;
@@ -62,6 +64,7 @@ namespace ET.Client
         public RectTransform JoystickBase;
         public RectTransform JoystickKnob;
         public readonly List<BrawlPracticeUnitView> PracticeUnits = new();
+        public readonly Dictionary<GameObject, BrawlCharacterAnimationView> CharacterAnimations = new();
         public readonly List<BrawlLifeNotice> LastLifeEvents = new();
         public readonly Dictionary<string, AssetHandle> ModelHandles = new();
         public GameObject Overlay;

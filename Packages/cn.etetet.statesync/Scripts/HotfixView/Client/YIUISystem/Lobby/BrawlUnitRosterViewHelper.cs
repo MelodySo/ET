@@ -40,6 +40,7 @@ namespace ET.Client
                 BrawlPracticeUnitView view = session.PracticeUnits[i];
                 if (present.Contains(view.UnitId)) continue;
                 view.Removed = true;
+                BrawlCharacterAnimationHelper.Release(session, view.Model);
                 if (view.Model != null) UnityEngine.Object.Destroy(view.Model);
                 session.PracticeUnits.RemoveAt(i);
             }
@@ -54,7 +55,11 @@ namespace ET.Client
                 if (view.Model != null)
                 {
                     bool spawning = view.States.TryGetValue(StateId.Spawning, out bool value) && value;
-                    if (view.Model.activeSelf == spawning) view.Model.SetActive(!spawning);
+                    if (view.Model.activeSelf == spawning)
+                    {
+                        view.Model.SetActive(!spawning);
+                        BrawlCharacterAnimationHelper.Reset(view.Animation);
+                    }
                     if (view.UnitId == session.MyUnitId) session.Hero = view.Model;
                 }
             }
@@ -66,16 +71,31 @@ namespace ET.Client
         {
             if (view.Removed || view.ModelLoading || view.Model != null) return;
             view.ModelLoading = true;
+            if (view.Animation != null)
+            {
+                BrawlCharacterAnimationHelper.Release(session, view.Animation.Model);
+                view.Animation = null;
+            }
             try
             {
                 GameObject model = await BrawlModelHelper.InstantiateModel(session, view.ModelPath, session.NPCRoot.transform,
                     $"{view.Kind}_{view.ConfigId}_{view.UnitId}", view.Position);
                 if (session.CancelRequested || session.Closing || view.Removed)
                 {
-                    if (model != null) UnityEngine.Object.Destroy(model);
+                    if (model != null) { BrawlCharacterAnimationHelper.Release(session, model); UnityEngine.Object.Destroy(model); }
                     return;
                 }
                 view.Model = model;
+                session.CharacterAnimations.TryGetValue(model, out view.Animation);
+                if (view.Animation != null)
+                {
+                    BrawlPracticeClientComponent client = session.MovementClient;
+                    if (view.Kind != BrawlPracticeUnitKind.NPC && client != null)
+                        view.Animation.PositionResetSpeed = Mathf.Max(0.01f,
+                            client.Fiber().GetSingleton<BrawlHeroConfigCategory>().Get(view.ConfigId).MoveSpeedTier);
+                    BrawlCharacterAnimationHelper.SetFacing(view.Animation,
+                        new Vector3(view.FacingDirection.x, 0, view.FacingDirection.y), false);
+                }
                 model.transform.localPosition = view.Position;
                 foreach (Animator animator in model.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
                 model.SetActive(!(view.States.TryGetValue(StateId.Spawning, out bool spawning) && spawning));
