@@ -35,6 +35,7 @@ namespace ET.Server
 
         public static void SendSnapshot(BrawlPracticeSessionComponent state)
         {
+            BrawlSkillUseNoticeHelper.Send(state);
             Scene room = state.Room;
             BrawlProjectileRoomComponent projectiles = room.GetComponent<BrawlProjectileRoomComponent>();
             using G2C_BrawlProjectileSnapshot snapshot = G2C_BrawlProjectileSnapshot.Create();

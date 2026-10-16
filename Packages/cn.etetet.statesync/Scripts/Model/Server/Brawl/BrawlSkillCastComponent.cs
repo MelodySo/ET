@@ -14,5 +14,9 @@ namespace ET.Server
         public float Height;
         public int ProjectileConfigId;
         public BrawlFaction Faction;
+        public long PresentationCastId;
+        public int SkillId;
+        public BrawlSkillSlot Slot;
+        public bool Sustained;
     }
 }

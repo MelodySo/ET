@@ -11,7 +11,7 @@ namespace ET.Server
         }
 
         public static void Start(Unit unit, BrawlProjectileLaunch[] launches, int configId, float2 direction,
-            float height, long now, long cooldown, BrawlSkillSlot slot = BrawlSkillSlot.NormalAttack, BrawlCollisionRuleConfig[] rules = null)
+            float height, long now, long cooldown, BrawlSkillSlot slot = BrawlSkillSlot.NormalAttack, BrawlCollisionRuleConfig[] rules = null, int skillId = 0)
         {
             BrawlSkillCastComponent cast = unit.GetComponent<BrawlSkillCastComponent>();
             cast.Rules = rules ?? BrawlCollisionRuleHelper.Resolve(unit.Fiber().GetSingleton<BrawlCollisionRuleConfigCategory>(),
@@ -21,6 +21,11 @@ namespace ET.Server
             else cast.NextNormalCastAt = checked(now + cooldown);
             cast.ProjectileConfigId = configId; cast.Direction = direction; cast.Height = height;
             cast.Faction = unit.GetComponent<BrawlPracticeUnitComponent>().Faction;
+            cast.SkillId = skillId; cast.Slot = slot;
+            cast.Sustained = false;
+            foreach (BrawlProjectileLaunch launch in launches)
+                if (launch.DelayMilliseconds > 0) cast.Sustained = true;
+            BrawlSkillUseNoticeHelper.Start(unit, now);
         }
 
         public static void Tick(Unit unit, BrawlLevelConfig level, int cellSize, long now)
@@ -29,6 +34,7 @@ namespace ET.Server
             if (cast.Launches == null) return;
             if (BrawlUnitLifeHelper.CannotAct(unit))
             {
+                BrawlSkillUseNoticeHelper.Record(unit, BrawlSkillUsePhase.Interrupted, now);
                 cast.Launches = null;
                 BrawlAmmoHelper.ResetClock(unit, now);
                 return;
@@ -39,6 +45,9 @@ namespace ET.Server
             float2 right = new float2(cast.Direction.y, -cast.Direction.x);
             while (cast.NextIndex < cast.Launches.Length && cast.Launches[cast.NextIndex].DelayMilliseconds <= now - cast.StartedAt)
             {
+                // 同一轮霰弹共享延迟：每轮仅通知一次，不按弹丸数播放攻击。
+                if (cast.NextIndex == 0 || cast.Launches[cast.NextIndex - 1].DelayMilliseconds != cast.Launches[cast.NextIndex].DelayMilliseconds)
+                    BrawlSkillUseNoticeHelper.Record(unit, BrawlSkillUsePhase.Fired, now);
                 BrawlProjectileLaunch launch = cast.Launches[cast.NextIndex++];
                 BrawlProjectile projectile = projectiles.AddChild<BrawlProjectile>();
                 projectile.ConfigId = config.Id; projectile.OwnerUnitId = unit.Id; projectile.Faction = cast.Faction;
@@ -57,6 +66,7 @@ namespace ET.Server
             }
             if (cast.NextIndex == cast.Launches.Length)
             {
+                BrawlSkillUseNoticeHelper.Record(unit, BrawlSkillUsePhase.Completed, now);
                 cast.Launches = null;
                 BrawlAmmoHelper.ResetClock(unit, now);
             }

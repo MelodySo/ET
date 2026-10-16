@@ -50,8 +50,12 @@ namespace ET.Test
                 BrawlAmmoHelper.Initialize(owner, skill, false, 1000);
                 BrawlLevelConfig level = new(1, 1, 20, 20, new int[400], Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 if (!BrawlAmmoHelper.TryConsume(owner, 1000)) return Fail(100911, "Full ammo failed to start burst.");
-                BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(1, 0), 0.6f, 1000, 800);
+                BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(1, 0), 0.6f, 1000, 800, skillId: skill.Id);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1000);
+                if (projectiles.SkillNotices.Count != 2 || projectiles.SkillNotices[0].Phase != BrawlSkillUsePhase.Started ||
+                    projectiles.SkillNotices[1].Phase != BrawlSkillUsePhase.Fired || !projectiles.SkillNotices[0].Sustained ||
+                    projectiles.SkillNotices[0].CastId != projectiles.SkillNotices[1].CastId)
+                    return Fail(100913, "Burst start and first fire notices are missing or mismatched.");
                 if (projectiles.Children.Count != 1 || BrawlSkillSequenceHelper.CanStart(cast, 1000))
                     return Fail(100904, "First shot must be immediate and active burst must reject a second cast.");
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1150);
@@ -73,7 +77,9 @@ namespace ET.Test
                 if (properties.GetFloat(PropertyId.Ammo) != 2) return Fail(100912, "Six shots must consume one ammo without reloading during the burst.");
                 if (projectiles.Children.Count != 6 || !BrawlSkillSequenceHelper.CanStart(cast, 1800))
                     return Fail(100908, "Sixth shot and cooldown must finish at 800ms.");
-                BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(0, 1), 0.6f, 1800, 800);
+                if (projectiles.SkillNotices.Count != 8 || projectiles.SkillNotices[7].Phase != BrawlSkillUsePhase.Completed)
+                    return Fail(100914, "A six-shot burst must publish start, six fires and completion.");
+                BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(0, 1), 0.6f, 1800, 800, skillId: skill.Id);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1800);
                 states.AddSource(StateId.Dead, -2);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 2000);
@@ -82,6 +88,17 @@ namespace ET.Test
                 states.RemoveSource(StateId.Dead, -2);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 3000);
                 if (projectiles.Children.Count != 7) return Fail(100910, "Cancelled burst resumed after state removal.");
+                if (projectiles.SkillNotices.Count != 11 || projectiles.SkillNotices[10].Phase != BrawlSkillUsePhase.Interrupted ||
+                    projectiles.SkillNotices[10].CastId == projectiles.SkillNotices[0].CastId)
+                    return Fail(100915, "Death must interrupt only the new cast and never resume it.");
+                projectiles.SkillNotices.Clear();
+                BrawlProjectileLaunch pellet = launches[0];
+                BrawlSkillSequenceHelper.Start(owner, new[] { pellet, pellet, pellet }, config.Id, new float2(0, 1),
+                    0.6f, 3000, 0, skillId: skill.Id);
+                BrawlSkillSequenceHelper.Tick(owner, level, 1, 3000);
+                if (projectiles.SkillNotices.Count != 3 || projectiles.SkillNotices[0].Sustained ||
+                    projectiles.SkillNotices[1].Phase != BrawlSkillUsePhase.Fired || projectiles.Children.Count != 10)
+                    return Fail(100916, "Simultaneous pellets must share one fire notice without changing projectile count.");
             }
             finally { fiber.AddSingleton(previousConfig); fiber.AddSingleton(oldRules); }
             return ErrorCode.ERR_Success;

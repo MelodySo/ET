@@ -30,6 +30,8 @@ namespace ET.Client
         public long AttackSequence;
         public long LastProjectileSnapshotSequence;
         public long LastProjectileEventId;
+        public long LastSkillUseEventId;
+        public readonly List<BrawlSkillUseNotice> PendingSkillUseEvents = new();
         public IBrawlProjectilePresentation ProjectilePresentation;
         public GameObject ProjectileTemplateRoot;
         public readonly Dictionary<string, GameObject> ProjectileTemplates = new();

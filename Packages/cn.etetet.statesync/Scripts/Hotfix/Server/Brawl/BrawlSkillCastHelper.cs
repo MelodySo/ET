@@ -66,7 +66,7 @@ namespace ET.Server
             catch (ArgumentException exception) { Log.Warning(exception.Message); return false; }
             bool consumed = slot == BrawlSkillSlot.Super ? BrawlSuperChargeHelper.TryConsume(unit) : BrawlAmmoHelper.TryConsume(unit, now);
             if (!consumed) return false;
-            BrawlSkillSequenceHelper.Start(unit, launches, config.Id, math.normalizesafe(direction), height, now, cooldown, slot, rules);
+            BrawlSkillSequenceHelper.Start(unit, launches, config.Id, math.normalizesafe(direction), height, now, cooldown, slot, rules, skill.Id);
             return true;
         }
 

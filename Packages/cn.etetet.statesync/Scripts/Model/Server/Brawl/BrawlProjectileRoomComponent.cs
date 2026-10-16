@@ -9,6 +9,9 @@ namespace ET.Server
         public long EventSequence;
         public long CurrentTick;
         public List<BrawlProjectileNotice> Notices = new();
+        public long SkillCastSequence;
+        public long SkillEventSequence;
+        public List<BrawlSkillUseNotice> SkillNotices = new();
         // 房间私有地形变更；共享关卡配置永远不修改。
         public HashSet<int> ClearedGrass = new();
         public List<long> PendingRemoval = new();

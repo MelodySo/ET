@@ -391,6 +391,7 @@ namespace ET.Client
             {
                 BrawlSkillAimVisualHelper.Clear(session);
                 BrawlCharacterAnimationHelper.Clear(session);
+                BrawlSkillUseViewHelper.Clear(session);
                 foreach (AssetHandle modelHandle in session.ModelHandles.Values)
                     if (modelHandle.IsValid) modelHandle.Release();
                 session.ModelHandles.Clear();

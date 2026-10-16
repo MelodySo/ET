@@ -10,6 +10,7 @@ namespace ET.Server
             self.Rules = System.Array.Empty<BrawlCollisionRuleConfig>();
             self.NextNormalCastAt = 0; self.NextSuperCastAt = 0;
             self.Direction = default; self.Height = 0; self.ProjectileConfigId = 0; self.Faction = default;
+            self.PresentationCastId = 0; self.SkillId = 0; self.Slot = default; self.Sustained = false;
         }
     }
 }

@@ -61,6 +61,8 @@ namespace ET.Client
                 }
             }
             character.runtimeAnimatorController = runtime;
+            // 购买包 AnimationEvent 不接入战斗反馈，本轮不播放枪口特效或声音。
+            character.fireEvents = false;
             character.updateMode = AnimatorUpdateMode.UnscaledTime;
             Reset(view);
         }
@@ -68,30 +70,148 @@ namespace ET.Client
         public static void Reset(BrawlCharacterAnimationView view)
         {
             if (view == null) return;
+            ResetSampling(view);
+            view.LifeInitialized = false;
+            view.ActiveCastId = 0;
+            view.LastCastId = 0;
+            view.Dead = false;
+            view.Spawning = false;
+            view.UpperActionPlaying = false;
+            view.SpawnActionPlaying = false;
+            view.FacingLocked = false;
+            if (view.Animator == null) return;
+            Animator animator = view.Animator;
+            view.WasActive = animator.isActiveAndEnabled;
+            animator.SetLayerWeight(0, 1);
+            ClearActionLayers(view);
+            animator.SetFloat("UpperActionSpeed", 1);
+            animator.SetFloat("FullBodyActionSpeed", 1);
+            if (animator.isActiveAndEnabled) animator.Play("Locomotion.Move", 0, 0);
+        }
+
+        public static void ResetSampling(BrawlCharacterAnimationView view)
+        {
+            if (view == null) return;
             view.HasPositionSample = false;
             view.DisplayVelocity = Vector3.zero;
             view.NativeMoveSpeed = 0;
             view.PlaybackSpeed = 1;
             view.MotionClips.Clear();
-            view.FacingLocked = false;
             if (view.Animator == null) return;
             Animator animator = view.Animator;
-            animator.SetLayerWeight(0, 1);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveZ", 0);
+            animator.SetFloat("LocomotionSpeed", 1);
+        }
+
+        private static void ClearActionLayers(BrawlCharacterAnimationView view)
+        {
+            Animator animator = view.Animator;
             animator.SetLayerWeight(1, 0);
             animator.SetLayerWeight(2, 0);
             foreach (AnimatorControllerParameter parameter in animator.parameters)
                 if (parameter.type == AnimatorControllerParameterType.Trigger) animator.ResetTrigger(parameter.nameHash);
-            animator.SetFloat("MoveX", 0);
-            animator.SetFloat("MoveZ", 0);
-            animator.SetFloat("LocomotionSpeed", 1);
-            animator.SetFloat("UpperActionSpeed", 1);
-            animator.SetFloat("FullBodyActionSpeed", 1);
+            view.UpperActionPlaying = false;
+            view.SpawnActionPlaying = false;
             if (animator.isActiveAndEnabled)
             {
-                animator.Play("Locomotion.Move", 0, 0);
                 animator.Play("UpperBody.Empty", 1, 0);
                 animator.Play("FullBody.Empty", 2, 0);
             }
+        }
+
+        public static void UpdateLife(BrawlPracticeUnitView unit, double renderTick)
+        {
+            while (unit.AnimationLifeSamples.Count > 0 && unit.AnimationLifeSamples[0].Tick <= renderTick)
+            {
+                var sample = unit.AnimationLifeSamples[0];
+                unit.DisplayDead = sample.Dead;
+                unit.DisplaySpawning = sample.Spawning;
+                unit.AnimationLifeSamples.RemoveAt(0);
+            }
+            BrawlCharacterAnimationView view = unit.Animation;
+            if (view == null || view.Animator == null || !view.Animator.isActiveAndEnabled) return;
+            Animator animator = view.Animator;
+            bool dead = unit.DisplayDead;
+            bool spawning = !dead && unit.DisplaySpawning;
+            if (!view.LifeInitialized || view.Dead != dead || view.Spawning != spawning)
+            {
+                ClearActionLayers(view);
+                ResetSampling(view);
+                view.FacingLocked = false;
+                view.ActiveCastId = 0;
+                view.LifeInitialized = true;
+                view.Dead = dead;
+                view.Spawning = spawning;
+                animator.SetFloat("FullBodyActionSpeed", 1);
+                if (dead || spawning)
+                {
+                    animator.SetLayerWeight(2, 1);
+                    animator.Play(dead ? "FullBody.FullDeath" : "FullBody.FullSpawn", 2, 0);
+                    view.SpawnActionPlaying = spawning;
+                }
+                return;
+            }
+            // Empty 无 Motion、Write Defaults Off，必须主动关闭覆盖层。
+            if (view.SpawnActionPlaying && animator.GetCurrentAnimatorStateInfo(2).IsName("FullBody.Empty") && !animator.IsInTransition(2))
+            {
+                animator.SetLayerWeight(2, 0);
+                view.SpawnActionPlaying = false;
+            }
+            if (view.UpperActionPlaying && Time.frameCount > view.UpperActionStartedFrame &&
+                animator.GetCurrentAnimatorStateInfo(1).IsName("UpperBody.Empty") && !animator.IsInTransition(1))
+            {
+                animator.SetLayerWeight(1, 0);
+                view.UpperActionPlaying = false;
+            }
+        }
+
+        /// <summary>只供已确认的成功施法事件调用；不从摇杆或弹丸数量推断攻击。</summary>
+        public static void PlayAttack(BrawlCharacterAnimationView view, bool super, Vector3 direction)
+        {
+            if (view == null || view.Animator == null || !view.Animator.isActiveAndEnabled ||
+                !view.LifeInitialized || view.Dead || view.Spawning) return;
+            foreach (AnimatorControllerParameter parameter in view.Animator.parameters)
+                if (parameter.type == AnimatorControllerParameterType.Trigger) view.Animator.ResetTrigger(parameter.nameHash);
+            SetFacing(view, direction, view.FacingLocked);
+            view.Model.transform.rotation = Quaternion.LookRotation(view.FacingDirection, Vector3.up) * view.ModelRotationOffset;
+            view.Animator.SetFloat("UpperActionSpeed", 1);
+            view.Animator.SetLayerWeight(1, 1);
+            view.Animator.Play(super ? "UpperBody.UpperSuperAttack" : "UpperBody.UpperNormalAttack", 1, 0);
+            view.UpperActionPlaying = true;
+            view.UpperActionStartedFrame = Time.frameCount;
+            RestoreMovementFacing(view);
+        }
+
+        public static void BeginCast(BrawlCharacterAnimationView view, BrawlSkillUseNotice notice)
+        {
+            if (view == null || !view.LifeInitialized || view.Dead || view.Spawning || notice.CastId <= view.LastCastId) return;
+            view.LastCastId = notice.CastId;
+            view.ActiveCastId = notice.CastId;
+            SetFacing(view, new Vector3(notice.DirectionX, 0, notice.DirectionZ), notice.Sustained);
+        }
+
+        public static void EndCast(BrawlCharacterAnimationView view, long castId, bool interrupted)
+        {
+            if (view == null || view.ActiveCastId != castId) return;
+            view.ActiveCastId = 0;
+            view.FacingLocked = false;
+            if (interrupted && view.Animator != null)
+            {
+                view.Animator.SetLayerWeight(1, 0);
+                foreach (AnimatorControllerParameter parameter in view.Animator.parameters)
+                    if (parameter.type == AnimatorControllerParameterType.Trigger) view.Animator.ResetTrigger(parameter.nameHash);
+                if (view.Animator.isActiveAndEnabled) view.Animator.Play("UpperBody.Empty", 1, 0);
+                view.UpperActionPlaying = false;
+            }
+            RestoreMovementFacing(view);
+        }
+
+        private static void RestoreMovementFacing(BrawlCharacterAnimationView view)
+        {
+            if (view.FacingLocked || view.Dead || view.Spawning || view.DisplayVelocity.sqrMagnitude <= IdleSpeed * IdleSpeed || view.Model == null) return;
+            view.FacingDirection = view.DisplayVelocity.normalized;
+            view.Model.transform.rotation = Quaternion.LookRotation(view.FacingDirection, Vector3.up) * view.ModelRotationOffset;
         }
 
         /// <summary>未来仅由成功施法表现事件调用，技能摇杆准备阶段不能调用。</summary>
@@ -109,15 +229,16 @@ namespace ET.Client
             bool active = view.Animator.isActiveAndEnabled;
             if (active != view.WasActive)
             {
-                Reset(view);
+                ResetSampling(view);
                 view.WasActive = active;
+                view.LifeInitialized = false;
             }
             if (!active) return;
             Vector3 position = view.Model.transform.position;
             if (!view.HasPositionSample || delta <= 0 || delta > MaxSampleInterval ||
                 Vector3.Distance(position, view.PreviousPosition) > view.PositionResetSpeed * MaxSampleInterval)
             {
-                Reset(view);
+                ResetSampling(view);
                 view.PreviousPosition = position;
                 view.HasPositionSample = true;
                 return;
@@ -127,7 +248,7 @@ namespace ET.Client
             view.PreviousPosition = position;
             view.DisplayVelocity = velocity;
             float speed = velocity.magnitude;
-            bool moving = speed > IdleSpeed;
+            bool moving = !view.Dead && !view.Spawning && speed > IdleSpeed;
             if (moving && !view.FacingLocked) view.FacingDirection = velocity / speed;
             Quaternion facing = Quaternion.LookRotation(view.FacingDirection, Vector3.up);
             view.Model.transform.rotation = Quaternion.RotateTowards(view.Model.transform.rotation,

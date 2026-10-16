@@ -232,3 +232,25 @@ message BrawlProjectileEvent
     bool Blocked = 15;
     bool Effective = 16;
 }
+
+// 服务器确认的技能表现事件，与请求序号、弹丸数量独立。
+message G2C_BrawlSkillUse // IMessage
+{
+    int64 EntryId = 1;
+    int64 RoomId = 2;
+    repeated BrawlSkillUseEvent Events = 3;
+}
+
+message BrawlSkillUseEvent
+{
+    int64 EventId = 1;
+    int64 CastId = 2;
+    int64 UnitId = 3;
+    int32 SkillId = 4;
+    int32 Slot = 5;
+    int64 Tick = 6;
+    int32 Phase = 7;
+    float DirectionX = 8;
+    float DirectionZ = 9;
+    bool Sustained = 10;
+}

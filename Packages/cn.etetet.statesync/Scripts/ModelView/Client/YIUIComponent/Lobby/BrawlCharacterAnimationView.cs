@@ -18,6 +18,14 @@ namespace ET.Client
         public bool HasPositionSample;
         public bool WasActive;
         public bool FacingLocked;
+        public bool LifeInitialized;
+        public bool Dead;
+        public bool Spawning;
+        public bool UpperActionPlaying;
+        public int UpperActionStartedFrame;
+        public long ActiveCastId;
+        public long LastCastId;
+        public bool SpawnActionPlaying;
         // 仅用于识别位置跳变，不再作为动画播放倍率分母。
         public float PositionResetSpeed = 1;
         public readonly Dictionary<AnimationClip, Vector3> MotionVelocities = new();

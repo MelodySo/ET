@@ -88,3 +88,9 @@
 - Statesync_BrawlCollisionRules_Test：自建规则组；阵营/标签匹配、缺组拒绝、穿草/木桶/敌人后被地形墙挡住、最近顺序、去重、死亡跳过、房间草隔离、Range/Lifetime/HitLimit结束原因和多规则只扣一次血。
 - 已迁移Statesync_BrawlNPCBlock_Test、BrawlProjectileCollision_Test、BrawlColtSuper_Test、BrawlRevolver_Test、BrawlProjectile_Test、BrawlSuperCharge_Test、BrawlLifecycle_Test的新配置/标签断言。柯尔特大招测试改为穿透已命中墙，不再要求命中即销毁。
 - 本轮仅通过dotnet build ET.sln编译，不自动运行用例、服务器或Unity Play。人工验证清单见Book/Brawl开发交接.md最新章节。
+
+## 角色动作通知（2026-10-16）
+
+- Statesync_BrawlRevolver_Test 增加成功开始/逐发/结束序列、死亡中断 CastId、同时多颗弹丸仅一个 Fired 的断言。
+- Statesync_BrawlColtSuper_Test 增加施法被拒绝无通知、成功通知的单位/技能/槽位、重复请求不生成新通知的断言。
+- 本轮不启动服务器或 Unity Play，运行测试未执行；客户端人工验证步骤见 Book/Brawl客户端战斗表现.md 第十二节。

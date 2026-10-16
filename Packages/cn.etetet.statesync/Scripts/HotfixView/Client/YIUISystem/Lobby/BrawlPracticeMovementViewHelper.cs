@@ -86,6 +86,14 @@ namespace ET.Client
                     break;
                 }
             }
+            foreach (BrawlPracticeUnitView view in session.PracticeUnits)
+            {
+                bool dead = view.States.TryGetValue(StateId.Dead, out bool deadValue) && deadValue;
+                bool spawning = view.States.TryGetValue(StateId.Spawning, out bool spawnValue) && spawnValue;
+                view.AnimationLifeSamples.Add((message.Tick, dead, spawning));
+                if (view.AnimationLifeSamples.Count > BrawlMovementSettings.MaxSnapshotHistory)
+                    view.AnimationLifeSamples.RemoveAt(0);
+            }
             bool resetTimeline = first || message.Tick - session.RenderTick > BrawlMovementSettings.MaxCatchUpTicks;
             if (resetTimeline)
                 session.RenderTick = message.Tick - BrawlMovementSettings.InterpolationDelayTicks;
@@ -95,7 +103,7 @@ namespace ET.Client
                 foreach (BrawlPracticeUnitView view in session.PracticeUnits)
                 {
                     if (view.UnitId != info.UnitId) continue;
-                    if (resetTimeline) BrawlCharacterAnimationHelper.Reset(view.Animation);
+                    if (resetTimeline) BrawlCharacterAnimationHelper.ResetSampling(view.Animation);
                     if (first) view.Samples.Add(new BrawlPositionSample { Tick = message.Tick - BrawlMovementSettings.InterpolationDelayTicks, Position = view.Position });
                     view.Position = new Vector3(info.X, view.Position.y, info.Z);
                     view.MoveDirection = new Vector2(info.MoveX, info.MoveZ);

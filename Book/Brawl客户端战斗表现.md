@@ -1,6 +1,6 @@
 # Brawl 客户端战斗表现
 
-更新日期：2026-10-15。本文记录已确认方案、实施结果与待办。最新客户端待机／移动实现见第九节；第四节保留前次资源阶段记录。
+更新日期：2026-10-16。本文记录已确认方案、实施结果与待办。出生／攻击／死亡及施法通知见第十二节，移动速度校准见第十一节；前文保留历史记录。
 
 ## 当前工作限制与协作边界
 
@@ -301,3 +301,66 @@
 - 起停混合、急转身、重定向脚型仍可能有残余脚滑；此方案匹配周期平均步幅，不等于脚部IK或逐帧足底锁定。
 
 验证：21个角色的84个移动槽位均已切换为同套、同周期的循环RM动画。雪莉／公牛临时预览采样4.0650米／秒，按Clip×Avatar×Transform计算4.0626米／秒，误差约0.06%；关闭Root Motion后连续求值一周期，模型位置保持不变。没有进入Play或启动服务器。dotnet build ET.sln 本次未完整通过：dotnet.exe进程38792占用Bin/ET.Core.dll，复制重试10次后报MSB3027／MSB3021；共2个复制错误，24个警告（含重试与原HybridCLR警告），耗时40.30秒。日志Temp/BrawlAnimation-speed-build.log。未擅自停止服务器，需用户停止后补跑完整构建。游戏观感仍由用户验证：直线匀速时脚步应明显更贴地；滑墙减速时步频随实际速度降低；顶墙无位移时回待机；Bot复用同样规则。检查Animator的Apply Root Motion仍关闭，LocomotionSpeed随n/m变化，松手后为1。
+## 十二、出生、攻击与死亡动作（2026-10-16）
+
+### 实现与边界
+
+- 未发现专用 Spawn/Appear/Birth 动画。21 个 PBRDefault 角色的 `FullSpawn` 使用其实际固定武器套装的 `IdleBattle01`，不把 PowerUp 强化动作当作出生。出生期间模型可见，业务上是否可攻击/移动仍以服务器状态为准。
+- `FullDeath` 使用各武器套装的非循环 `Die`；死亡时关闭上半身层、清理所有旧 Trigger，全身层权重为 1，播完保持末帧。模型移除、复活时机仍由服务器 roster 决定，不用动画完成触发战斗结果。
+- `UpperNormalAttack` 与 `UpperSuperAttack` 映射到实际武器源控制器的攻击 Clip。本阶段两槽位可以共用动作，但保持独立原始槽位；不是确认所有大招最终都用普通攻击动作。雪莉保持 Pistol/HandGun，公牛使用 Shotgun/Rifle02 的 ShootShotgun。
+- 攻击播放入口为 `BrawlCharacterAnimationHelper.PlayAttack`：上半身 Mask 覆盖，下半身继续移动；每次重播一周期，回到 Empty 后显式关闭层权重。出生/死亡会清理攻击。已接入 G2C_BrawlSkillUse 权威施法通知；动画入口不从输入或弹丸数量推测施法成功。
+- 用户本轮确认允许 UseSkill 类通知，新增 G2C_BrawlSkillUse / BrawlSkillUseEvent：EventId、CastId、UnitId、SkillId、Slot、Tick、方向、Sustained 与 Started/Fired/Completed/Interrupted 阶段。只扩展通知，不修改技能结算、AI、寻路或 Excel。
+- 不接枪口特效、声音；角色 Animator 的 AnimationEvent 派发关闭，避免购买包事件意外触发反馈。现有弹丸特效未改。
+- `AnimationLifeSamples` 将出生/死亡布尔状态按快照 Tick 缓冲，随 RenderTick 消费；新视图从初始 roster 恢复状态。现有 roster 移除仍立即执行，不新增尸体延迟保留机制。
+- `ResetSampling` 只清理移动采样，不再因追帧/位置跳变重播死亡或清除动作。`Reset` 用于完整视图初始化；运行时 Override 随视图释放。
+
+### 编辑器入口与资源位置
+
+入口均在 Unity 顶部 `Brawl` 菜单，不是独立运行时界面：
+
+| 菜单 | 用途 |
+| --- | --- |
+| Animation / Build Character Action Mappings | 按 Prefab 实际启用武器，生成/更新 21 个角色的移动、出生、攻击、死亡映射；旧 Build Character Locomotion Mappings 菜单保留为同一操作的兼容入口。 |
+| Animation / Inspect Motion Speeds | 输出移动 Clip 原始根位移速度，报告 `Temp/BrawlAnimation-motion-speeds.txt`。 |
+| Animation / Verify Root Motion Scale | 临时预览场景验证雪莉、公牛根位移缩放换算，不进入 Play；报告 `Temp/BrawlAnimation-motion-scale.txt`。 |
+| Presentation / Build Skill Aim Assets | 生成自有技能指示器 Prefab/材质，通常不需要每次运行。 |
+
+映射资源：`Packages/cn.etetet.brawl/Assets/Animation/BrawlCharacter/Characters/*.overrideController`。生成代码：`Packages/cn.etetet.brawl/Scripts/Editor/Share/BrawlCharacterAnimationEditor.cs`；报告 `Temp/BrawlCharacterAnimation-mappings.txt`。不修改 PBRMaskTint、购买包源控制器、FBX、武器开关或 Excel。
+
+### 客户端代码关系
+
+以下代码均位于 statesync 包的 Lobby 目录：
+
+- `BrawlModelHelper`：通过现有资源加载链实例化模型，绑定角色 Animator。
+- `BrawlUnitRosterViewHelper`：按服务器单位名单创建/移除视图，恢复生命周期状态；每个单位持有 `BrawlPracticeUnitView`。
+- `BrawlPracticeMovementViewHelper`：接收服务器快照、缓冲生命周期状态、插值显示位置，在实际显示位移后更新移动动画。
+- `BrawlCharacterAnimationView`（ModelView）：每角色独立 Override、速度采样、面向与动作状态的数据；没有战斗判定。
+- `BrawlCharacterAnimationHelper`（HotfixView）：批量绑定映射、三层权重与 Trigger 清理、出生/死亡/攻击动作入口、移动速度 n/m 换算、销毁释放。
+- 共享 `BrawlCharacter.controller` 管状态与层，各角色 Override 管 Clip，运行时为每个角色复制独立实例。移动方向、面向与瞄准方向保持分离。
+
+### 手动验证
+
+1. 正常启动客户端进入练习赛，确认出生阶段人物可见并保持当前武器待机，出生结束后能正常移动；动画不提前解除出生限制。
+2. 让玩家和公牛分别死亡，确认全身倒下、没有继续跑动或上半身攻击，死亡末帧保持到服务器移除；重生后无旧死亡姿态残留。
+3. 移动、停止、正面顶墙，确认移动倍率与待机切换没有回退；连续重进练习赛检查旧视图没有残留。
+4. 服务器加载本次代码与协议后验证攻击：包括无弹药拒绝不播放、一次霰弹仅播放一次、移动中攻击下半身继续移动、死亡打断攻击、无枪口特效。
+
+验证仅做编辑器资源生成、引用检查与编译；不由代理启动服务器或进入 Unity Play，实际观感由用户测试。
+
+### 施法通知链路与最新授权
+
+本小节覆盖前文“不修改服务器/协议”以及第五节“通知待设计”的本轮限制：用户确认需要 UseSkill 类服务器通知，现已实现最小事件链路。
+
+- 服务端 `BrawlSkillCastHelper.TryStart` 校验/扣资源成功后，把 SkillId 传给现有 `BrawlSkillSequenceHelper`。`BrawlSkillUseNoticeHelper` 只旁路记录通知：成功开始、每轮实际发射、完成或中断。相同发射延迟的一轮弹丸仅发一个 Fired，既有弹丸数量、时序、碰撞、伤害不变。
+- 事件缓存在现有房间组件，独立通过 `G2C_BrawlSkillUse` 发送；使用房间内单调 EventId 和 CastId。通知覆盖所有走公共施法入口的单位。当前练习房间只有一个真实连接，尚未实现多人房间成员广播。
+- 客户端 `G2C_BrawlSkillUseHandler -> BrawlSkillUseViewHelper -> BrawlCharacterAnimationHelper`。复制协议数据后排队，校验 EntryId/RoomId、EventId 去重，按 RenderTick 播放；结束/中断必须匹配 ActiveCastId。退出清队列，重建模型不重播旧动作。
+- 超过现有 MaxCatchUpTicks 的迟到开始/发射不补播；结束/中断仍消费以释放已有锁向。模型短暂未加载时暂存，超过窗口丢弃。此策略优先避免补播过时攻击，弱网下可能省略动作，弹丸与战斗结果仍以原有快照为准。
+- 连发开始锁定施放方向，实际 Fired 重播上半身动作，Completed 解锁但允许最后一段动作播完，Interrupted 立即关闭上半身层。死亡/出生优先清除动作和锁向。瞬发不维持动画时长锁向，正在移动时立即恢复实际移动朝向。
+- 当前公牛 AI 只有追逐，没有施法调用。本轮不添加 Bot 攻击行为；其出生、移动、死亡可验证，攻击表现复用入口需后续 AI 实际施法后验证。
+- 因为这次经授权新增了服务器通知，测试攻击需要服务器加载本次协议和代码；此前单纯移动动画改动不需要服务器重启。本轮不自动停止/重启服务器。
+- 扩展 `Statesync_BrawlRevolver_Test`：连发开始/逐发/完成、死亡中断与新 CastId、同轮多颗只发一次 Fired；扩展 `Statesync_BrawlColtSuper_Test`：拒绝不通知、成功身份/槽位正确、重复请求不追加成功事件。仅编译检查，未执行运行用例。
+### 本轮最终验证结果
+
+- 21 个角色的出生/攻击/死亡映射已由 Unity 生成并保存；24 个独立替换键、引用有效性与运行时 Override 实例隔离检查通过。默认共享 Override、MaskTint、原始动画导入设置未修改。
+- `dotnet build ET.sln` 最终成功：0 错误、14 个既有 HybridCLR CS0649 警告，耗时 54.54 秒。双端模型/逻辑、客户端 ModelView/HotfixView、Editor 与扩展测试代码均参与编译。日志：`Temp/BrawlAnimation-actions-final-build.log`。
+- 早期尝试遇到旧服务器进程锁 DLL；用户关闭服务器后最终构建成功。代理没有停止或启动服务器，没有进入 Unity Play，没有执行运行测试。出生、死亡姿态以及移动中上半身攻击的实际观感仍需人工验证。

@@ -16,6 +16,7 @@ namespace ET.Client
             {
                 present.Add(info.UnitId);
                 BrawlPracticeUnitView view = session.PracticeUnits.Find(v => v.UnitId == info.UnitId);
+                bool added = view == null;
                 if (view == null)
                 {
                     BrawlPracticeUnitKind kind = (BrawlPracticeUnitKind)info.Kind;
@@ -34,6 +35,11 @@ namespace ET.Client
                 view.SpawnCompleteAt = info.SpawnCompleteAt; view.DeathDestroyAt = info.DeathDestroyAt;
                 view.States.Clear();
                 foreach (BrawlStateValue value in info.States) view.States[(StateId)value.StateId] = value.Value;
+                if (added)
+                {
+                    view.DisplayDead = view.States.TryGetValue(StateId.Dead, out bool dead) && dead;
+                    view.DisplaySpawning = view.States.TryGetValue(StateId.Spawning, out bool spawning) && spawning;
+                }
             }
             for (int i = session.PracticeUnits.Count - 1; i >= 0; --i)
             {
@@ -54,12 +60,7 @@ namespace ET.Client
                 if (view.Model == null && !view.ModelLoading && !view.ModelLoadFailed) LoadModel(session, view).Coroutine();
                 if (view.Model != null)
                 {
-                    bool spawning = view.States.TryGetValue(StateId.Spawning, out bool value) && value;
-                    if (view.Model.activeSelf == spawning)
-                    {
-                        view.Model.SetActive(!spawning);
-                        BrawlCharacterAnimationHelper.Reset(view.Animation);
-                    }
+                    BrawlCharacterAnimationHelper.UpdateLife(view, session.RenderTick);
                     if (view.UnitId == session.MyUnitId) session.Hero = view.Model;
                 }
             }
@@ -98,7 +99,8 @@ namespace ET.Client
                 }
                 model.transform.localPosition = view.Position;
                 foreach (Animator animator in model.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
-                model.SetActive(!(view.States.TryGetValue(StateId.Spawning, out bool spawning) && spawning));
+                model.SetActive(true);
+                BrawlCharacterAnimationHelper.UpdateLife(view, session.RenderTick);
                 if (view.UnitId == session.MyUnitId) session.Hero = model;
             }
             catch (Exception exception)

@@ -36,6 +36,7 @@ namespace ET.Test
                 BrawlSuperChargeHelper.Add(owner, 0.4);
                 if (BrawlSkillCastHelper.TryStart(owner, skill, config, BrawlSkillSlot.Super, new float2(0, 1), 0.6f, 0) || cast.Launches != null)
                     return Fail(101201, "Fractional super ammo allowed a cast.");
+                if (shots.SkillNotices.Count != 0) return Fail(101211, "Rejected cast must not publish a success notice.");
                 BrawlSuperChargeHelper.Add(owner, 1);
                 cast.NextNormalCastAt = 5000;
                 if (!BrawlSkillCastHelper.TryStart(owner, skill, config, BrawlSkillSlot.Super, new float2(0, 1), 0.6f, 0))
@@ -45,6 +46,9 @@ namespace ET.Test
                     return Fail(101203, "Super consumed wrong resource or overwrote normal cooldown.");
                 if (BrawlSkillCastHelper.TryStart(owner, skill, config, BrawlSkillSlot.Super, new float2(0, 1), 0.6f, 0) ||
                     !Near(properties.GetDouble(PropertyId.SuperAmmo), 0.4)) return Fail(101204, "Repeated active cast consumed additional charge.");
+                if (shots.SkillNotices.Count != 1 || shots.SkillNotices[0].SkillId != skill.Id ||
+                    shots.SkillNotices[0].Slot != BrawlSkillSlot.Super || shots.SkillNotices[0].UnitId != owner.Id)
+                    return Fail(101212, "Success notice has wrong identity or rejected repeat generated a notice.");
                 BrawlLevelConfig level = new(1, 1, 20, 20, new int[400], Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 for (long now = 0; now <= 950; now += 50) BrawlSkillSequenceHelper.Tick(owner, level, 1, now);
                 if (shots.Children.Count != 12 || cast.Launches != null || BrawlSkillSequenceHelper.CanStart(cast, 950, BrawlSkillSlot.Super))

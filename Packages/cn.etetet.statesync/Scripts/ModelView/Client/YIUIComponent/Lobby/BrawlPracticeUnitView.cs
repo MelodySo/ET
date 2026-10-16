@@ -32,6 +32,10 @@ namespace ET.Client
         public bool ModelLoadFailed;
         public long SpawnCompleteAt;
         public long DeathDestroyAt;
+        // 独立于即时业务状态，按插值时间线消费；不控制能否攻击或复活。
+        public bool DisplayDead;
+        public bool DisplaySpawning;
+        public readonly List<(long Tick, bool Dead, bool Spawning)> AnimationLifeSamples = new();
         public readonly List<BrawlPositionSample> Samples = new();
     }
 }

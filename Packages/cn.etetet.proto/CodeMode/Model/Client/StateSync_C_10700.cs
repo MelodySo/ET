@@ -620,6 +620,64 @@ namespace ET
         }
     }
 
+    // 服务器确认的技能表现事件，与请求序号、弹丸数量独立。
+    [MemoryPackable]
+    [Message(Opcode.G2C_BrawlSkillUse)]
+    public partial class G2C_BrawlSkillUse : MessageObject, IMessage
+    {
+        public static G2C_BrawlSkillUse Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2C_BrawlSkillUse>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long EntryId { get; set; }
+        [MemoryPackOrder(1)]
+        public long RoomId { get; set; }
+        [MemoryPackOrder(2)]
+        public List<BrawlSkillUseEvent> Events { get; set; } = new();
+
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [MemoryPackable]
+    [Message(Opcode.BrawlSkillUseEvent)]
+    public partial class BrawlSkillUseEvent : MessageObject
+    {
+        public static BrawlSkillUseEvent Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<BrawlSkillUseEvent>(isFromPool);
+        }
+
+        [MemoryPackOrder(0)]
+        public long EventId { get; set; }
+        [MemoryPackOrder(1)]
+        public long CastId { get; set; }
+        [MemoryPackOrder(2)]
+        public long UnitId { get; set; }
+        [MemoryPackOrder(3)]
+        public int SkillId { get; set; }
+        [MemoryPackOrder(4)]
+        public int Slot { get; set; }
+        [MemoryPackOrder(5)]
+        public long Tick { get; set; }
+        [MemoryPackOrder(6)]
+        public int Phase { get; set; }
+        [MemoryPackOrder(7)]
+        public float DirectionX { get; set; }
+        [MemoryPackOrder(8)]
+        public float DirectionZ { get; set; }
+        [MemoryPackOrder(9)]
+        public bool Sustained { get; set; }
+        public override void Dispose()
+        {
+            ObjectPool.Recycle(this);
+        }
+    }
+
     public static partial class Opcode
     {
         public const ushort RouterSync = 10701;
@@ -644,5 +702,7 @@ namespace ET
         public const ushort BrawlProjectileState = 10720;
         public const ushort G2C_BrawlProjectileSnapshot = 10721;
         public const ushort BrawlProjectileEvent = 10722;
+        public const ushort G2C_BrawlSkillUse = 10723;
+        public const ushort BrawlSkillUseEvent = 10724;
     }
 }
