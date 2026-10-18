@@ -1,5 +1,12 @@
 # Brawl NPC 阻挡验证
 
+## 2026-10-18 雪莉普攻冷却
+
+- Statesync_BrawlRevolver_Test新增霰弹TryStart入口回归：1秒CD、齐射结束后冷却保留、连点与999ms拒绝、1000ms允许；拒绝不扣弹药/不发通知/不延长CD；改0.5秒配置仍生效。
+- 10101训练场用户已反馈正常；本次技能修改仍待实机验证。未启动服务器、进入Unity Play或执行测试。
+- 完整 `dotnet build ET.sln` 通过：0错误、0警告，38.52秒；日志 `Temp/Brawl-shotgun-cooldown-build.log`。新增用例仅编译，未执行。
+
+
 ## 2026-10-18 训练场统一联网（验证清单）
 
 - 静态检查：训练场10101、练习赛10201都调用统一联网入口；移除IsPractice、本地LoadCharacters/ResolveNPCs及RunTerrain专用验证入口。协议LevelId双端生成。

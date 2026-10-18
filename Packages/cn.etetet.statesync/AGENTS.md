@@ -1,5 +1,9 @@
 # cn.etetet.statesync
 
+## 技能冷却（2026-10-18最新）
+
+BrawlSkillCastHelper对所有发射器的普攻和大招统一读取技能CooldownTime，不再保留“雪莉普攻无CD”例外；本节覆盖下文历史无CD描述。普攻/大招独立冷却，从服务器成功施放开始计时，连发中仍不允许重入。边界回归在Statesync_BrawlRevolver_Test。
+
 ## 训练场联网迁移（2026-10-18）
 
 训练场入口10101、练习赛入口10201统一走服务器练习房间；单机展示逻辑与RunTerrain已删除。人数和Bot由关卡引用的玩法决定（当前支持每组1人、1或2组），不是由按钮或关卡编号猜测。C2G_BrawlPracticeEnter新增LevelId，双端需要一起更新。本节覆盖下文历史“固定10201/公牛/仅本地展示”的说明。配置与验证状态见Book/Brawl开发交接.md最新章节。

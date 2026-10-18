@@ -59,9 +59,8 @@ namespace ET.Server
             long cooldown;
             try
             {
-                // 大招使用配置冷却；普攻继续保持此前雪莉无CD、左轮有CD的规则。
-                cooldown = slot == BrawlSkillSlot.Super || skill.EmitterType == (int)BrawlEmitterType.Revolver
-                    ? BrawlUnitLifeHelper.Milliseconds(skill.CooldownTime) : 0;
+                // 冷却由技能配置决定，与发射器类型无关；从成功施放时刻开始计时。
+                cooldown = BrawlUnitLifeHelper.Milliseconds(skill.CooldownTime);
             }
             catch (ArgumentException exception) { Log.Warning(exception.Message); return false; }
             bool consumed = slot == BrawlSkillSlot.Super ? BrawlSuperChargeHelper.TryConsume(unit) : BrawlAmmoHelper.TryConsume(unit, now);

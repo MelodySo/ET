@@ -99,6 +99,36 @@ namespace ET.Test
                 if (projectiles.SkillNotices.Count != 3 || projectiles.SkillNotices[0].Sustained ||
                     projectiles.SkillNotices[1].Phase != BrawlSkillUsePhase.Fired || projectiles.Children.Count != 10)
                     return Fail(100916, "Simultaneous pellets must share one fire notice without changing projectile count.");
+
+                // Exercise the real cast entry after all simultaneous pellets have already fired.
+                BrawlSkillConfig shotgun = new(10101, config.Id, 5, 1, 1, 0, 0, 3, 1.5f, 1f, 1, 2, 7.67f, 30, 0, 0, 0);
+                properties.Set(PropertyId.Level, 1);
+                BrawlAmmoHelper.Initialize(owner, shotgun, 10000);
+                properties.Set(PropertyId.Ammo, 3);
+                if (!BrawlSkillCastHelper.TryStart(owner, shotgun, config, BrawlSkillSlot.NormalAttack, new float2(0, 1), 0.6f, 10000))
+                    return Fail(100917, "Loaded shotgun must accept the first cast.");
+                BrawlSkillSequenceHelper.Tick(owner, level, 1, 10000);
+                int noticeCount = projectiles.SkillNotices.Count;
+                int projectileCount = projectiles.Children.Count;
+                if (cast.Launches != null || cast.NextNormalCastAt != 11000 || properties.GetDouble(PropertyId.Ammo) != 2)
+                    return Fail(100918, "Shotgun cooldown must survive completion of its simultaneous volley.");
+                foreach (long now in new long[] { 10000, 10001, 10500, 10999 })
+                {
+                    if (BrawlSkillCastHelper.TryStart(owner, shotgun, config, BrawlSkillSlot.NormalAttack, new float2(0, 1), 0.6f, now))
+                        return Fail(100919, "Shotgun ignored its configured one-second cooldown.");
+                }
+                if (properties.GetDouble(PropertyId.Ammo) != 2 || projectiles.SkillNotices.Count != noticeCount ||
+                    projectiles.Children.Count != projectileCount || cast.NextNormalCastAt != 11000)
+                    return Fail(100920, "Rejected cooldown clicks consumed ammo, emitted notices or extended cooldown.");
+                if (!BrawlSkillCastHelper.TryStart(owner, shotgun, config, BrawlSkillSlot.NormalAttack, new float2(0, 1), 0.6f, 11000))
+                    return Fail(100921, "Shotgun must become available exactly at cooldown expiry.");
+                BrawlSkillSequenceHelper.Tick(owner, level, 1, 11000);
+                if (properties.GetDouble(PropertyId.Ammo) != 1 || projectiles.Children.Count != projectileCount + 5 || cast.NextNormalCastAt != 12000)
+                    return Fail(100922, "Second shotgun cast must consume one ammo and restart its own cooldown.");
+                BrawlSkillConfig shorterCooldown = new(10101, config.Id, 5, 1, 1, 0, 0, 3, 1.5f, 0.5f, 1, 2, 7.67f, 30, 0, 0, 0);
+                if (!BrawlSkillCastHelper.TryStart(owner, shorterCooldown, config, BrawlSkillSlot.NormalAttack, new float2(0, 1), 0.6f, 12000) ||
+                    cast.NextNormalCastAt != 12500)
+                    return Fail(100923, "Shotgun cooldown must follow configuration instead of a fixed one-second constant.");
             }
             finally { fiber.AddSingleton(previousConfig); fiber.AddSingleton(oldRules); }
             return ErrorCode.ERR_Success;
