@@ -11,12 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f6850877531c38a479f2d1aecbef0f9c, type: 3}
   m_Name: ColtCombat
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   serializationData:
     SerializedFormat: 2
-    SerializedBytes: 
+    SerializedBytes:
     ReferencedUnityObjects: []
-    SerializedBytesString: 
+    SerializedBytesString:
     Prefab: {fileID: 0}
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
@@ -30,10 +30,10 @@ MonoBehaviour:
     - Name: Children
       Entry: 7
       Data: 1|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
       Data: 1
-    - Name: 
+    - Name:
       Entry: 7
       Data: 2|ET.BTSelector, ET.Model
     - Name: Id
@@ -42,10 +42,10 @@ MonoBehaviour:
     - Name: Children
       Entry: 7
       Data: 3|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
       Data: 5
-    - Name: 
+    - Name:
       Entry: 7
       Data: 4|ET.BTSequence, ET.Model
     - Name: Id
@@ -54,10 +54,10 @@ MonoBehaviour:
     - Name: Children
       Entry: 7
       Data: 5|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
       Data: 2
-    - Name: 
+    - Name:
       Entry: 7
       Data: 6|ET.BTBrawlHasActiveCast, ET.Model
     - Name: Id
@@ -66,15 +66,15 @@ MonoBehaviour:
     - Name: Children
       Entry: 7
       Data: 7|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u5F53\u524D\u8FDE\u53D1\u5C1A\u672A\u7ED3\u675F"
@@ -99,42 +99,42 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 1050
-    - Name: 
+    - Name:
       Entry: 4
       Data: -824
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
-      Data: 8|ET.BTBrawlIdle, ET.Model
+      Data: 8|ET.BTBrawlFollowTarget, ET.Model
     - Name: Id
       Entry: 3
       Data: 5
     - Name: Children
       Entry: 7
       Data: 9|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
-      Data: "\u505C\u6B65\u5B8C\u6210\u5F53\u524D\u653B\u51FB"
+      Data: "\u8FDE\u53D1\u4E2D\u504F\u79FB\u8DDF\u968F\uFF1B\u8D85\u51FA\u5C04\u7A0B\u6216\u53D7\u963B\u5219\u8FFD\u51FB"
     - Name: IsCollapsed
       Entry: 5
       Data: false
@@ -156,30 +156,42 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
-      Data: 1050
-    - Name: 
+      Data: 0
+    - Name:
       Entry: 4
-      Data: -653
-    - Name: 
+      Data: 0
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
-    - Name: 
+    - Name: RangeMargin
+      Entry: 4
+      Data: 0.5
+    - Name: SightWidth
+      Entry: 4
+      Data: 0.2
+    - Name: RepathMilliseconds
+      Entry: 3
+      Data: 250
+    - Name: MaxSearchNodes
+      Entry: 3
+      Data: 10000
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 6
-      Data: 
+      Data:
     - Name: IsCollapsed
       Entry: 5
       Data: false
@@ -201,19 +213,19 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 700
-    - Name: 
+    - Name:
       Entry: 4
       Data: -728.5
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
       Data: 10|ET.BTSequence, ET.Model
     - Name: Id
@@ -222,10 +234,10 @@ MonoBehaviour:
     - Name: Children
       Entry: 7
       Data: 11|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
-      Data: 2
-    - Name: 
+      Data: 3
+    - Name:
       Entry: 7
       Data: 12|ET.BTBrawlAttackPosition, ET.Model
     - Name: Id
@@ -234,15 +246,15 @@ MonoBehaviour:
     - Name: Children
       Entry: 7
       Data: 13|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u5927\u62DB\u4F4D\u7F6E\uFF1A\u6280\u80FD\u5C04\u7A0B\u4E0E\u78B0\u649E\u89C4\u5219"
@@ -267,15 +279,15 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 1050
-    - Name: 
+    - Name:
       Entry: 4
       Data: -482
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
@@ -288,10 +300,10 @@ MonoBehaviour:
     - Name: SightWidth
       Entry: 4
       Data: 0.2
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
       Data: 14|ET.BTBrawlUseSkill, ET.Model
     - Name: Id
@@ -300,15 +312,15 @@ MonoBehaviour:
     - Name: Children
       Entry: 7
       Data: 15|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u4F18\u5148\u4F7F\u7528\u5927\u62DB"
@@ -333,33 +345,45 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 1050
-    - Name: 
+    - Name:
       Entry: 4
       Data: -251
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
     - Name: Slot
       Entry: 3
       Data: 2
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
+      Entry: 7
+      Data: 16|ET.BTBrawlFollowTarget, ET.Model
+    - Name: Id
+      Entry: 3
+      Data: 16
+    - Name: Children
+      Entry: 7
+      Data: 17|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
+      Entry: 12
+      Data: 0
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
-      Entry: 6
-      Data: 
+      Entry: 1
+      Data: "\u8BB0\u5F55\u672C\u8F6E\u653B\u51FB\u76F8\u5BF9\u4F4D\u7F6E\u5E76\u5F00\u59CB\u8DDF\u968F"
     - Name: IsCollapsed
       Entry: 5
       Data: false
@@ -381,48 +405,105 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
+      Entry: 4
+      Data: 0
+    - Name:
+      Entry: 4
+      Data: 0
+    - Name:
+      Entry: 8
+      Data:
+    - Name: Unit
+      Entry: 1
+      Data: Unit
+    - Name: RangeMargin
+      Entry: 4
+      Data: 0.5
+    - Name: SightWidth
+      Entry: 4
+      Data: 0.2
+    - Name: RepathMilliseconds
+      Entry: 3
+      Data: 250
+    - Name: MaxSearchNodes
+      Entry: 3
+      Data: 10000
+    - Name:
+      Entry: 8
+      Data:
+    - Name:
+      Entry: 13
+      Data:
+    - Name:
+      Entry: 8
+      Data:
+    - Name: Desc
+      Entry: 6
+      Data:
+    - Name: IsCollapsed
+      Entry: 5
+      Data: false
+    - Name: ChildrenCollapsed
+      Entry: 5
+      Data: false
+    - Name: DescCollapsed
+      Entry: 5
+      Data: true
+    - Name: EditorLayoutVisible
+      Entry: 5
+      Data: false
+    - Name: EditorNodeWidth
+      Entry: 4
+      Data: 300
+    - Name: EditorHorizontalSpacing
+      Entry: 4
+      Data: 50
+    - Name: Position
+      Entry: 7
+      Data: UnityEngine.Vector2, UnityEngine.CoreModule
+    - Name:
       Entry: 4
       Data: 700
-    - Name: 
+    - Name:
       Entry: 4
       Data: -346.5
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
-      Data: 16|ET.BTSequence, ET.Model
+      Data: 18|ET.BTSequence, ET.Model
     - Name: Id
       Entry: 3
       Data: 9
     - Name: Children
       Entry: 7
-      Data: 17|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+      Data: 19|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
       Entry: 12
-      Data: 2
-    - Name: 
+      Data: 3
+    - Name:
       Entry: 7
-      Data: 18|ET.BTBrawlAttackPosition, ET.Model
+      Data: 20|ET.BTBrawlAttackPosition, ET.Model
     - Name: Id
       Entry: 3
       Data: 10
     - Name: Children
       Entry: 7
-      Data: 19|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+      Data: 21|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u666E\u653B\u4F4D\u7F6E\uFF1A\u6280\u80FD\u5C04\u7A0B\u4E0E\u78B0\u649E\u89C4\u5219"
@@ -447,15 +528,15 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 1050
-    - Name: 
+    - Name:
       Entry: 4
       Data: -60
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
@@ -468,27 +549,27 @@ MonoBehaviour:
     - Name: SightWidth
       Entry: 4
       Data: 0.2
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
-      Data: 20|ET.BTBrawlUseSkill, ET.Model
+      Data: 22|ET.BTBrawlUseSkill, ET.Model
     - Name: Id
       Entry: 3
       Data: 11
     - Name: Children
       Entry: 7
-      Data: 21|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+      Data: 23|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u666E\u901A\u653B\u51FB"
@@ -513,33 +594,45 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 1050
-    - Name: 
+    - Name:
       Entry: 4
       Data: 171
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
     - Name: Slot
       Entry: 3
       Data: 1
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
+      Entry: 7
+      Data: 24|ET.BTBrawlFollowTarget, ET.Model
+    - Name: Id
+      Entry: 3
+      Data: 17
+    - Name: Children
+      Entry: 7
+      Data: 25|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
+      Entry: 12
+      Data: 0
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
-      Entry: 6
-      Data: 
+      Entry: 1
+      Data: "\u8BB0\u5F55\u672C\u8F6E\u653B\u51FB\u76F8\u5BF9\u4F4D\u7F6E\u5E76\u5F00\u59CB\u8DDF\u968F"
     - Name: IsCollapsed
       Entry: 5
       Data: false
@@ -561,48 +654,105 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
+      Entry: 4
+      Data: 0
+    - Name:
+      Entry: 4
+      Data: 0
+    - Name:
+      Entry: 8
+      Data:
+    - Name: Unit
+      Entry: 1
+      Data: Unit
+    - Name: RangeMargin
+      Entry: 4
+      Data: 0.5
+    - Name: SightWidth
+      Entry: 4
+      Data: 0.2
+    - Name: RepathMilliseconds
+      Entry: 3
+      Data: 250
+    - Name: MaxSearchNodes
+      Entry: 3
+      Data: 10000
+    - Name:
+      Entry: 8
+      Data:
+    - Name:
+      Entry: 13
+      Data:
+    - Name:
+      Entry: 8
+      Data:
+    - Name: Desc
+      Entry: 6
+      Data:
+    - Name: IsCollapsed
+      Entry: 5
+      Data: false
+    - Name: ChildrenCollapsed
+      Entry: 5
+      Data: false
+    - Name: DescCollapsed
+      Entry: 5
+      Data: true
+    - Name: EditorLayoutVisible
+      Entry: 5
+      Data: false
+    - Name: EditorNodeWidth
+      Entry: 4
+      Data: 300
+    - Name: EditorHorizontalSpacing
+      Entry: 4
+      Data: 50
+    - Name: Position
+      Entry: 7
+      Data: UnityEngine.Vector2, UnityEngine.CoreModule
+    - Name:
       Entry: 4
       Data: 700
-    - Name: 
+    - Name:
       Entry: 4
       Data: 75.5
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
-      Data: 22|ET.BTSequence, ET.Model
+      Data: 26|ET.BTSequence, ET.Model
     - Name: Id
       Entry: 3
       Data: 12
     - Name: Children
       Entry: 7
-      Data: 23|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+      Data: 27|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
       Entry: 12
       Data: 2
-    - Name: 
+    - Name:
       Entry: 7
-      Data: 24|ET.BTBrawlAttackPosition, ET.Model
+      Data: 28|ET.BTBrawlAttackPosition, ET.Model
     - Name: Id
       Entry: 3
       Data: 13
     - Name: Children
       Entry: 7
-      Data: 25|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+      Data: 29|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u666E\u653B\u4F4D\u7F6E\uFF1A\u6280\u80FD\u5C04\u7A0B\u4E0E\u78B0\u649E\u89C4\u5219"
@@ -627,15 +777,15 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 1050
-    - Name: 
+    - Name:
       Entry: 4
       Data: 362
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
@@ -648,27 +798,27 @@ MonoBehaviour:
     - Name: SightWidth
       Entry: 4
       Data: 0.2
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
-      Data: 26|ET.BTBrawlIdle, ET.Model
+      Data: 30|ET.BTBrawlIdle, ET.Model
     - Name: Id
       Entry: 3
       Data: 14
     - Name: Children
       Entry: 7
-      Data: 27|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+      Data: 31|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u7B49\u5F85\u88C5\u586B\u6216\u51B7\u5374\uFF0C\u4E0D\u7EE7\u7EED\u8D34\u8FD1"
@@ -693,30 +843,30 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 1050
-    - Name: 
+    - Name:
       Entry: 4
       Data: 593
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 6
-      Data: 
+      Data:
     - Name: IsCollapsed
       Entry: 5
       Data: false
@@ -738,36 +888,36 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 700
-    - Name: 
+    - Name:
       Entry: 4
       Data: 487.5
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 7
-      Data: 28|ET.BTBrawlChase, ET.Model
+      Data: 32|ET.BTBrawlChase, ET.Model
     - Name: Id
       Entry: 3
       Data: 15
     - Name: Children
       Entry: 7
-      Data: 29|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
-    - Name: 
+      Data: 33|System.Collections.Generic.List`1[[ET.BTNode, ET.Model]], mscorlib
+    - Name:
       Entry: 12
       Data: 0
-    - Name: 
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 1
       Data: "\u65E0\u8B66\u6212\u8DDD\u79BB\uFF0C\u8FFD\u9010\u6216\u7ED5\u5899"
@@ -792,15 +942,15 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 700
-    - Name: 
+    - Name:
       Entry: 4
       Data: 764
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Unit
       Entry: 1
       Data: Unit
@@ -810,18 +960,18 @@ MonoBehaviour:
     - Name: MaxSearchNodes
       Entry: 3
       Data: 10000
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 6
-      Data: 
+      Data:
     - Name: IsCollapsed
       Entry: 5
       Data: false
@@ -843,27 +993,27 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 350
-    - Name: 
+    - Name:
       Entry: 4
       Data: 0
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 13
-      Data: 
-    - Name: 
+      Data:
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: Desc
       Entry: 6
-      Data: 
+      Data:
     - Name: IsCollapsed
       Entry: 5
       Data: false
@@ -885,23 +1035,23 @@ MonoBehaviour:
     - Name: Position
       Entry: 7
       Data: UnityEngine.Vector2, UnityEngine.CoreModule
-    - Name: 
+    - Name:
       Entry: 4
       Data: 0
-    - Name: 
+    - Name:
       Entry: 4
       Data: 0
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
     - Name: TreeId
       Entry: 3
       Data: 5504373793383376197
     - Name: Unit
       Entry: 1
       Data: Unit
-    - Name: 
+    - Name:
       Entry: 8
-      Data: 
+      Data:
   HeroId: 401
   OpponentHeroId: 101

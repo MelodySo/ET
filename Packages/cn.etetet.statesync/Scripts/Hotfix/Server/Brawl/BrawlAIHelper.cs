@@ -35,6 +35,9 @@ namespace ET.Server
         }
 
         public static void Chase(Unit unit, BTBrawlChase node)
+            => Chase(unit, node.RepathMilliseconds, node.MaxSearchNodes);
+
+        public static void Chase(Unit unit, int repathMilliseconds, int maxSearchNodes)
         {
             Unit target = GetTarget(unit);
             if (target == null || BrawlUnitLifeHelper.CannotAct(unit)) { Idle(unit); return; }
@@ -45,9 +48,9 @@ namespace ET.Server
             ai.Chasing = true;
             if (ai.Now >= ai.NextPlanAt || ai.PlannedTargetId != target.Id)
             {
-                ai.NextPlanAt = ai.Now + math.max(BrawlMovementSettings.TickMilliseconds, node.RepathMilliseconds);
+                ai.NextPlanAt = ai.Now + math.max(BrawlMovementSettings.TickMilliseconds, repathMilliseconds);
                 ai.PlannedTargetId = target.Id; ai.Waypoint = 0; ++ai.Plans;
-                BrawlPathfindingHelper.Find(units, unit, level, ai.CellSize, target.Position.xz, node.MaxSearchNodes, ai.Path);
+                BrawlPathfindingHelper.Find(units, unit, level, ai.CellSize, target.Position.xz, maxSearchNodes, ai.Path);
             }
             if (ai.Waypoint >= ai.Path.Count) return;
             float2 position = unit.Position.xz;

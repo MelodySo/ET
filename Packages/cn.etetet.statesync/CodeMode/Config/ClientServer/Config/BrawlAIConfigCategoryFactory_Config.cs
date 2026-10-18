@@ -137,11 +137,15 @@ namespace ET
                             Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
                             Unit = @"Unit",
                         },
-                        new global::ET.BTBrawlIdle()
+                        new global::ET.BTBrawlFollowTarget()
                         {
                             Id = 5,
                             Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
                             Unit = @"Unit",
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                            RepathMilliseconds = 250,
+                            MaxSearchNodes = 10000,
                         },
                     },
                 },
@@ -166,6 +170,16 @@ namespace ET
                             Unit = @"Unit",
                             Slot = global::ET.BrawlSkillSlot.Super,
                         },
+                        new global::ET.BTBrawlFollowTarget()
+                        {
+                            Id = 16,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                            RepathMilliseconds = 250,
+                            MaxSearchNodes = 10000,
+                        },
                     },
                 },
                 new global::ET.BTSequence()
@@ -188,6 +202,16 @@ namespace ET
                             Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
                             Unit = @"Unit",
                             Slot = global::ET.BrawlSkillSlot.NormalAttack,
+                        },
+                        new global::ET.BTBrawlFollowTarget()
+                        {
+                            Id = 17,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                            RepathMilliseconds = 250,
+                            MaxSearchNodes = 10000,
                         },
                     },
                 },

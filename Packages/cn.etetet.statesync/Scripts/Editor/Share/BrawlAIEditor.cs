@@ -60,8 +60,55 @@ namespace ET
                     new BTBrawlChase { Id = 15, Desc = "无警戒距离，追逐或绕墙" },
                 } },
             } };
+            if (heroId == 401)
+            {
+                int nextId = MaxNodeId(asset.Tree) + 1;
+                EnableFollowing(asset.Tree, ref nextId);
+            }
             AssetDatabase.CreateAsset(asset, path);
             return asset;
+        }
+
+        [MenuItem("Brawl/AI/Enable Colt Moving Attacks")]
+        public static void EnableColtMovingAttacks()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("请先退出 Play。");
+            BrawlAIScriptableObject asset = AssetDatabase.LoadAssetAtPath<BrawlAIScriptableObject>(AssetDirectory + "/ColtCombat.asset");
+            if (asset == null) throw new InvalidOperationException("请先创建 ColtCombat 行为树。");
+            Undo.RecordObject(asset, "Enable Colt Moving Attacks");
+            int nextId = MaxNodeId(asset.Tree) + 1;
+            EnableFollowing(asset.Tree, ref nextId);
+            EditorUtility.SetDirty(asset);
+            Selection.activeObject = asset;
+            Export(asset);
+        }
+
+        private static int MaxNodeId(BTNode node)
+        {
+            int result = node.Id;
+            foreach (BTNode child in node.Children) result = Math.Max(result, MaxNodeId(child));
+            return result;
+        }
+
+        // 只迁移旧的连发待机与施法成功分支；重复执行不覆盖已编辑的跟随参数。
+        private static void EnableFollowing(BTNode node, ref int nextId)
+        {
+            if (node is BTSequence && node.Children.OfType<BTBrawlHasActiveCast>().Any())
+            {
+                for (int i = 0; i < node.Children.Count; ++i)
+                    if (node.Children[i] is BTBrawlIdle idle)
+                        node.Children[i] = new BTBrawlFollowTarget
+                        { Id = idle.Id, Desc = "按连发技能矩形纠正站位；受阻则追击" };
+            }
+            if (node is BTSequence && node.Children.OfType<BTBrawlUseSkill>().Any() &&
+                !node.Children.OfType<BTBrawlFollowTarget>().Any())
+            {
+                BTBrawlAttackPosition position = node.Children.OfType<BTBrawlAttackPosition>().FirstOrDefault();
+                BTBrawlFollowTarget follow = new() { Id = nextId++, Desc = "按技能完整宽度纠偏并维持射程余量" };
+                if (position != null) { follow.RangeMargin = position.RangeMargin; follow.SightWidth = position.SightWidth; }
+                node.Children.Add(follow);
+            }
+            foreach (BTNode child in node.Children) EnableFollowing(child, ref nextId);
         }
         [MenuItem("Brawl/AI/Create or Select Bull Chase")]
         public static void CreateOrSelect()
@@ -138,7 +185,8 @@ namespace ET
         {
             if (node is not BrawlAIRoot && node is not BTSelector && node is not BTSequence &&
                 node is not BTBrawlPlayerWithinDistance && node is not BTBrawlChase && node is not BTBrawlIdle &&
-                node is not BTBrawlHasActiveCast && node is not BTBrawlAttackPosition && node is not BTBrawlUseSkill)
+                node is not BTBrawlHasActiveCast && node is not BTBrawlAttackPosition && node is not BTBrawlUseSkill &&
+                node is not BTBrawlFollowTarget)
                 errors.Add($"Unsupported Brawl AI node: {node.GetType().Name}");
             if (node is BTBrawlAttackPosition position)
             {
@@ -154,6 +202,11 @@ namespace ET
                 errors.Add("Distance must be finite and non-negative.");
             if (node is BTBrawlChase chase && (chase.RepathMilliseconds < 50 || chase.MaxSearchNodes <= 0 || chase.MaxSearchNodes > 10000))
                 errors.Add("RepathMilliseconds >= 50 and MaxSearchNodes in 1..10000 are required.");
+            if (node is BTBrawlFollowTarget follow &&
+                (float.IsNaN(follow.RangeMargin) || float.IsInfinity(follow.RangeMargin) || follow.RangeMargin < 0 ||
+                 float.IsNaN(follow.SightWidth) || float.IsInfinity(follow.SightWidth) || follow.SightWidth < 0 ||
+                 follow.RepathMilliseconds < 50 || follow.MaxSearchNodes <= 0 || follow.MaxSearchNodes > 10000))
+                errors.Add("Follow requires finite non-negative margin/sight width, RepathMilliseconds >= 50 and MaxSearchNodes in 1..10000.");
             if (node is BTAction || node is BTCondition)
                 if (node.Children.Count != 0) errors.Add("Brawl actions and conditions must be leaves.");
             foreach (BTNode child in node.Children)

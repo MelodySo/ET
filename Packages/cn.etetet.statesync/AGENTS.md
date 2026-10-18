@@ -1,5 +1,11 @@
 # cn.etetet.statesync
 
+## 柯尔特矩形射击走位（2026-10-18）
+
+- 柯尔特行为树的活动连发与施法成功分支接 `BTBrawlFollowTarget`，按当前锁定施法方向及技能完整宽度纠正目标中心的横向偏差，纵向维持技能射程减 RangeMargin；不保存开火时双方偏移，不按单颗子弹判断。
+- 连线遮挡仍取该技能弹丸的 BrawlCollisionRule.BlockProjectile；超出前向射程、连线或纠偏路径受阻时回退原 Chase。只写 DesiredDirection，不改 Position、施法方向或弹丸结算。
+- Unity 菜单 `Brawl/AI/Enable Colt Moving Attacks` 定向升级并导出柯尔特树，重复执行保留已有节点参数；雪莉树不变。测试在 Statesync_BrawlCombatAI_Test；验收及历史覆盖关系见 Book/Braw_AI开发交接.md。
+
 ## 关卡中心原点（2026-10-15）
 
 - 所有 Brawl 关卡世界原点为几何中心，格中心 X/Z = (column/row - (ColumnCount/RowCount - 1)/2) * CellSize。网格索引保持左下角起算，不修改 Excel。

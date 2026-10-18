@@ -21,7 +21,7 @@ namespace ET.Test
             {
                 BrawlAIConfigCategory aiConfig = new()
                 {
-                    Trees = new() { [101] = Tree(), [401] = Tree() },
+                    Trees = new() { [101] = Tree(), [401] = Tree(true) },
                     PracticeOpponents = new() { [101] = 401, [401] = 101 },
                 };
                 aiConfig.ResolveRef();
@@ -131,6 +131,64 @@ namespace ET.Test
                 if (coltCast.Launches == null || coltCast.Slot != BrawlSkillSlot.NormalAttack || math.lengthsq(colt.GetComponent<BrawlMoveComponent>().DesiredDirection) != 0)
                     return Fail(109118, "Colt normal attack must stop at 8.5m.");
 
+                BrawlMoveComponent coltMove = colt.GetComponent<BrawlMoveComponent>();
+                float2 lockedDirection = coltCast.Direction;
+                long movingCastId = coltCast.PresentationCastId;
+                double ammoBeforeMoving = colt.GetComponent<PropertyComponent>().GetDouble(PropertyId.Ammo);
+                notices = shots.SkillNotices.Count;
+                player.Position = new float3(8.5f, 0, -4.8f);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4160);
+                if (math.lengthsq(coltMove.DesiredDirection) > .000001f)
+                    return Fail(109136, "A target within the full skill rectangle width must not trigger offset following.");
+                player.Position = new float3(8.5f, 0, -4.6f);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4170);
+                if (coltMove.DesiredDirection.y <= 0 || math.abs(coltMove.DesiredDirection.x) > .0001f)
+                    return Fail(109137, "A target just outside the skill half-width must cause lateral correction, not radial chase.");
+                BrawlSkillConfig originalNormal = fiber.GetSingleton<BrawlSkillConfigCategory>().Get(40101);
+                fiber.GetSingleton<BrawlSkillConfigCategory>().GetAll()[40101] = new(40101, 10101, 6, 2, 1, 0, .16f, 3, 1.6f, .8f, 1, 1, 9, 2, 0, 0, 0);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4180);
+                if (math.lengthsq(coltMove.DesiredDirection) > .000001f)
+                    return Fail(109138, "Rectangle correction must read skill width, not individual projectile radius.");
+                fiber.GetSingleton<BrawlSkillConfigCategory>().GetAll()[40101] = originalNormal;
+                player.Position = new float3(7.5f, 0, -5);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4200);
+                if (coltMove.DesiredDirection.x >= 0 || math.abs(coltMove.DesiredDirection.y) > .0001f)
+                    return Fail(109128, "Colt must retreat when the target approaches during a burst.");
+                player.Position = new float3(7.5f, 0, -4);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4250);
+                if (coltMove.DesiredDirection.y <= 0)
+                    return Fail(109129, "Colt must follow the target's positive lateral displacement.");
+                player.Position = new float3(7.5f, 0, -6);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4300);
+                if (coltMove.DesiredDirection.y >= 0)
+                    return Fail(109130, "Colt must follow the target's negative lateral displacement.");
+                player.Position = new float3(9.1f, 0, -5);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4350);
+                if (!colt.GetComponent<BrawlAIComponent>().Chasing || coltMove.DesiredDirection.x <= 0)
+                    return Fail(109131, "Colt must chase while firing when the target leaves range.");
+                if (coltCast.PresentationCastId != movingCastId || math.any(coltCast.Direction != lockedDirection) ||
+                    math.any(coltMove.FacingDirection != lockedDirection) || shots.SkillNotices.Count != notices ||
+                    colt.GetComponent<PropertyComponent>().GetDouble(PropertyId.Ammo) != ammoBeforeMoving)
+                    return Fail(109132, "Following must not restart the cast, consume ammo or rotate its locked firing direction.");
+                player.Position = new float3(7.5f, 0, -5);
+                wall.Position = new float3(3, 0, -5);
+                data.UnitLayerMask = BrawlUnitLayer.Tile | BrawlUnitLayer.Destroyable;
+                wall.GetComponent<StateComponent>().RemoveSource(StateId.Dead, 1);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4400);
+                if (!colt.GetComponent<BrawlAIComponent>().Chasing)
+                    return Fail(109133, "An obstructed firing line must switch offset following back to chase.");
+                wall.Position = new float3(-1, 0, -5);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4450);
+                if (!colt.GetComponent<BrawlAIComponent>().Chasing)
+                    return Fail(109134, "An obstructed correction destination must fall back to chase instead of crossing the wall.");
+                wall.Position = new float3(3, 0, 0);
+                wall.GetComponent<StateComponent>().AddSource(StateId.Dead, 1);
+                colt.GetComponent<StateComponent>().AddSource(StateId.Stunned, 2);
+                BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4500);
+                if (math.lengthsq(coltMove.DesiredDirection) != 0)
+                    return Fail(109135, "A controlled Colt must stop following.");
+                colt.GetComponent<StateComponent>().RemoveSource(StateId.Stunned, 2);
+
                 BTBrawlAttackPosition normalPosition = new() { Slot = BrawlSkillSlot.NormalAttack };
                 BTBrawlAttackPosition superPosition = new() { Slot = BrawlSkillSlot.Super };
                 fiber.GetSingleton<BrawlSkillConfigCategory>().GetAll()[40101] = new(40101, 10101, 6, 2, 1, 0, .16f, 3, 1.6f, .8f, 1, 1, 6, .7f, 0, 0, 0);
@@ -178,8 +236,10 @@ namespace ET.Test
             }
         }
 
-        private static BrawlAIRoot Tree() => new() { Children = new()
+        private static BrawlAIRoot Tree(bool followDuringCast = false)
         {
+            BrawlAIRoot tree = new() { Children = new()
+            {
             new BTSelector { Children = new()
             {
                 new BTSequence { Children = new() { new BTBrawlHasActiveCast(), new BTBrawlIdle() } },
@@ -188,7 +248,16 @@ namespace ET.Test
                 new BTSequence { Children = new() { new BTBrawlAttackPosition { Slot = BrawlSkillSlot.NormalAttack }, new BTBrawlIdle() } },
                 new BTBrawlChase(),
             } },
-        } };
+            } };
+            if (followDuringCast)
+            {
+                BTNode selector = tree.Children[0];
+                selector.Children[0].Children[1] = new BTBrawlFollowTarget();
+                selector.Children[1].Children.Add(new BTBrawlFollowTarget());
+                selector.Children[2].Children.Add(new BTBrawlFollowTarget());
+            }
+            return tree;
+        }
 
         private static Unit Create(UnitComponent units, int heroId, float3 position)
         {
