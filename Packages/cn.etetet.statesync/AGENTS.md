@@ -51,7 +51,9 @@ BrawlSkillCastHelper对所有发射器的普攻和大招统一读取技能Cooldo
 - `BrawlHeroMenuHelper` 在大厅 YIUIInitialize 创建动态 UGUI/TMP 子界面，Destroy 清理，随大厅隐藏；不修改 YIUIGen 或原 prefab。
 - 状态归属 LobbyPanelComponent；事件闭包通过 EntityRef 获取存活 owner。
 - 列表读取 BrawlHeroConfigCategory，暂以 UnlockPrice=0 表示默认已解锁，等级统一为 1；未接账号英雄资产或培养系统。
-- 详情显示 BaseHp 与 MoveSpeedTier；已解锁、未解锁均可试用。训练场和练习赛均请求服务器创建房间。
+- 详情由 BrawlHeroDetailHelper 创建蓝色三列布局与技能弹窗，显示模型、定位、品质、描述、BaseHp + HpGrowthPerLevel、技能关联弹丸的 Value + ValueGrowthPerLevel；等级固定1／最高11，无升级入口。普通技能就是 NormalAttackSkillId，不展示 SpecialSkillId。
+- BrawlHeroPreviewHelper 通过 YooAsset 加载英雄 ModelPath，只渲染一次待机定格并立即销毁临时舞台；预览纹理与请求版本归属 LobbyPanelComponent.HeroDetails，切换／关页／销毁时释放。异步使用 EntityRef 和版本校验，禁止迟到加载覆盖新英雄。资源、协议和战斗逻辑不受影响。
+- 已解锁、未解锁均可试用。训练场和练习赛均请求服务器创建房间。详情 UI 本轮未编译、未 Play，待用户验收；字段来源与清单位于 Book/Brawl开发交接.md 最新章节。
 
 ## 服务器练习赛第一版
 

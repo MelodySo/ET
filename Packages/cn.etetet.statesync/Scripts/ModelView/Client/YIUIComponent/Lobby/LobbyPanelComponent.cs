@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using YIUIFramework;
 using System.Collections.Generic;
@@ -14,6 +14,7 @@ namespace ET.Client
         public GameObject HeroTrialView;
         public TMPro.TMP_FontAsset HeroMenuFont;
         public TMPro.TextMeshProUGUI HeroDetailText;
+        public BrawlHeroDetailView HeroDetails;
         public int SelectedHeroId;
         public BrawlTrainingSession TrainingSession;
     }

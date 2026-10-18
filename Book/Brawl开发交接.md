@@ -1,5 +1,17 @@
 # Brawl Demo 开发交接
 
+## 2026-10-19 英雄详情 UI（待用户实测）
+
+- 英雄列表点击后，进入蓝色纯色 Image 详情页：左侧姓名、定位、品质、英雄描述；中央为配置模型的待机定格预览；右侧显示战力等级、生命值、普攻与超级技能。布局参照用户提供的两张截图，升级按钮不创建，战力等级固定显示 **1**、最高 **11**，不接账号培养或修改战斗等级。
+- 点击右侧属性行或“属性与技能详情”，打开生命值／移速及左右两张技能卡的弹窗。**普通技能即 `NormalAttackSkillId` 对应的普攻**，超级技能读取 `SuperSkillId`，本次不读取 `SpecialSkillId`。
+- 生命值来自 `BrawlHero.BaseHp / HpGrowthPerLevel`；伤害经英雄技能 ID → `BrawlSkill.ProjectileId` → `BrawlProjectile.Value / ValueGrowthPerLevel`，以 `ProjectilesPerVolley × 单颗基础伤害 + 单颗每级成长` 展示每轮伤害，绿色 `+成长` 不计入当前一级基础值。弹窗显示技能表名称／描述、`SkillRangeParam1` 米数和普攻 `ReloadTime` 秒／发。多轮技能未汇总整次施法总伤害，卡片明确标为“伤害（每轮）”。缺失草稿配置只显示占位，不猜测数值。
+- 当前客户端导出数据：雪莉生命 `3900 +390`，普攻 `5 × 300 +30`，大招 `5 × 288 +32`；柯尔特生命 `4000 +400`，普攻 `6 × 360 +36`，大招 `12 × 320 +32`。截图仅作排版参考，不覆盖现有配置。
+- 代码落点均在 statesync：`BrawlHeroMenuHelper` 保留列表、试用和生命周期入口；`BrawlHeroUIHelper` 为共用 UGUI 控件；`BrawlHeroDetailHelper` 创建布局并读配置；`BrawlHeroPreviewHelper` 通过现有 YooAsset 加载 `ModelPath`，在 URP 预览相机中一次性生成 600×800 透明 RenderTexture，立即销毁临时模型／相机／灯光。预览沿用当前 Prefab 的武器和 Idle，不播放音效、粒子或 AnimationEvent，不修改共享 Animator 资源。
+- `LobbyPanelComponent.HeroDetails` 持有纯控件／纹理数据。异步加载使用 EntityRef 和预览版本校验；切换英雄、返回列表、关闭菜单及大厅销毁均释放旧纹理，迟到请求只释放自己的资源句柄。试用仍为练习赛 **10201**、训练场 **10101**。
+- 本轮只改客户端 UI 与文档，未改 NPC／英雄／技能／弹丸 Excel、协议、服务器、预制体及购买资源；未导表、未编译、未启动服务器、未进入 Unity Play。完成静态引用和差异检查；运行效果待用户测试。新增脚本的 `.meta` 由 Unity 正常导入生成，未手写 `.meta`／`.csproj`。
+- 手测：Unity 完成脚本刷新后，分别选择雪莉／柯尔特，检查模型、名字、定位、描述和上述数值；打开／关闭属性弹窗，确认技能名称／描述／射程／装弹时间对应；快速返回列表切换英雄，确认无串模型／串属性；试用、返回大厅、重新打开详情应正常，升级按钮始终不显示。也可查看未完成的英雄，确认缺配置时不报错。
+
+
 ## 2026-10-19 隐藏旧魔兽大厅 UI
 
 - BrawlHeroMenuHelper创建菜单前关闭大厅预制体原有子对象，保留资源与YIUI绑定；Brawl根面板改为不透明背景，默认直接显示英雄列表。关闭列表仍只有Brawl背景和英雄入口，不露出旧大厅，不改登录及服务器逻辑。

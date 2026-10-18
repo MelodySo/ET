@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static ET.Client.BrawlHeroUIHelper;
 
 namespace ET.Client
 {
@@ -38,7 +39,9 @@ namespace ET.Client
             Button close = Button(self, modal, "Close", "关闭", () =>
             {
                 LobbyPanelComponent current = owner;
-                if (current != null) current.HeroMenuModal.SetActive(false);
+                if (current == null) return;
+                BrawlHeroDetailHelper.Hide(current);
+                current.HeroMenuModal.SetActive(false);
             });
             RectTransform closeRect = (RectTransform)close.transform;
             Place(closeRect, -165, 25, 135, 50);
@@ -82,24 +85,15 @@ namespace ET.Client
                 element.minHeight = element.preferredHeight = 70;
             }
 
-            RectTransform detail = Panel("HeroDetail", modal, new Color(0.08f, 0.11f, 0.17f));
-            Stretch(detail, new Vector2(0.05f, 0.08f), new Vector2(0.95f, 0.84f));
-            self.HeroDetailView = detail.gameObject;
-            self.HeroDetailText = Label(self, detail, "Attributes", "", 28);
-            Stretch(self.HeroDetailText.rectTransform, new Vector2(0.06f, 0.32f), new Vector2(0.94f, 0.93f));
-            self.HeroDetailText.alignment = TextAlignmentOptions.TopLeft;
-            Button back = Button(self, detail, "Back", "返回英雄列表", () =>
+            BrawlHeroDetailHelper.Create(self, modal, () =>
             {
                 LobbyPanelComponent current = owner;
                 if (current != null) ShowList(current);
-            });
-            Stretch((RectTransform)back.transform, new Vector2(0.06f, 0.08f), new Vector2(0.46f, 0.23f));
-            Button trial = Button(self, detail, "Trial", "试用", () =>
+            }, () =>
             {
                 LobbyPanelComponent current = owner;
                 if (current != null) current.HeroTrialView.SetActive(true);
             });
-            Stretch((RectTransform)trial.transform, new Vector2(0.54f, 0.08f), new Vector2(0.94f, 0.23f));
 
             RectTransform trialOverlay = Panel("TrialChoice", modal, new Color(0, 0, 0, 0.8f));
             Stretch(trialOverlay, Vector2.zero, Vector2.one);
@@ -133,6 +127,7 @@ namespace ET.Client
 
         private static void ShowList(LobbyPanelComponent self)
         {
+            BrawlHeroDetailHelper.Hide(self);
             self.HeroMenuRoot.transform.SetAsLastSibling();
             self.HeroMenuModal.SetActive(true);
             self.HeroListView.SetActive(true);
@@ -145,11 +140,10 @@ namespace ET.Client
         {
             BrawlHeroConfig hero = self.Fiber().GetSingleton<BrawlHeroConfigCategory>().Get(id);
             self.SelectedHeroId = id;
-            string speed = hero.MoveSpeedTier switch { 1 => "慢", 2 => "中", 3 => "快", 4 => "非常快", _ => "未知" };
-            self.HeroDetailText.text = $"{hero.Name}\n\n战力等级：1\n生命值：{hero.BaseHp}\n移动速度：{speed}";
             self.HeroListView.SetActive(false);
             self.HeroDetailView.SetActive(true);
             self.HeroTrialView.SetActive(false);
+            BrawlHeroDetailHelper.Show(self, hero);
         }
 
         private static void OnPracticeClicked(LobbyPanelComponent self)
@@ -165,6 +159,8 @@ namespace ET.Client
         public static void Destroy(LobbyPanelComponent self)
         {
             BrawlTrainingHelper.Cancel(self);
+            BrawlHeroDetailHelper.Hide(self);
+            self.HeroDetails = null;
             if (self.HeroMenuRoot != null)
             {
                 foreach (Button button in self.HeroMenuRoot.GetComponentsInChildren<Button>(true)) button.onClick.RemoveAllListeners();
@@ -176,63 +172,5 @@ namespace ET.Client
             self.SelectedHeroId = 0;
         }
 
-        private static RectTransform Rect(string name, Transform parent)
-        {
-            GameObject go = new(name, typeof(RectTransform));
-            go.layer = parent.gameObject.layer;
-            RectTransform rect = (RectTransform)go.transform;
-            rect.SetParent(parent, false);
-            return rect;
-        }
-
-        private static RectTransform Panel(string name, Transform parent, Color color)
-        {
-            RectTransform rect = Rect(name, parent);
-            rect.gameObject.AddComponent<Image>().color = color;
-            return rect;
-        }
-
-        private static TextMeshProUGUI Label(LobbyPanelComponent self, Transform parent, string name, string text, int size)
-        {
-            TextMeshProUGUI label = Rect(name, parent).gameObject.AddComponent<TextMeshProUGUI>();
-            label.font = self.HeroMenuFont;
-            label.text = text;
-            label.fontSize = size;
-            label.color = Color.white;
-            label.alignment = TextAlignmentOptions.Center;
-            label.raycastTarget = false;
-            label.richText = false;
-            label.enableWordWrapping = true;
-            return label;
-        }
-
-        private static Button Button(LobbyPanelComponent self, Transform parent, string name, string text, Action action)
-        {
-            RectTransform rect = Panel(name, parent, new Color(0.18f, 0.28f, 0.43f));
-            Button button = rect.gameObject.AddComponent<Button>();
-            button.targetGraphic = rect.GetComponent<Image>();
-            Navigation navigation = button.navigation;
-            navigation.mode = Navigation.Mode.None;
-            button.navigation = navigation;
-            button.onClick.AddListener(() => action());
-            TextMeshProUGUI label = Label(self, rect, "Label", text, 24);
-            Stretch(label.rectTransform, new Vector2(0.03f, 0.03f), new Vector2(0.97f, 0.97f));
-            return button;
-        }
-
-        private static void Stretch(RectTransform rect, Vector2 min, Vector2 max)
-        {
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-        }
-
-        private static void Place(RectTransform rect, float x, float y, float width, float height)
-        {
-            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
-            rect.pivot = new Vector2(0, 1);
-            rect.anchoredPosition = new Vector2(x, -y);
-            rect.sizeDelta = new Vector2(width, height);
-        }
     }
 }
