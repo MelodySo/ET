@@ -1,5 +1,11 @@
 # Brawl NPC 阻挡验证
 
+## 2026-10-19 Brawl大厅隐藏旧UI（实机通过）
+
+- 用户授权进入Play并使用已运行服务器。验证登录后默认英雄列表、关闭/重开、雪莉详情、试用选择、10101进场与返回；旧魔兽大厅始终隐藏，训练场退出RPC成功，运行Error查询0条。测试后退出Play，未停止服务器。
+- 客户端程序集编译成功且Unity运行新代码；完整ET.sln构建被服务器占用Bin中的ET.Mathematics.dll/ET.MemoryPack.dll阻止复制（4错误）。详见Temp/Brawl-lobby-ui-build.log。未改服务器、协议、Excel或预制体。
+
+
 ## 2026-10-18 雪莉普攻冷却
 
 - Statesync_BrawlRevolver_Test新增霰弹TryStart入口回归：1秒CD、齐射结束后冷却保留、连点与999ms拒绝、1000ms允许；拒绝不扣弹药/不发通知/不延长CD；改0.5秒配置仍生效。

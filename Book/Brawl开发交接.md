@@ -1,5 +1,12 @@
 # Brawl Demo 开发交接
 
+## 2026-10-19 隐藏旧魔兽大厅 UI
+
+- BrawlHeroMenuHelper创建菜单前关闭大厅预制体原有子对象，保留资源与YIUI绑定；Brawl根面板改为不透明背景，默认直接显示英雄列表。关闭列表仍只有Brawl背景和英雄入口，不露出旧大厅，不改登录及服务器逻辑。
+- 已连接用户运行中的服务器实测：登录直接显示英雄列表、关闭和重开、雪莉详情、试用模式选择、进入10101训练场、退出返回大厅均正常；旧大厅未恢复，运行错误查询为空。测试后已退出Play，服务器未停止。
+- `dotnet build ET.sln` 的客户端ET.HotfixView生成成功；完整构建因服务器PID30576占用Bin/ET.Mathematics.dll与ET.MemoryPack.dll而失败（复制阶段4个错误），不能标为全量构建通过。日志Temp/Brawl-lobby-ui-build.log。Unity自动刷新完成后实际运行验证了新代码。
+
+
 ## 2026-10-18 雪莉普攻冷却修复
 
 - 已确认服务端导出10101普攻CooldownTime=1秒。根因是BrawlSkillCastHelper仍将非左轮普攻冷却强制设为0，旧版雪莉无CD特例未删除。

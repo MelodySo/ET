@@ -16,7 +16,9 @@ namespace ET.Client
             self.HeroMenuFont = Resources.Load<TMP_FontAsset>("Fonts/SourceHanSansSC-VF SDF");
             if (self.HeroMenuFont == null)
                 throw new InvalidOperationException("缺少英雄界面中文字体：Resources/Fonts/SourceHanSansSC-VF SDF");
-            RectTransform root = Rect("BrawlHeroMenu", parent);
+            // Brawl 使用自己的大厅；保留旧预制体及绑定，只关闭其显示与交互。
+            foreach (Transform child in parent) child.gameObject.SetActive(false);
+            RectTransform root = Panel("BrawlHeroMenu", parent, new Color(0.025f, 0.035f, 0.065f, 1f));
             Stretch(root, Vector2.zero, Vector2.one);
             root.SetAsLastSibling();
             self.HeroMenuRoot = root.gameObject;
@@ -126,7 +128,7 @@ namespace ET.Client
             Stretch((RectTransform)cancel.transform, new Vector2(0.25f, 0.10f), new Vector2(0.75f, 0.31f));
             self.HeroTrialView.SetActive(false);
             self.HeroDetailView.SetActive(false);
-            self.HeroMenuModal.SetActive(false);
+            ShowList(self);
         }
 
         private static void ShowList(LobbyPanelComponent self)
