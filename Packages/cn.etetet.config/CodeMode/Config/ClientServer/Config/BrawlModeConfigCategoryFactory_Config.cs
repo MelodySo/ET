@@ -26,7 +26,7 @@ public sealed class BrawlModeConfigCategoryFactory_Config : IConfigFactory
             [ 3 ] = new ET.BrawlModeConfig(3, @"宝石争霸（5V5）", @"宝石争霸，5V5", 180, false, 5, 2),
             [ 100 ] = new ET.BrawlModeConfig(100, @"荒野决斗（测试用）", @"荒野决斗玩法，每个人各自为战，吃鸡，角逐出最后胜者。", 60, true, 1, 2),
             [ 101 ] = new ET.BrawlModeConfig(101, @"训练场", @"放置4个木桩，每个木桩死亡后定时复活刷新。", 0, true, 1, 1),
-            [ 102 ] = new ET.BrawlModeConfig(102, @"练习赛（测试）", @"对抗bot", 0, true, 1, 2)
+            [ 102 ] = new ET.BrawlModeConfig(102, @"练习赛", @"对抗bot", 0, true, 1, 2)
         });
     }
 }

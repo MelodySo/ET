@@ -24,9 +24,10 @@ namespace ET.Server
                 component.ParticipantSlot = i;
                 life.RespawnPointIds[i] = point.Id;
             }
-            // 当前练习赛仍为1v1；映射数组按TeamSize支持红队在前、蓝队在后。
+            // 单组只有玩家；双组增加蓝方 Bot，复活点沿用配置分组。
             AddParticipant(state, 0, state.HeroId, BrawlPracticeUnitKind.Player, BrawlFaction.Red, playerId);
-            AddParticipant(state, mode.TeamSize, botHeroId, BrawlPracticeUnitKind.Bot, BrawlFaction.Blue, 0);
+            if (mode.TeamCount > 1)
+                AddParticipant(state, mode.TeamSize, botHeroId, BrawlPracticeUnitKind.Bot, BrawlFaction.Blue, 0);
         }
 
         private static void AddParticipant(BrawlPracticeSessionComponent state, int slot, int heroId, BrawlPracticeUnitKind kind, BrawlFaction faction, long playerId)

@@ -6,7 +6,7 @@ namespace ET.Client
     {
         public static void Cast(BrawlTrainingSession session, BrawlSkillSlot slot, Vector2 direction)
         {
-            if (session.Loading || session.Closing || session.CancelRequested || !session.IsPractice) return;
+            if (session.Loading || session.Closing || session.CancelRequested) return;
             if ((slot != BrawlSkillSlot.NormalAttack && slot != BrawlSkillSlot.Super) || direction.sqrMagnitude <= 0) return;
             ClientSenderComponent sender = session.PracticeSender;
             if (sender == null || session.PracticeEntryId == 0) return;

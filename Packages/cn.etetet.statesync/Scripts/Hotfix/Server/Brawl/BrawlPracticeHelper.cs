@@ -7,10 +7,6 @@ namespace ET.Server
     /// <summary>首版单人练习房间，与 Gate 同 Fiber；连接销毁时房间自动销毁。</summary>
     public static class BrawlPracticeHelper
     {
-        // 入口固定，Bot 对应英雄由行为树导出的练习赛配对配置决定。
-        private const int PracticeModeId = 102;
-        private const int PracticeLevelId = 10201;
-
         public static void Enter(Session session, C2G_BrawlPracticeEnter request, G2C_BrawlPracticeEnter response)
         {
             Player player = session.GetComponent<SessionPlayerComponent>()?.Player;
@@ -19,27 +15,33 @@ namespace ET.Server
             BrawlPracticeSessionComponent state = session.GetComponent<BrawlPracticeSessionComponent>();
             if (state != null && state.EntryId == request.EntryId)
             {
-                if (state.HeroId != request.HeroId) throw new InvalidOperationException("重复请求的英雄不一致。");
+                if (state.HeroId != request.HeroId || state.LevelId != request.LevelId)
+                    throw new InvalidOperationException("重复请求的英雄或关卡不一致。");
                 FillSnapshot(state, response);
                 return;
             }
             Fiber fiber = session.Fiber();
-            BrawlModeConfig mode = fiber.GetSingleton<BrawlModeConfigCategory>().GetOrDefault(PracticeModeId);
-            BrawlLevelConfig level = fiber.GetSingleton<BrawlLevelConfigCategory>().GetOrDefault(PracticeLevelId);
-            if (mode == null || !mode.Enabled || mode.TeamSize != 1 || mode.TeamCount != 2 || mode.TimeLimitSeconds != 0)
-                throw new InvalidOperationException("玩法 102 必须启用，TeamSize=1、TeamCount=2、TimeLimitSeconds=0。");
-            if (level == null || level.ModeId != mode.Id) throw new InvalidOperationException("练习赛关卡 10201 不存在或 ModeId 不为 102。");
+            BrawlLevelConfig level = fiber.GetSingleton<BrawlLevelConfigCategory>().GetOrDefault(request.LevelId);
+            if (level == null) throw new InvalidOperationException($"关卡 {request.LevelId} 不存在，请导出最新配置。");
+            BrawlModeConfig mode = fiber.GetSingleton<BrawlModeConfigCategory>().GetOrDefault(level.ModeId);
+            if (mode == null || !mode.Enabled || mode.TeamSize != 1 || mode.TeamCount < 1 || mode.TeamCount > 2 || mode.TimeLimitSeconds != 0)
+                throw new InvalidOperationException($"关卡 {level.Id} 的玩法必须启用，TeamSize=1、TeamCount=1或2、TimeLimitSeconds=0。");
             BrawlHeroConfig playerHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(request.HeroId);
-            int botHeroId = fiber.GetSingleton<BrawlAIConfigCategory>().GetPracticeOpponent(request.HeroId);
-            BrawlHeroConfig botHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(botHeroId);
-            if (playerHero == null || botHero == null)
-                throw new InvalidOperationException("玩家或 Bot 英雄配置不存在。");
+            if (playerHero == null) throw new InvalidOperationException("玩家英雄配置不存在。");
+            int botHeroId = 0;
+            BrawlHeroConfig botHero = null;
+            if (mode.TeamCount > 1)
+            {
+                botHeroId = fiber.GetSingleton<BrawlAIConfigCategory>().GetPracticeOpponent(request.HeroId);
+                botHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(botHeroId);
+                if (botHero == null) throw new InvalidOperationException("Bot 英雄配置不存在。");
+            }
             int cellSize = fiber.GetSingleton<BrawlGlobalConfigCategory>().CellSize;
             if (cellSize <= 0) throw new InvalidOperationException("CellSize 必须大于零。");
             ValidateLevel(level, mode.TeamSize * mode.TeamCount, fiber.GetSingleton<BrawlNPCConfigCategory>(),
                 fiber.GetSingleton<BrawlRespawnPointConfigCategory>());
             ValidateHeroSpawn(level, cellSize, level.SpawnPoints[0], playerHero);
-            ValidateHeroSpawn(level, cellSize, level.SpawnPoints[1], botHero);
+            if (botHero != null) ValidateHeroSpawn(level, cellSize, level.SpawnPoints[mode.TeamSize], botHero);
 
             // 新的进入请求替换该连接尚未退出的旧房间，延迟退出按 EntryId 匹配，不会销毁新房间。
             session.RemoveComponent<BrawlPracticeSessionComponent>();

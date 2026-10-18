@@ -6,7 +6,7 @@ namespace ET.Client
 {
     public static class BrawlPracticeClientHelper
     {
-        public static async ETTask<int> Enter(LobbyPanelComponent self, BrawlTrainingSession session, int heroId)
+        public static async ETTask<int> Enter(LobbyPanelComponent self, BrawlTrainingSession session, int heroId, int levelId)
         {
             EntityRef<LobbyPanelComponent> owner = self;
             ClientSenderComponent sender = self.Root().GetComponent<ClientSenderComponent>();
@@ -15,6 +15,7 @@ namespace ET.Client
             session.PracticeEntryId = IdGenerater.Instance.GenerateId();
             C2G_BrawlPracticeEnter request = C2G_BrawlPracticeEnter.Create();
             request.HeroId = heroId;
+            request.LevelId = levelId;
             request.EntryId = session.PracticeEntryId;
             using G2C_BrawlPracticeEnter response = (G2C_BrawlPracticeEnter)await sender.Call(request, false);
             self = owner;
@@ -24,7 +25,7 @@ namespace ET.Client
             session.MyUnitId = response.MyUnitId;
             session.CellSize = response.CellSize;
             if (self == null || session.CancelRequested) return response.LevelId;
-            if (response.RoomId <= 0 || response.MyUnitId <= 0 || response.CellSize <= 0)
+            if (response.LevelId != levelId || response.RoomId <= 0 || response.MyUnitId <= 0 || response.CellSize <= 0)
                 throw new InvalidOperationException("服务器返回的房间数据无效。");
             BrawlHeroConfigCategory heroes = self.Fiber().GetSingleton<BrawlHeroConfigCategory>();
             BrawlNPCConfigCategory npcs = self.Fiber().GetSingleton<BrawlNPCConfigCategory>();

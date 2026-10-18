@@ -73,6 +73,7 @@ message C2G_BrawlPracticeEnter // ISessionRequest
     int32 RpcId = 1;
     int32 HeroId = 2;
     int64 EntryId = 3;
+    int32 LevelId = 4;
 }
 
 message G2C_BrawlPracticeEnter // ISessionResponse

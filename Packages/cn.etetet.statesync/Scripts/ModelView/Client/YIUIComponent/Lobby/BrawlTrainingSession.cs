@@ -6,7 +6,7 @@ using YooAsset;
 
 namespace ET.Client
 {
-    /// <summary>训练场/练习赛的客户端资源与恢复信息，由大厅持有；练习赛另关联服务器房间。</summary>
+    /// <summary>训练场/练习赛的客户端资源与恢复信息，由大厅持有；两者均关联服务器房间。</summary>
     [EnableClass]
     public sealed class BrawlTrainingSession
     {
@@ -20,7 +20,7 @@ namespace ET.Client
         public GameObject NPCRoot;
         public int CellSize;
         public BrawlAIPlayProbe AIProbe; // Optional, explicitly started verification only.
-        public bool IsPractice;
+        public string Title;
         public long PracticeEntryId;
         public long PracticeRoomId;
         public long MyUnitId;

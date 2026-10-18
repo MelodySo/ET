@@ -152,12 +152,12 @@ namespace ET.Client
 
         private static void OnPracticeClicked(LobbyPanelComponent self)
         {
-            BrawlTrainingHelper.Enter(self, practice: true).Coroutine();
+            BrawlTrainingHelper.Enter(self, 10201, "练习赛").Coroutine();
         }
 
         private static void OnTrainingClicked(LobbyPanelComponent self)
         {
-            BrawlTrainingHelper.Enter(self).Coroutine();
+            BrawlTrainingHelper.Enter(self, 10101, "训练场").Coroutine();
         }
 
         public static void Destroy(LobbyPanelComponent self)

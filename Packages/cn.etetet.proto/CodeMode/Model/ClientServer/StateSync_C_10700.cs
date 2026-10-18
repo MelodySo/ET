@@ -195,6 +195,8 @@ namespace ET
         public int HeroId { get; set; }
         [MemoryPackOrder(2)]
         public long EntryId { get; set; }
+        [MemoryPackOrder(3)]
+        public int LevelId { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);

@@ -1,5 +1,10 @@
 # cn.etetet.statesync
 
+## 训练场联网迁移（2026-10-18）
+
+训练场入口10101、练习赛入口10201统一走服务器练习房间；单机展示逻辑与RunTerrain已删除。人数和Bot由关卡引用的玩法决定（当前支持每组1人、1或2组），不是由按钮或关卡编号猜测。C2G_BrawlPracticeEnter新增LevelId，双端需要一起更新。本节覆盖下文历史“固定10201/公牛/仅本地展示”的说明。配置与验证状态见Book/Brawl开发交接.md最新章节。
+
+
 ## 柯尔特矩形射击走位（2026-10-18）
 
 - 柯尔特行为树的活动连发与施法成功分支接 `BTBrawlFollowTarget`，按当前锁定施法方向及技能完整宽度纠正目标中心的横向偏差，纵向维持技能射程减 RangeMargin；不保存开火时双方偏移，不按单颗子弹判断。
@@ -9,7 +14,7 @@
 ## 关卡中心原点（2026-10-15）
 
 - 所有 Brawl 关卡世界原点为几何中心，格中心 X/Z = (column/row - (ColumnCount/RowCount - 1)/2) * CellSize。网格索引保持左下角起算，不修改 Excel。
-- 统一转换在 BrawlTerrainMovementHelper.GridOffset/CellPosition；地形显示、本地训练人物、服务端出生/复活点、NPC、地图移动碰撞及弹丸地形碰撞均已适配。坐标协议不变，双端需同时更新并重新进入关卡。
+- 统一转换在 BrawlTerrainMovementHelper.GridOffset/CellPosition；地形显示、服务端出生/复活点、NPC、地图移动碰撞及弹丸地形碰撞均已适配。坐标协议不变，双端需同时更新并重新进入关卡。
 - 编辑器尺寸调整仍保留左下角数据，并非中心锚定扩图；手工场景物体不自动平移。本节覆盖历史左下角世界原点描述。
 
 ## 概述
@@ -42,7 +47,7 @@
 - `BrawlHeroMenuHelper` 在大厅 YIUIInitialize 创建动态 UGUI/TMP 子界面，Destroy 清理，随大厅隐藏；不修改 YIUIGen 或原 prefab。
 - 状态归属 LobbyPanelComponent；事件闭包通过 EntityRef 获取存活 owner。
 - 列表读取 BrawlHeroConfigCategory，暂以 UnlockPrice=0 表示默认已解锁，等级统一为 1；未接账号英雄资产或培养系统。
-- 详情显示 BaseHp 与 MoveSpeedTier；已解锁、未解锁均可试用。训练场本地展示，练习赛请求服务器创建房间。
+- 详情显示 BaseHp 与 MoveSpeedTier；已解锁、未解锁均可试用。训练场和练习赛均请求服务器创建房间。
 
 ## 服务器练习赛第一版
 
@@ -52,7 +57,7 @@
 - 单位 ConfigId 按 Kind 指向 BrawlHero 或 BrawlNPC，禁止调用原 MMO Unit.Config() 解释这些 ID。玩家与 Bot 添加 BrawlMoveComponent；不添加原 MMO 移动、AI、数值、技能或 AOI 组件。
 - 服务端校验关卡、出生点及 NPC，读取 BrawlGlobal.CellSize 计算世界坐标；客户端按快照的单位 ID、配置 ID 与坐标加载模型，不自行补出 Bot/NPC。
 - EntryId 用于进入请求幂等与退出匹配；新进入替换该连接旧房间，迟到的旧退出不会删除新房间。当前不支持断线续局。
-- 客户端共用 BrawlTrainingHelper 的场景、地形和退出 UI；练习赛显示服务器房间 ID，训练场仍为本地流程。资源加载失败尝试退出服务器房间并恢复大厅。
+- 客户端共用 BrawlTrainingHelper 的场景、地形和退出 UI；练习赛显示服务器房间 ID，训练场同样关联服务器房间。资源加载失败尝试退出服务器房间并恢复大厅。
 
 ## 练习赛服务器权威移动
 
@@ -64,7 +69,7 @@
 - 首版每个服务器移动 Tick 发送玩家与 Bot 的位置快照（静止时也发送，便于保持插值时间线），NPC 不重复同步。带 EntryId、RoomId、Tick、最后输入序号，避免旧房间/乱序快照污染。
 - BrawlPracticeClientComponent 位于客户端根 Scene，通过 SceneType.Client 接收 IMessage，不能走原 MMO ICurrentMessage。每帧采集 WASD 或简易屏幕摇杆，约 20Hz 发送，开始/停止及时发送；失焦清零。
 - 表现仅在已收到的快照间插值，初始缓冲 2 Tick，断流不外推、不预测、不控制 Animator。退出先停止输入并 Dispose 客户端组件，再退出服务器房间和卸载模型。
-- 本地训练场保持原展示流程，不启用这一套移动。
+- 训练场同样使用服务器权威移动。
 - 摇杆 BrawlJoystickHelper.DeadZone=0.2f，HandleRange=60，中心 12 UI 局部单位以内（含边界）停止，超过阈值全速；手柄视觉仍随拖动距离变化。碰墙滑动后的实际位移不强制恢复全速。
 - BrawlNPCBlockHelper 按 NPC.ComponentTypes/ComponentValues 配对挂载组件，类型 BrawlUnitComponentType.Block=1，值为 BrawlUnitComponentBlockConfig.Id。拒绝未知/重复类型、不等长数组、缺失配置与非法阻挡尺寸。无配置即无阻挡。
 - BrawlUnitComponentBlock 同时保存 CanBeDestroyed 与配置尺寸。用户明确当前不拆可摧毁组件；该 bool 不影响是否阻挡，本轮未实现伤害/摧毁。NPC 移除组件或销毁后不再阻挡。
@@ -121,7 +126,7 @@
 - 房间BrawlLifecycleRoomComponent保存参与者绑定、long[]复活点ID、纯值NPC待重生记录及通知；禁止静态System集合或保存已销毁实体引用。复活点只服务英雄，SpawnPoints前TeamSize个红方、其余蓝方；当前实际仍1v1。NPCIds不得重复配置出生点。
 - 快照携带MyUnitId、变化时全量Roster和LifeEvents。客户端切换新实体模型，Spawning时隐藏人物；不实现动画/特效/倒计时/状态机。具体配置、测试和历史覆盖关系见Book/Brawl开发交接.md最新章节。
 
-## 本地训练场展示流程
+## 技能历史与训练场联网流程
 
 - 柯尔特大招40102已实现（覆盖旧的仅充能说明）：复用Revolver，读取12发/0.08333间隔/12米/宽1配置。C2G_BrawlCastSkill按槽位选择英雄技能，普攻和大招分别冷却、共享连发互斥。成功施放大招仅扣SuperAmmo一格且保留小数；墙与敌人有效扣血后回充，碰撞仍销毁本枚。大招发射期间暂停普通装填，但大招充能不暂停。雪莉大招草稿仍未实现，详见交接文档。
 
@@ -132,16 +137,11 @@
 
 - 柯尔特普攻最新规则（2026-10-15）：Revolver=2对应BrawlRevolverEmitter，按配置单轮6发、160ms间隔、左右交替边缘偏移，方向锁定、位置随英雄。BrawlSkillCastComponent保存发射计划，SequenceHelper在服务器Tick执行绝对时刻；死亡/受控取消剩余发射。左轮读取CooldownTime（当前800ms），雪莉继续无CD，无弹药/装填。详细边界与验证见Book/Brawl开发交接.md。
 
-- `BrawlTrainingHelper` 由英雄详情的训练场按钮触发；当前按用户约定选取关卡 10101，场景从 BrawlLevelConfig.SceneAsset 读取，不调用原 MMO EnterMap，也不进入 Map2。
-- 使用 DefaultPackage 叠加加载场景，兼容 SceneAsset 的相对路径/短名称；当前收集器按文件名寻址。
-- 状态与资源由 LobbyPanelComponent.TrainingSession 持有；加载防重入、异步后用 EntityRef 获取大厅；大厅销毁时取消/清理。
-- 隐藏大厅 CanvasGroup，创建独立 Overlay 退出按钮；退出卸载场景并恢复原活动场景、大厅显示和相机状态。
-- 主角按所选 BrawlHeroConfig.ModelPath 加载，放在关卡第一个出生格，不再创建胶囊；格子尺寸读取 BrawlGlobalConfigCategory.CellSize（米，当前 1），进入时校验正数并存入会话。列对应 X、行对应 Z。地形、英雄、NPC 坐标及相机取景共用此尺寸，配置仍保存格子索引，不缩放 Prefab。
-- 使用 BrawlLevelConfig.StyleId 获取 BrawlLevelStyleConfig，MapGrid 1/2/3/4 分别使用 ModelPath1/2/3/4；Ground=0 不生成模型，空地址跳过，ModelPath5 暂未使用。按收集器短地址加载 Prefab，保留其原始旋转与缩放。
-- 同种模型每次会话只加载一个句柄；退出先销毁实例/卸载场景，再释放句柄并恢复大厅。大厅临时 CanvasGroup 保留至大厅销毁，避免同帧重新进入遇到延迟销毁问题。
-- NPCIds/NPCPoints 按下标配对，读取 BrawlNPCConfig.ModelPath 加载模型；校验数组、位置和配置。只展示，不创建网络 Unit、血量或战斗组件。保留 Prefab 的武器、旋转、缩放与 Animator，只在实例上关闭 Root Motion，不驱动动画参数，不修改场景已有对象。
-- 训练场是本地展示流程，不建立服务端房间；现有账号登录仍需服务端与 MongoDB。CodeMode 不变，不等同于完整离线启动。
-- 保留验证入口 `Brawl/Verification/RunTerrain`：从本包 Init 场景启动，等待登录 UI 就绪后手动执行；无需登录/服务器，使用真实加载与退出逻辑验证 10101、10001、10101 三轮。仅诊断入口绕过登录，正常业务登录不变。结果输出 BRAWL_TERRAIN_PASS，截图保存 Temp/BrawlTerrain_{id}.png；验证后停止 Play。
+- `BrawlTrainingHelper` / `BrawlTrainingSession` 是两个入口共用的联网场景加载与资源管理代码，名称保留，不再包含单机分支。删除本地英雄／NPC 创建和 `Brawl/Verification/RunTerrain` 入口。
+- 训练场按钮请求 LevelId=10101，练习赛请求 LevelId=10201；C2G_BrawlPracticeEnter 携带 LevelId。服务器查关卡 ModeId，再查玩法；仅支持启用、无限时、每组1人的1组或2组布局。单组不解析对手、不建Bot；双组沿用英雄配对。
+- NPC、英雄、复活点均由服务器创建并同步。血量、重生延迟、掉落沿用既有配置与逻辑，不在训练场写特殊数值。
+- 两入口共用输入、技能、动画、相机及退出清理。登录连接仍必需，没有离线回退。异步加载保留 EntityRef、防重入、取消和资源释放。
+- 本节及文件顶部最新迁移说明覆盖旧“本地训练场”记录。
 
 ## 账号登录界面
 

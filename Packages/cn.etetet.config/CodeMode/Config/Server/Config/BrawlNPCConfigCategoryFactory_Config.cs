@@ -31,7 +31,8 @@ public sealed class BrawlNPCConfigCategoryFactory_Config : IConfigFactory
             [ 202 ] = new ET.BrawlNPCConfig(202, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
             [ 203 ] = new ET.BrawlNPCConfig(203, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
             [ 204 ] = new ET.BrawlNPCConfig(204, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
-            [ 205 ] = new ET.BrawlNPCConfig(205, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true)
+            [ 205 ] = new ET.BrawlNPCConfig(205, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
+            [ 401 ] = new ET.BrawlNPCConfig(401, 1, 0, 5000, 500, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 10f, 6, true)
         });
     }
 }

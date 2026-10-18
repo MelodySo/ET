@@ -31,7 +31,8 @@ public sealed class BrawlNPCConfigCategoryFactory_Config : IConfigFactory
             [ 202 ] = new ET.BrawlNPCConfig(202, @"木桶", @"", @"Wall_Tile_Barrel", 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
             [ 203 ] = new ET.BrawlNPCConfig(203, @"木箱", @"", @"Wall_Tile_Box", 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
             [ 204 ] = new ET.BrawlNPCConfig(204, @"仙人掌", @"", @"Wall_Tile_Cactus", 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
-            [ 205 ] = new ET.BrawlNPCConfig(205, @"花盆", @"", @"Wall_Tile_Vase", 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true)
+            [ 205 ] = new ET.BrawlNPCConfig(205, @"花盆", @"", @"Wall_Tile_Vase", 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
+            [ 401 ] = new ET.BrawlNPCConfig(401, @"宝箱（木桩）", @"", @"Chest", 1, 0, 5000, 500, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 10f, 6, true)
         });
     }
 }

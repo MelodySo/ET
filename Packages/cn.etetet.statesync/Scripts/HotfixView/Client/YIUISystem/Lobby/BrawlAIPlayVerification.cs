@@ -38,7 +38,7 @@ namespace ET.Client
                 for (int pass = 0; pass < 2; ++pass)
                 {
                     lobby = lobbyRef;
-                    await BrawlTrainingHelper.Enter(lobby, 10201, true);
+                    await BrawlTrainingHelper.Enter(lobby, 10201, "练习赛");
                     lobby = lobbyRef;
                     BrawlTrainingSession session = lobby.TrainingSession;
                     if (session == null || session.Loading || session.PracticeRoomId == oldRoom) throw new Exception("Practice entry failed or reused old room.");

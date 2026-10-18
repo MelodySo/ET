@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
@@ -9,37 +8,28 @@ using YooAsset;
 
 namespace ET.Client
 {
-    /// <summary>本地训练场与服务器练习赛共用的显示流程，不调用原 MMO EnterMap。</summary>
+    /// <summary>训练场与练习赛共用的联网显示流程，不调用原 MMO EnterMap。</summary>
     public static class BrawlTrainingHelper
     {
-        // 当前入口按约定固定选用训练关卡，场景名称仍由配置决定。
-        private const int TrainingLevelId = 10101;
-
-        public static async ETTask Enter(LobbyPanelComponent self, int levelId = TrainingLevelId, bool practice = false)
+        public static async ETTask Enter(LobbyPanelComponent self, int levelId, string title)
         {
             if (self.TrainingSession != null) return;
             EntityRef<LobbyPanelComponent> owner = self;
-            BrawlTrainingSession session = new() { Loading = true, IsPractice = practice, PreviousScene = SceneManager.GetActiveScene() };
+            BrawlTrainingSession session = new() { Loading = true, Title = title, PreviousScene = SceneManager.GetActiveScene() };
             self.TrainingSession = session;
             try
             {
                 int heroId = self.SelectedHeroId;
                 CreateOverlay(self, session);
                 HideLobby(self, session);
-                if (practice)
-                {
-                    levelId = await BrawlPracticeClientHelper.Enter(self, session, heroId);
-                    self = owner;
-                    if (self == null || session.CancelRequested)
-                    {
-                        session.Loading = false;
-                        await Cleanup(session);
-                        return;
-                    }
-                }
-                else session.CellSize = self.Fiber().GetSingleton<BrawlGlobalConfigCategory>().CellSize;
-                // 分支中的 RPC / 取消清理均可能 await，公共路径重新取得存活大厅实体。
+                levelId = await BrawlPracticeClientHelper.Enter(self, session, heroId, levelId);
                 self = owner;
+                if (self == null || session.CancelRequested)
+                {
+                    session.Loading = false;
+                    await Cleanup(session);
+                    return;
+                }
                 if (session.CellSize <= 0) throw new InvalidOperationException("BrawlGlobal.CellSize 必须大于 0，请修改并导出配置。");
                 BrawlHeroConfig hero = self.Fiber().GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(heroId);
                 BrawlLevelConfig level = self.Fiber().GetSingleton<BrawlLevelConfigCategory>().GetOrDefault(levelId);
@@ -50,9 +40,8 @@ namespace ET.Client
                 ValidateLevel(level, style);
                 if (string.IsNullOrWhiteSpace(hero.ModelPath))
                     throw new InvalidOperationException($"英雄 {hero.Id} 缺少 ModelPath，请检查英雄表并导出。");
-                BrawlNPCConfig[] npcs = practice ? null : ResolveNPCs(level, self.Fiber().GetSingleton<BrawlNPCConfigCategory>());
 
-                BrawlProjectileConfigCategory projectileConfigs = practice ? self.Fiber().GetSingleton<BrawlProjectileConfigCategory>() : null;
+                BrawlProjectileConfigCategory projectileConfigs = self.Fiber().GetSingleton<BrawlProjectileConfigCategory>();
                 // 资源收集使用 AddressByFileName，同时兼容表内的项目相对路径和短名称。
                 string address = Path.GetFileNameWithoutExtension(level.SceneAsset.Replace('\\', '/'));
                 session.SceneHandle = YooAssets.GetPackage("DefaultPackage").LoadSceneAsync(address, LoadSceneMode.Additive);
@@ -73,7 +62,7 @@ namespace ET.Client
                 session.CameraController = self.Root().AddComponent<BrawlCameraComponent, Camera, BrawlGlobalConfigCategory>(
                     session.BattleCamera, self.Fiber().GetSingleton<BrawlGlobalConfigCategory>());
                 await LoadTerrain(session, level, style);
-                if (practice && !session.CancelRequested)
+                if (!session.CancelRequested)
                 {
                     await BrawlProjectileVisualHelper.Preload(session, projectileConfigs);
                     if (!session.CancelRequested && !session.Closing) await BrawlSkillAimVisualHelper.Initialize(session);
@@ -82,8 +71,7 @@ namespace ET.Client
                 }
                 if (!session.CancelRequested)
                 {
-                    if (practice) await LoadPracticeUnits(session);
-                    else await LoadCharacters(session, hero, level, npcs);
+                    await LoadPracticeUnits(session);
                 }
                 self = owner;
                 if (self == null || session.CancelRequested)
@@ -95,13 +83,11 @@ namespace ET.Client
                 BrawlCameraComponent cameraController = session.CameraController;
                 cameraController.SetTarget(session.Hero != null ? session.Hero.transform : null);
                 cameraController.Follow();
-                session.StatusText.text = practice
-                    ? $"练习赛 · {hero.Name}\n点按普攻随移动方向 · 拖动瞄准 · 拖回取消"
-                    : $"训练场 · {hero.Name}\n本地试用 / 暂无移动与战斗";
+                session.StatusText.text = $"{session.Title} · {hero.Name}\n点按普攻随移动方向 · 拖动瞄准 · 拖回取消";
                 session.LoadingBackground.enabled = false;
                 session.ExitButton.interactable = true;
                 session.Loading = false;
-                if (practice) BrawlSkillViewHelper.Create(session, self.HeroMenuFont, hero, self.Fiber().GetSingleton<BrawlSkillConfigCategory>());
+                BrawlSkillViewHelper.Create(session, self.HeroMenuFont, hero, self.Fiber().GetSingleton<BrawlSkillConfigCategory>());
             }
             catch (Exception exception)
             {
@@ -113,7 +99,7 @@ namespace ET.Client
                 {
                     self.TrainingSession = null;
                     self.HeroTrialView.SetActive(false);
-                    self.HeroDetailText.text += $"\n\n进入{(practice ? "练习赛" : "训练场")}失败：{exception.Message}";
+                    self.HeroDetailText.text += $"\n\n进入{session.Title}失败：{exception.Message}";
                 }
             }
         }
@@ -173,50 +159,6 @@ namespace ET.Client
         {
             Unity.Mathematics.float2 position = BrawlTerrainMovementHelper.CellPosition(level, index, cellSize);
             return new Vector3(position.x, 0, position.y);
-        }
-
-        private static BrawlNPCConfig[] ResolveNPCs(BrawlLevelConfig level, BrawlNPCConfigCategory category)
-        {
-            int count = level.NPCIds?.Length ?? 0;
-            if (count != (level.NPCPoints?.Length ?? 0))
-                throw new InvalidOperationException($"关卡 {level.Id} 的 NPCIds 与 NPCPoints 必须等长。");
-            BrawlNPCConfig[] configs = new BrawlNPCConfig[count];
-            HashSet<int> occupied = new();
-            for (int i = 0; i < count; ++i)
-            {
-                int point = level.NPCPoints[i];
-                if (point < 0 || point >= level.MapGrid.Length || !occupied.Add(point) ||
-                    Array.IndexOf(level.SpawnPoints, point) >= 0)
-                    throw new InvalidOperationException($"关卡 {level.Id} 的 NPC 出生格 {point} 越界、重复或与玩家重叠。");
-                int tile = level.MapGrid[point];
-                if (tile != (int)BrawlTileType.Ground && tile != (int)BrawlTileType.Grass)
-                    throw new InvalidOperationException($"关卡 {level.Id} 的 NPC 出生格 {point} 必须在平地或草丛上。");
-                BrawlNPCConfig config = category.GetOrDefault(level.NPCIds[i]);
-                if (config == null || string.IsNullOrWhiteSpace(config.ModelPath))
-                    throw new InvalidOperationException($"NPC {level.NPCIds[i]} 不存在或缺少 ModelPath，请检查 NPC 表并导出。");
-                configs[i] = config;
-            }
-            return configs;
-        }
-
-        private static async ETTask LoadCharacters(BrawlTrainingSession session, BrawlHeroConfig hero, BrawlLevelConfig level,
-            BrawlNPCConfig[] npcs)
-        {
-            session.Hero = await BrawlModelHelper.InstantiateModel(session, hero.ModelPath, session.RuntimeRoot.transform,
-                $"TrainingHero_{hero.Id}", CellPosition(level.SpawnPoints[0], level, session.CellSize));
-            if (session.CancelRequested) return;
-            // 保留 Prefab 的专属武器和控制器，不驱动动画参数；禁止根运动改变出生位置。
-            foreach (Animator animator in session.Hero.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
-            session.NPCRoot = new GameObject("NPCs");
-            session.NPCRoot.transform.SetParent(session.RuntimeRoot.transform, false);
-            for (int i = 0; i < npcs.Length; ++i)
-            {
-                if (session.CancelRequested) return;
-                GameObject npc = await BrawlModelHelper.InstantiateModel(session, npcs[i].ModelPath, session.NPCRoot.transform,
-                    $"NPC_{i}_{npcs[i].Id}", CellPosition(level.NPCPoints[i], level, session.CellSize));
-                if (session.CancelRequested) return;
-                foreach (Animator animator in npc.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
-            }
         }
 
         private static async ETTask LoadPracticeUnits(BrawlTrainingSession session)
@@ -314,7 +256,7 @@ namespace ET.Client
             session.StatusText.color = Color.white;
             session.StatusText.raycastTarget = false;
             session.StatusText.richText = false;
-            session.StatusText.text = session.IsPractice ? "正在请求练习赛……" : "正在进入训练场……";
+            session.StatusText.text = $"正在请求{session.Title}……";
 
             GameObject exitObject = new("ExitTraining", typeof(RectTransform), typeof(Image), typeof(Button));
             RectTransform exitRect = (RectTransform)exitObject.transform;
@@ -346,7 +288,7 @@ namespace ET.Client
             label.color = Color.white;
             label.alignment = TextAlignmentOptions.Center;
             label.raycastTarget = false;
-            label.text = session.IsPractice ? "退出练习赛" : "退出训练场";
+            label.text = $"退出{session.Title}";
         }
 
         public static async ETTask Cleanup(BrawlTrainingSession session)
@@ -367,7 +309,7 @@ namespace ET.Client
                 BrawlPracticeClientComponent movement = session.MovementClient;
                 movement?.Dispose();
                 session.MovementClient = default;
-                if (session.IsPractice) await BrawlPracticeClientHelper.Exit(session);
+                await BrawlPracticeClientHelper.Exit(session);
                 if (session.PreviousScene.IsValid() && session.PreviousScene.isLoaded) SceneManager.SetActiveScene(session.PreviousScene);
                 if (session.RuntimeRoot != null)
                 {
