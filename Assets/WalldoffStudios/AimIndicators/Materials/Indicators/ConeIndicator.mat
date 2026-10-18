@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4949275760554778610
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 5
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ConeIndicator
+  m_Shader: {fileID: 4800000, guid: 5053bbed09a0940469db175b80c02620, type: 3}
+  m_ValidKeywords:
+  - EDGE_ON
+  m_InvalidKeywords:
+  - PARABOLIC_ON
+  - _SURFACE_TYPE_TRANSPARENT
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2997
+  stringTagMap: {}
+  disabledShaderPasses:
+  - DepthOnly
+  - SHADOWCASTER
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaTex:
+        m_Texture: {fileID: 2800000, guid: 87f68bcbe0dfed74994756bf1e19857a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 5de654ce8c4eb42438799f33378d14c1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EdgeTex:
+        m_Texture: {fileID: 2800000, guid: b66b11d7a1393ad47a21ba8f9239dd09, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FillTex:
+        m_Texture: {fileID: 2800000, guid: 0ece6643209d7c64aa3c17b1ac4a939b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 9f9db2acb61537b4ba5b462a746da0e9, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 0.356
+    - _AlphaClip: 0
+    - _AlphaFill: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _ColorMask: 15
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DistortionAmount: 0.017
+    - _DstBlend: 10
+    - _DstMode: 10
+    - _HitPointX: 0
+    - _HitPointY: 0
+    - _HitPointZ: 0.03
+    - _Overlap: 0
+    - _QueueOffset: 0
+    - _RangeFill: 0
+    - _RaycastAmount: 1
+    - _RaycastIndex: 0
+    - _SampleGI: 0
+    - _ScrollSpeed: 6.22
+    - _SrcBlend: 5
+    - _SrcMode: 5
+    - _Stencil: 0
+    - _StencilComp: 6
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _Strength: 1.5
+    - _Surface: 1
+    - _Test: 0
+    - _VertPos: 1
+    - _ZTest: 2
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _FillColor: {r: 0, g: 0.4436121, b: 1, a: 1}
+    - _HitPoint: {r: 0, g: 0, b: 0, a: 0}
+    - _HitPointCorners: {r: -22, g: -3.76, b: 13.86, a: 0}
+  m_BuildTextureStacks: []

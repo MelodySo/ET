@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3443ccf49f38274490ff876c32cc7f2, type: 3}
+  m_Name: Indicator textures
+  m_EditorClassIdentifier: 
+  coneTextures:
+  - {fileID: 2800000, guid: 500c809c2eaa0e44db51244d793b661a, type: 3}
+  - {fileID: 2800000, guid: 14e5e415636ff6a4b85ef900911d8f60, type: 3}
+  - {fileID: 2800000, guid: adefaf178e2f2404c8e57ecc2f4a5989, type: 3}
+  - {fileID: 2800000, guid: 3bb74a410e4f65a48aaaf6a59378ad7f, type: 3}
+  - {fileID: 2800000, guid: 28465f765baa9824b9e8440f7ac791f8, type: 3}
+  - {fileID: 2800000, guid: 95c915fa8348dd14ebe02d6a11a2d400, type: 3}
+  - {fileID: 2800000, guid: 5dc309c76d0f44f4eb169d190c7b51ed, type: 3}
+  - {fileID: 2800000, guid: a83d78effd8d03645acc7ff380b9745d, type: 3}
+  - {fileID: 2800000, guid: 4b91ebf4b57bee84681463aca95fb013, type: 3}
+  - {fileID: 2800000, guid: c849c21eccdc6b640aff238fdba95380, type: 3}
+  - {fileID: 2800000, guid: ed7cada4238d22746872e7b84e50d5ec, type: 3}
+  - {fileID: 2800000, guid: fd35d6e7acda9534380e620e66ea061f, type: 3}
+  - {fileID: 2800000, guid: 4ac905ca0ec1f874cb5419991a7cab4a, type: 3}
+  - {fileID: 2800000, guid: 92dfdd4041b5c0a4b9bcbbe21c39e1e3, type: 3}
+  lineTextures:
+  - {fileID: 2800000, guid: 2149d349029d2614e92031e5a45586b2, type: 3}
+  - {fileID: 2800000, guid: 3a3ec664ffb301b43af48a92f88dc8ef, type: 3}
+  - {fileID: 2800000, guid: e2c8411182a0cb74cbe2ff8eb6151fb8, type: 3}
+  - {fileID: 2800000, guid: b266ad06a078f9644b7f82491c1b10c0, type: 3}
+  - {fileID: 2800000, guid: b91ba3e39cde65147b845134c07fda8f, type: 3}
+  - {fileID: 2800000, guid: a6a8faf06f6ee52458110d29e1b41527, type: 3}
+  - {fileID: 2800000, guid: 40221c47e50e1ec41a0d9e8f212f11ff, type: 3}
+  - {fileID: 2800000, guid: 5a108a842931f944382f9f78ca4dd069, type: 3}
+  - {fileID: 2800000, guid: 3eaacfd72cda83c4c9e48c33f973c0b5, type: 3}
+  - {fileID: 2800000, guid: e2af55febb3e9e44793f9f4aeaf43587, type: 3}
+  parabolicTextures:
+  - {fileID: 2800000, guid: 43e3ceefff6dc5e49be08fe0c780219a, type: 3}
+  - {fileID: 2800000, guid: 44e3ae9f307f2b24d8f5f09ab38a1768, type: 3}
+  - {fileID: 2800000, guid: 85a87077347dc1a4391eb4ef9514cdcb, type: 3}
+  - {fileID: 2800000, guid: 41f6256817f2f4e42a4143cdf7fc1050, type: 3}
+  - {fileID: 2800000, guid: 6b9e79873de424e41ae9b31920329a21, type: 3}
+  - {fileID: 2800000, guid: ac4e01b478f44fd4d86fd3a15521f803, type: 3}
+  - {fileID: 2800000, guid: dbac972fe7a607041a41722e47aa1c72, type: 3}
+  targetTextures:
+  - {fileID: 2800000, guid: 896a7831d7ffa7b4096ce67a2a050394, type: 3}
+  - {fileID: 2800000, guid: daa5511d4a239e040a5056cbd0fcd040, type: 3}
+  - {fileID: 2800000, guid: 619abf590c8e7db4f87cf16b8f855c34, type: 3}
+  - {fileID: 2800000, guid: 738f5cf74f2a43f4486564c97faad31d, type: 3}
+  - {fileID: 2800000, guid: f3d9c17bb4a6f174282a952632026a35, type: 3}
+  - {fileID: 2800000, guid: 75feaff4c1fa10141b71697f9a031295, type: 3}
+  - {fileID: 2800000, guid: 894522eb03496cc41a1059d0f1c1bb6e, type: 3}
+  - {fileID: 2800000, guid: 8faf5113dafdc5745a7cbf9e781be845, type: 3}
+  - {fileID: 2800000, guid: df298e9540edf0843aea40ad20ab1c17, type: 3}
+  - {fileID: 2800000, guid: eeab2e45d3ef9244baaa9a847b7baa47, type: 3}
+  edgeTextures:
+  - {fileID: 2800000, guid: b66b11d7a1393ad47a21ba8f9239dd09, type: 3}
+  - {fileID: 2800000, guid: bc519769a46518d4799e6c8aa1def24e, type: 3}
+  - {fileID: 2800000, guid: 52f64c6a7afa168429d29aed0cf7b8d7, type: 3}
+  - {fileID: 2800000, guid: 9735409e22e3cdf438309e9981e52256, type: 3}
