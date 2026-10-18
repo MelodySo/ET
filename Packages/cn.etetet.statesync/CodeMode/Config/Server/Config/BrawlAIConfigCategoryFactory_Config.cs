@@ -5,7 +5,7 @@ namespace ET
     public sealed class BrawlAIConfigCategoryFactory_Config : IConfigFactory
     {
         public System.Type ConfigType => typeof(BrawlAIConfigCategory);
-        public ASingleton Create() => new BrawlAIConfigCategory { HeroId = 201, Tree = new global::ET.BrawlAIRoot()
+        public ASingleton Create() => new BrawlAIConfigCategory { Trees = new() { [101] = new global::ET.BrawlAIRoot()
 {
     Id = 1,
     Children = new global::System.Collections.Generic.List<global::ET.BTNode>
@@ -20,34 +20,212 @@ namespace ET
                     Id = 3,
                     Children = new global::System.Collections.Generic.List<global::ET.BTNode>
                     {
-                        new global::ET.BTBrawlPlayerWithinDistance()
+                        new global::ET.BTBrawlHasActiveCast()
                         {
                             Id = 4,
                             Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
                             Unit = @"Unit",
-                            Distance = 5f,
                         },
-                        new global::ET.BTBrawlChase()
+                        new global::ET.BTBrawlIdle()
                         {
                             Id = 5,
                             Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
                             Unit = @"Unit",
-                            RepathMilliseconds = 250,
-                            MaxSearchNodes = 10000,
                         },
                     },
                 },
-                new global::ET.BTBrawlIdle()
+                new global::ET.BTSequence()
                 {
                     Id = 6,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+                    {
+                        new global::ET.BTBrawlAttackPosition()
+                        {
+                            Id = 7,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.Super,
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                        },
+                        new global::ET.BTBrawlUseSkill()
+                        {
+                            Id = 8,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.Super,
+                        },
+                    },
+                },
+                new global::ET.BTSequence()
+                {
+                    Id = 9,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+                    {
+                        new global::ET.BTBrawlAttackPosition()
+                        {
+                            Id = 10,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.NormalAttack,
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                        },
+                        new global::ET.BTBrawlUseSkill()
+                        {
+                            Id = 11,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.NormalAttack,
+                        },
+                    },
+                },
+                new global::ET.BTSequence()
+                {
+                    Id = 12,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+                    {
+                        new global::ET.BTBrawlAttackPosition()
+                        {
+                            Id = 13,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.NormalAttack,
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                        },
+                        new global::ET.BTBrawlIdle()
+                        {
+                            Id = 14,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                        },
+                    },
+                },
+                new global::ET.BTBrawlChase()
+                {
+                    Id = 15,
                     Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
                     Unit = @"Unit",
+                    RepathMilliseconds = 250,
+                    MaxSearchNodes = 10000,
                 },
             },
         },
     },
-    TreeId = 7410629564975891313L,
+    TreeId = 7030292464103093527L,
     Unit = @"Unit",
-} };
+},
+[401] = new global::ET.BrawlAIRoot()
+{
+    Id = 1,
+    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+    {
+        new global::ET.BTSelector()
+        {
+            Id = 2,
+            Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+            {
+                new global::ET.BTSequence()
+                {
+                    Id = 3,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+                    {
+                        new global::ET.BTBrawlHasActiveCast()
+                        {
+                            Id = 4,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                        },
+                        new global::ET.BTBrawlIdle()
+                        {
+                            Id = 5,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                        },
+                    },
+                },
+                new global::ET.BTSequence()
+                {
+                    Id = 6,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+                    {
+                        new global::ET.BTBrawlAttackPosition()
+                        {
+                            Id = 7,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.Super,
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                        },
+                        new global::ET.BTBrawlUseSkill()
+                        {
+                            Id = 8,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.Super,
+                        },
+                    },
+                },
+                new global::ET.BTSequence()
+                {
+                    Id = 9,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+                    {
+                        new global::ET.BTBrawlAttackPosition()
+                        {
+                            Id = 10,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.NormalAttack,
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                        },
+                        new global::ET.BTBrawlUseSkill()
+                        {
+                            Id = 11,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.NormalAttack,
+                        },
+                    },
+                },
+                new global::ET.BTSequence()
+                {
+                    Id = 12,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>
+                    {
+                        new global::ET.BTBrawlAttackPosition()
+                        {
+                            Id = 13,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                            Slot = global::ET.BrawlSkillSlot.NormalAttack,
+                            RangeMargin = 0.5f,
+                            SightWidth = 0.2f,
+                        },
+                        new global::ET.BTBrawlIdle()
+                        {
+                            Id = 14,
+                            Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                            Unit = @"Unit",
+                        },
+                    },
+                },
+                new global::ET.BTBrawlChase()
+                {
+                    Id = 15,
+                    Children = new global::System.Collections.Generic.List<global::ET.BTNode>(),
+                    Unit = @"Unit",
+                    RepathMilliseconds = 250,
+                    MaxSearchNodes = 10000,
+                },
+            },
+        },
+    },
+    TreeId = 5504373793383376197L,
+    Unit = @"Unit",
+} }, PracticeOpponents = new() { [101] = 401, [401] = 101 } };
     }
 }

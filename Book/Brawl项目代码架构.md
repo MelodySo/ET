@@ -1,6 +1,6 @@
 # Brawl Demo：当前代码架构与面试定位
 
-核查日期：2026-10-16。对象是本机这份 ET 工程，不是上游所有 ET 版本。依据当前源码、已生成配置、资源及已有日志整理；本轮只写文档，没有编译、启动服务或运行游戏。其他会话仍可能继续修改，演示以你亲自确认过的版本为准。
+核查日期：2026-10-16。对象是本机这份 ET 工程，不是上游所有 ET 版本。原稿依据源码、生成配置和已有日志整理；本日后续已实现雪莉／柯尔特战斗 AI，并同步更新下列 AI 说明。最新编译和手测范围见 AI 交接首节，未启动服务或运行游戏，演示效果仍由用户验收。
 
 配套阅读：[AI 协作与个人复盘](C:/Work/UnityProjects/ET/Book/Brawl_AI协作与个人复盘.md)、[面试速读](C:/Work/Website/zhaoye/面试题和复习/AI使用/ET_Brawl面试速读.md)、[客户端战斗表现](C:/Work/UnityProjects/ET/Book/Brawl客户端战斗表现.md)、[公牛 AI 交接](C:/Work/UnityProjects/ET/Book/Braw_AI开发交接.md)。相机、弹丸特效的历史实现记录仍留在[原交接](C:/Work/UnityProjects/ET/Book/Brawl开发交接.md)，不搬迁。
 
@@ -8,7 +8,7 @@
 
 这是基于 ET 的小地图、服务器权威战斗 Demo。Unity 客户端负责输入、场景与资源加载、快照插值、角色动画和技能表现；服务器负责单位创建、移动碰撞、技能合法性、弹丸命中、属性、死亡复活及 Bot 决策。配置由 Excel 经 Luban 导出，共享数据结构和数学逻辑放在不依赖 Unity 场景对象的层。
 
-当前练习赛是一名玩家加一个公牛 Bot，房间与登录 Session 关联，运行在 Gate 所在 Fiber 中。**不要把它说成已经完成独立战斗服、多人匹配、分布式房间迁移、断线重连或大规模并发验证。** 框架具备的基础设施不等于此 Demo 已经接入的功能。
+当前练习赛是一名玩家加一个战斗 Bot，雪莉和柯尔特互为对手；房间与登录 Session 关联，运行在 Gate 所在 Fiber 中。**不要把它说成已经完成独立战斗服、多人匹配、分布式房间迁移、断线重连或大规模并发验证。** 框架具备的基础设施不等于此 Demo 已经接入的功能。
 
 ```text
 Unity 输入/UI
@@ -66,7 +66,7 @@ MongoDB 用来持久化账号，**不是每 50ms 保存坐标、不是用数据�
 | 分支 | 当前作用 |
 | --- | --- |
 | 训练场，关卡 `10101` | 保留较早的本地场景/模型预览路径；不要误说成已完整接入服务器战斗的离线版本 |
-| 练习赛，玩法 `102`、关卡 `10201` | 调用 `BrawlPracticeClientHelper.Enter`，服务器创建玩家、公牛和 NPC，随后以服务器返回的房间/单位数据加载表现 |
+| 练习赛，玩法 `102`、关卡 `10201` | 调用 `BrawlPracticeClientHelper.Enter`，服务器创建玩家、与玩家互配的雪莉／柯尔特 Bot 和 NPC，随后以服务器返回的房间/单位数据加载表现 |
 
 训练场的场景加载本身可以本地执行，不代表当前应用从启动到登录都不需要服务器。面试展示联网移动/射击/AI，应进入**练习赛**。
 
@@ -96,7 +96,7 @@ MongoDB 用来持久化账号，**不是每 50ms 保存坐标、不是用数据�
 
 `EntryId` 区分进入批次：相同批次/英雄可返回已有结果，旧退出消息不能清理新房间。服务器校验玩法开启、人数、出生点、数组、模型无关的几何配置等。当前协议名虽然是 `C2G`，也不表示已经部署了独立战斗服。
 
-[BrawlUnitFactory.Create](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/Hotfix/Server/Brawl/BrawlUnitFactory.cs) 创建逻辑单位，按英雄/NPC 配置绑定属性、状态和生命周期；英雄还有移动、技能、弹药与大招充能，公牛 Bot 额外挂 AI 组件。NPC 不因有血量就必须有移动、AI 或 Animator。
+[BrawlUnitFactory.Create](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/Hotfix/Server/Brawl/BrawlUnitFactory.cs) 创建逻辑单位，按英雄/NPC 配置绑定属性、状态和生命周期；英雄还有移动、技能、弹药与大招充能，配置了行为树的 Bot 额外挂 AI 组件。NPC 不因有血量就必须有移动、AI 或 Animator。
 
 生命周期入口：[BrawlLifecycleHelper.Initialize / Tick](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/Hotfix/Server/Brawl/BrawlLifecycleHelper.cs) 和 [BrawlUnitLifeHelper](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/Hotfix/Server/Brawl/BrawlUnitLifeHelper.cs)。英雄死亡等待后销毁旧实体，在绑定出生点创建新实体；`MyUnitId` 随之改变。NPC 按配置决定死亡停留和原地复活。不能让旧输入/动画/异步加载作用到新实体。
 
@@ -170,7 +170,7 @@ z = (row    - (RowCount    - 1) / 2f) * CellSize;
 | `BrawlAmmoHelper` | 普攻用连续浮点弹药值表示装填进度，满一格才能消耗；一次技能扣一格，连发期间暂停装填 |
 | `BrawlSuperChargeHelper` | 有效造成伤害后按弹丸配置回充；大招消耗一格，死亡保存到参与者数据、重生恢复 |
 
-首次入场普攻满弹，重生为容量的1/3；小数装填进度不会因为一次射击被全部清零。默认大招自动恢复速率为0。无敌目标虽可能发生碰撞通知，但没有实际扣血就不能据此充能。
+首次入场与重生的普攻弹药均为容量的1/3，由 BrawlAmmoHelper 显式写入 PropertyComponent；小数装填进度不会因为一次射击被全部清零。出生期间暂停装填的现有规则不变。默认大招自动恢复速率为0。无敌目标虽可能发生碰撞通知，但没有实际扣血就不能据此充能。
 
 发射时锁定本次方向，后续连发从英雄当时的位置发出。弹丸数值按配置和施放等级形成快照。雪莉普攻当前有特定策略：普通霰弹分支不使用配置的普通冷却，而主要依赖弹药等约束；不要把表内每个字段都说成所有发射器一致生效。
 
@@ -196,24 +196,25 @@ z = (row    - (RowCount    - 1) / 2f) * CellSize;
 
 客户端：[BrawlProjectileViewHelper](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/HotfixView/Client/YIUISystem/Lobby/BrawlProjectileViewHelper.cs) 缓冲快照，按渲染时间线呈现并对事件去重；[BrawlProjectileVisualHelper](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/HotfixView/Client/YIUISystem/Lobby/BrawlProjectileVisualHelper.cs) 负责飞行、命中、自然消失特效。资源缓存不等于对象池，当前仍有 Instantiate/Destroy，未实现完整特效池。
 
-## 9. 公牛 AI 与寻路
+## 9. 雪莉／柯尔特战斗 AI 与寻路
 
-配置资源：[BullChase.asset](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Settings/BrawlAI/BullChase.asset)。由行为树资源导出相应 CodeMode 的配置工厂，不是直接让服务器读取 Unity Asset，也不是靠 NPC 表每帧解释一段脚本。
+配置资源：[ShellyCombat.asset](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Settings/BrawlAI/ShellyCombat.asset)、[ColtCombat.asset](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Settings/BrawlAI/ColtCombat.asset)。分别可编辑、共用节点；由资源导出相应 CodeMode 配置工厂，服务器按英雄 ID 选树。旧 BullChase 为历史资源，不参与当前练习赛配对。
 
 ```text
 BrawlAIRoot
 └─ Selector
-   ├─ Sequence
-   │  ├─ BTBrawlPlayerWithinDistance（5米）
-   │  └─ BTBrawlChase
-   └─ BTBrawlIdle
+   ├─ 有进行中的连发 → Idle 等待结束
+   ├─ 大招距离／视线条件 → UseSkill(Super)
+   ├─ 普攻距离／视线条件 → UseSkill(NormalAttack)
+   ├─ 普攻位置畅通 → Idle 等待装填／冷却
+   └─ Chase
 ```
 
 `BTHelper.RunTree` / `BTDispatcher.Handle` 分发具体 Handler。本项目这条树采用返回整数，0表示成功、非0表示失败；不要未经核对就套用另一套库的 Success/Failure/Running 机制。
 
-[BrawlAIHelper.Tick / GetTarget / Chase / Idle](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/Hotfix/Server/Brawl/BrawlAIHelper.cs) 在服务器模拟步内执行。目标必须有效且不在死亡/出生状态，5米内追击，范围外或不能行动则待机。AI 只更新移动意图，最终位置仍走 `BrawlUnitMovementHelper`，不会直接绕过碰撞修改 Transform。
+[BrawlAIHelper.Tick / GetTarget / Chase / Idle](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/Hotfix/Server/Brawl/BrawlAIHelper.cs) 在服务器模拟步内执行。没有 5 米感知上限，追击有效存活目标；每个技能按自身 `SkillRangeParam1 - RangeMargin` 独立判断距离，余量默认 0.5 米且结果不小于 0。当前雪莉两种技能 7.17 米，柯尔特普攻 8.5 米、大招 11.5 米；先大招再普攻。自身不能行动或目标死亡／无效时停止，目标出生期间追踪但不攻击。移动只输出意图，最终位置仍走 `BrawlUnitMovementHelper`。
 
-当前没有 Bot 攻击、技能选择、逃跑或复杂仇恨系统。“公牛能追着走”是已实现目标，不是完整对战 AI。
+普通／大招分开用宽 0.2 米的有限矩形检查墙体遮挡，并从各自技能的弹丸 `CollisionRuleGroupId` 解析规则，复用 `BrawlCollisionRuleHelper.Match` 的标签／阵营匹配，仅以 `BlockProjectile` 决定阻挡。草丛不在本轮视线候选中；查询不执行 `ApplyHitEvents`，不做伤害或破墙。位置不满足时继续寻路，满足但缺弹／冷却时停住。AI 经 `BrawlAICombatHelper` 调已有 `BrawlSkillCastHelper.TryStart`，复用弹药、充能、连发、伤害与施法表现通知；不模拟每颗子弹能否命中，也没有预测瞄准、侧移、逃跑或复杂仇恨系统。
 
 寻路：[BrawlPathfindingHelper.Find / CanTraverse](C:/Work/UnityProjects/ET/Packages/cn.etetet.statesync/Scripts/Hotfix/Server/Brawl/BrawlPathfindingHelper.cs)。
 

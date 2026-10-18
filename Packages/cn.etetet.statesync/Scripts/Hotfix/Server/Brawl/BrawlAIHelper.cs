@@ -10,8 +10,9 @@ namespace ET.Server
             if (ai == null) return;
             ai.LevelId = levelId; ai.CellSize = cellSize; ai.TargetId = targetId; ai.Now = now;
             unit.GetComponent<BrawlMoveComponent>().DesiredDirection = default;
-            if (BrawlUnitLifeHelper.CannotAct(unit)) { Idle(unit); return; }
-            BrawlAIRoot tree = unit.Fiber().GetSingleton<BrawlAIConfigCategory>().Tree;
+            if (BrawlUnitLifeHelper.CannotAct(unit) || GetTarget(unit) == null) { Idle(unit); return; }
+            if (!unit.Fiber().GetSingleton<BrawlAIConfigCategory>().Trees.TryGetValue(unit.ConfigId, out BrawlAIRoot tree))
+            { Idle(unit); return; }
             using BTEnv env = BTEnv.Create(unit.Scene(), unit.Id);
             env.AddEntity(tree.Unit, unit);
             if (BTHelper.RunTree(tree, env) != 0) Idle(unit);
@@ -23,7 +24,7 @@ namespace ET.Server
             Unit target = unit.Scene().GetComponent<UnitComponent>().Get(ai.TargetId);
             if (target == null || target.Id == unit.Id || target.GetComponent<BrawlMoveComponent>() == null) return null;
             StateComponent states = target.GetComponent<StateComponent>();
-            return states.Has(StateId.Dead) || states.Has(StateId.Spawning) ? null : target;
+            return states.Has(StateId.Dead) ? null : target;
         }
 
         public static void Idle(Unit unit)

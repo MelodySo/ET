@@ -14,15 +14,8 @@ namespace ET.Test
             BrawlLevelConfigCategory previousLevels = fiber.GetSingleton<BrawlLevelConfigCategory>();
             try
             {
-                BrawlAIRoot tree = new() { Children = new()
-                {
-                    new BTSelector { Children = new()
-                    {
-                        new BTSequence { Children = new() { new BTBrawlPlayerWithinDistance { Distance = 5 }, new BTBrawlChase() } },
-                        new BTBrawlIdle(),
-                    } },
-                } };
-                fiber.AddSingleton(new BrawlAIConfigCategory { HeroId = 201, Tree = tree });
+                BrawlAIRoot tree = new() { Children = new() { new BTBrawlChase() } };
+                fiber.AddSingleton(new BrawlAIConfigCategory { Trees = new() { [201] = tree } });
                 int[] cells = new int[121];
                 BrawlLevelConfig level = new(98701, 102, 11, 11, cells, Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 fiber.AddSingleton(new BrawlLevelConfigCategory(new Dictionary<int, BrawlLevelConfig> { [level.Id] = level }));
@@ -39,7 +32,7 @@ namespace ET.Test
                 if (!ai.Chasing) return Fail(109002, "Exactly 5m must Chase.");
                 player.Position = new float3(5.01f, 0, 0);
                 BrawlAIHelper.Tick(bot, level.Id, 1, player.Id, 100);
-                if (ai.Chasing || ai.Path.Count != 0 || math.lengthsq(move.DesiredDirection) != 0) return Fail(109003, "Crossing beyond 5m must clear movement immediately.");
+                if (!ai.Chasing || math.lengthsq(move.DesiredDirection) == 0) return Fail(109003, "Chase must continue beyond the removed 5m boundary.");
                 player.Position = new float3(2, 0, 0);
                 player.GetComponent<StateComponent>().AddSource(StateId.Dead, 1);
                 BrawlAIHelper.Tick(bot, level.Id, 1, player.Id, 150);
@@ -96,7 +89,7 @@ namespace ET.Test
                 if (lifecycleResult != 0) return lifecycleResult;
                 scene.Dispose();
                 if (!ai.IsDisposed || !bot.IsDisposed) return Fail(109013, "Room disposal leaked AI.");
-                Log.Console("BRAWL_AI_TEST_PASS: distance<5/=5/>5, cross-boundary stop, wall/NPC detours, water unreachable, bounds, spawn/dead target, disposal.");
+                Log.Console("BRAWL_AI_TEST_PASS: unrestricted chase, wall/NPC detours, water unreachable, bounds, spawn/dead target, disposal.");
                 return ErrorCode.ERR_Success;
             }
             finally { fiber.AddSingleton(previousAI); fiber.AddSingleton(previousLevels); }

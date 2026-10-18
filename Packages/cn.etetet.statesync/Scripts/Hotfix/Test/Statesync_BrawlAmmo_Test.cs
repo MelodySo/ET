@@ -16,10 +16,9 @@ namespace ET.Test
             BrawlSkillCastComponent cast = unit.AddComponent<BrawlSkillCastComponent>();
             BrawlSpawnComponent spawn = unit.AddComponent<BrawlSpawnComponent>();
             StateComponent states = unit.AddComponent<StateComponent>();
-            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.5f), false, 0);
-            if (properties.GetInt(PropertyId.MaxAmmo) != 3 || Ammo(unit) != 3) return Fail(101001, "Initial ammo must be full.");
-            for (int i = 0; i < 3; ++i)
-                if (!BrawlAmmoHelper.TryConsume(unit, 0)) return Fail(101002, "Each attack must consume one full ammo.");
+            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.5f), 0);
+            if (properties.GetInt(PropertyId.MaxAmmo) != 3 || Ammo(unit) != 1) return Fail(101001, "Initial ammo must be one third of capacity.");
+            if (!BrawlAmmoHelper.TryConsume(unit, 0)) return Fail(101002, "The initial one ammo must allow exactly one attack.");
             if (Ammo(unit) != 0 || BrawlAmmoHelper.TryConsume(unit, 0)) return Fail(101003, "Empty ammo allowed an extra attack.");
             BrawlAmmoHelper.Tick(unit, 750);
             if (!Near(Ammo(unit), 0.5) || BrawlAmmoHelper.TryConsume(unit, 750)) return Fail(101004, "Partial ammo cannot fire.");
@@ -32,17 +31,17 @@ namespace ET.Test
             BrawlAmmoHelper.Tick(unit, 9750);
             if (Ammo(unit) != 3) return Fail(101008, "Reload exceeded capacity.");
 
-            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.6f), false, 10000);
+            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.6f), 10000);
             BrawlAmmoHelper.TryConsume(unit, 10000);
             cast.Launches = new BrawlProjectileLaunch[6];
             BrawlAmmoHelper.Tick(unit, 10800);
-            if (Ammo(unit) != 2) return Fail(101009, "Ammo must not reload during a burst.");
+            if (Ammo(unit) != 0) return Fail(101009, "Ammo must not reload during a burst.");
             cast.Launches = null;
             BrawlAmmoHelper.ResetClock(unit, 10800);
             for (long now = 10850; now <= 12400; now += 50) BrawlAmmoHelper.Tick(unit, now);
-            if (Ammo(unit) != 3) return Fail(101010, "Colt must finish a reload exactly 1.6 seconds after its last shot.");
+            if (Ammo(unit) != 1) return Fail(101010, "Colt must finish a reload exactly 1.6 seconds after its last shot.");
 
-            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.5f), true, 13000);
+            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.5f), 13000);
             spawn.CompleteAt = 15000;
             states.AddSource(StateId.Spawning, -3);
             BrawlAmmoHelper.Tick(unit, 14950);
@@ -57,13 +56,13 @@ namespace ET.Test
             if (Ammo(unit) != 2) return Fail(101014, "Dead unit reloaded ammo.");
             states.RemoveSource(StateId.Dead, -2);
             spawn.CompleteAt = 0;
-            BrawlAmmoHelper.Initialize(unit, Skill(1, 1.5f), true, 18000);
+            BrawlAmmoHelper.Initialize(unit, Skill(1, 1.5f), 18000);
             if (!Near(Ammo(unit), 1d / 3) || BrawlAmmoHelper.TryConsume(unit, 18000)) return Fail(101015, "Capacity one must retain fractional respawn ammo.");
             properties.AddModifier(new PropertyModifier { Id = 1, SourceInstanceId = 1, Property = PropertyId.ReloadRateBonusRatio, Value = 1 });
             BrawlAmmoHelper.Tick(unit, 18500);
             if (Ammo(unit) != 1) return Fail(101016, "Reload rate modifier did not apply to continuous progress.");
             properties.RemoveModifier(1);
-            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.6f), false, 19000);
+            BrawlAmmoHelper.Initialize(unit, Skill(3, 1.6f), 19000);
             properties.Set(PropertyId.Ammo, 2.4);
             if (!BrawlAmmoHelper.TryConsume(unit, 19000) || !Near(Ammo(unit), 1.4))
                 return Fail(101017, "Colt attack incorrectly rounded 2.4 ammo down instead of keeping 1.4.");

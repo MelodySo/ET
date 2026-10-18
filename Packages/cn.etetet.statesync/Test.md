@@ -1,5 +1,18 @@
 # Brawl NPC 阻挡验证
 
+## 2026-10-16 初始弹药修正
+
+- `Statesync_BrawlAmmo_Test` 改为首次容量 3、弹药 1，只能立刻释放一次；保留逐格恢复、出生／死亡／连发暂停、小数进度和容量上限覆盖。`Statesync_BrawlRevolver_Test` 验证初始一格支持整轮六发且只扣一格。
+- 首次和重生统一走相同初始化，无满弹分支；本轮只编译，不执行测试或 Unity Play。
+- 完整 `dotnet build ET.sln` 通过：0 警告、0 错误，52.66 秒，日志 `Temp/BrawlAmmo-initial-third-build.log`。
+
+## 2026-10-16 战斗 AI（本轮仅编译）
+
+- `Statesync_BrawlCombatAI_Test`：雪莉／柯尔特互配；各技能射程减 0.5 米（7.17／8.5／11.5），大招耗尽继续接近到普攻距离，射程配置变动；普通／大招分别读取弹丸规则组、规则组及 BlockProjectile 变动、阵营过滤、ApplyHitEvents 不等于阻挡、查询无施法副作用；缺弹等待、绕墙、草丛及死亡墙、连发不重入、旋转矩形。
+- `Statesync_BrawlAI_Test` 去掉 5 米待机断言，验证超过 5 米仍追击，保留原 A*、障碍、不可达、死亡与重生用例。
+- 用例随代码编译，未执行测试、服务器或 Unity Play。人工清单见 `Book/Braw_AI开发交接.md` 首节。旧 `Brawl/Verification/RunAI` 仅提示过期，不再自动登录、进场或按“无攻击”断言。
+- 最新技能射程／碰撞规则版 `dotnet build ET.sln` 成功：0 错误、14 个既有 HybridCLR CS0649 警告，74.48 秒；日志 `Temp/BrawlAI-skill-rules-build.log`。测试只编译，未运行。
+
 ## 弹丸碰撞与阵营（最新）
 
 - 本轮取代下文第一版“弹丸穿墙/穿单位”行为：BlockMask=7 阻挡于地形墙、带阻挡组件的墙/木桶、敌军。TargetMask=1 仅敌方作战单位有效。墙体和木桶不因 Faction=0 被误判为敌军。

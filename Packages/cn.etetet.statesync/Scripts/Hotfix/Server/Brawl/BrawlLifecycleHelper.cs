@@ -45,7 +45,7 @@ namespace ET.Server
             BrawlParticipant participant = life.Participants[slot];
             Unit point = units.Get(participant.RespawnPointId);
             Unit unit = BrawlUnitFactory.Create(units, participant.HeroId, participant.Kind, participant.Faction, participant.PlayerId,
-                point.Position, slot, participant.UnitId != 0);
+                point.Position, slot);
             BrawlSuperChargeHelper.Restore(unit, participant.SuperAmmo);
             participant.UnitId = unit.Id;
             life.Participants[slot] = participant;

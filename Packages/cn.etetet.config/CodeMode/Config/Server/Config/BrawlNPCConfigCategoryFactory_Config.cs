@@ -22,11 +22,16 @@ public sealed class BrawlNPCConfigCategoryFactory_Config : IConfigFactory
         return new BrawlNPCConfigCategory(new System.Collections.Generic.Dictionary<int, ET.BrawlNPCConfig>()
         {
             [ 101 ] = new ET.BrawlNPCConfig(101, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
-            [ 201 ] = new ET.BrawlNPCConfig(201, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 0f, 0f, 0f, 0.2f, 0f, 40, true),
+            [ 201 ] = new ET.BrawlNPCConfig(201, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
             [ 301 ] = new ET.BrawlNPCConfig(301, 1, 0, 5000, 500, 2, new int[] { }, new int[] { }, 0.6f, 1f, 0f, 0f, 0f, 3f, 5f, 6, false),
             [ 1001 ] = new ET.BrawlNPCConfig(1001, 4, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.5f, 10f, 0, false),
             [ 2001 ] = new ET.BrawlNPCConfig(2001, 7, 3, 1, 0, 0, new int[] { 2 }, new int[] { 1 }, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 0, false),
-            [ 2002 ] = new ET.BrawlNPCConfig(2002, 7, 3, 1, 0, 0, new int[] { 2 }, new int[] { 1 }, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 0, false)
+            [ 2002 ] = new ET.BrawlNPCConfig(2002, 7, 3, 1, 0, 0, new int[] { 2 }, new int[] { 1 }, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 0, false),
+            [ 102 ] = new ET.BrawlNPCConfig(102, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
+            [ 202 ] = new ET.BrawlNPCConfig(202, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
+            [ 203 ] = new ET.BrawlNPCConfig(203, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
+            [ 204 ] = new ET.BrawlNPCConfig(204, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true),
+            [ 205 ] = new ET.BrawlNPCConfig(205, 2, 0, 1, 0, 0, new int[] { }, new int[] { }, 1f, 1f, 1f, 0f, 0f, 0.2f, 0f, 40, true)
         });
     }
 }

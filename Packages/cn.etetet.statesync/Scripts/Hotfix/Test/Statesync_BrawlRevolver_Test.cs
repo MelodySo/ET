@@ -47,9 +47,9 @@ namespace ET.Test
                 owner.AddComponent<BrawlAmmoComponent>();
                 owner.AddComponent<BrawlSpawnComponent>();
                 PropertyComponent properties = owner.AddComponent<PropertyComponent, Dictionary<PropertyId, double>>(new());
-                BrawlAmmoHelper.Initialize(owner, skill, false, 1000);
+                BrawlAmmoHelper.Initialize(owner, skill, 1000);
                 BrawlLevelConfig level = new(1, 1, 20, 20, new int[400], Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
-                if (!BrawlAmmoHelper.TryConsume(owner, 1000)) return Fail(100911, "Full ammo failed to start burst.");
+                if (!BrawlAmmoHelper.TryConsume(owner, 1000)) return Fail(100911, "Initial ammo failed to start burst.");
                 BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(1, 0), 0.6f, 1000, 800, skillId: skill.Id);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1000);
                 if (projectiles.SkillNotices.Count != 2 || projectiles.SkillNotices[0].Phase != BrawlSkillUsePhase.Started ||
@@ -74,7 +74,7 @@ namespace ET.Test
                     return Fail(100907, "Absolute shot schedule drifted or cooldown ended early.");
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1800);
                 BrawlAmmoHelper.Tick(owner, 1800);
-                if (properties.GetFloat(PropertyId.Ammo) != 2) return Fail(100912, "Six shots must consume one ammo without reloading during the burst.");
+                if (properties.GetFloat(PropertyId.Ammo) != 0) return Fail(100912, "Six shots must consume one ammo without reloading during the burst.");
                 if (projectiles.Children.Count != 6 || !BrawlSkillSequenceHelper.CanStart(cast, 1800))
                     return Fail(100908, "Sixth shot and cooldown must finish at 800ms.");
                 if (projectiles.SkillNotices.Count != 8 || projectiles.SkillNotices[7].Phase != BrawlSkillUsePhase.Completed)

@@ -7,10 +7,9 @@ namespace ET.Server
     /// <summary>首版单人练习房间，与 Gate 同 Fiber；连接销毁时房间自动销毁。</summary>
     public static class BrawlPracticeHelper
     {
-        // 首版入口与 Bot 按本轮约定固定，人数、出生点和 NPC 均读取配置。
+        // 入口固定，Bot 对应英雄由行为树导出的练习赛配对配置决定。
         private const int PracticeModeId = 102;
         private const int PracticeLevelId = 10201;
-        private const int BotHeroId = 201;
 
         public static void Enter(Session session, C2G_BrawlPracticeEnter request, G2C_BrawlPracticeEnter response)
         {
@@ -31,7 +30,8 @@ namespace ET.Server
                 throw new InvalidOperationException("玩法 102 必须启用，TeamSize=1、TeamCount=2、TimeLimitSeconds=0。");
             if (level == null || level.ModeId != mode.Id) throw new InvalidOperationException("练习赛关卡 10201 不存在或 ModeId 不为 102。");
             BrawlHeroConfig playerHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(request.HeroId);
-            BrawlHeroConfig botHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(BotHeroId);
+            int botHeroId = fiber.GetSingleton<BrawlAIConfigCategory>().GetPracticeOpponent(request.HeroId);
+            BrawlHeroConfig botHero = fiber.GetSingleton<BrawlHeroConfigCategory>().GetOrDefault(botHeroId);
             if (playerHero == null || botHero == null)
                 throw new InvalidOperationException("玩家或 Bot 英雄配置不存在。");
             int cellSize = fiber.GetSingleton<BrawlGlobalConfigCategory>().CellSize;
@@ -54,7 +54,7 @@ namespace ET.Server
                 state.Room = room;
                 UnitComponent units = room.AddComponent<UnitComponent>();
                 room.AddComponent<BrawlProjectileRoomComponent>();
-                BrawlLifecycleHelper.Initialize(state, mode, level, player.Id, BotHeroId);
+                BrawlLifecycleHelper.Initialize(state, mode, level, player.Id, botHeroId);
                 for (int i = 0; i < level.NPCIds.Length; ++i)
                     BrawlUnitFactory.Create(units, level.NPCIds[i], BrawlPracticeUnitKind.NPC, BrawlFaction.NeutralHostile, 0,
                         BrawlLifecycleHelper.Position(level.NPCPoints[i], level, cellSize));
@@ -69,7 +69,7 @@ namespace ET.Server
                 FillSnapshot(state, response);
                 room.GetComponent<BrawlLifecycleRoomComponent>().RosterDirty = false;
                 room.GetComponent<BrawlLifecycleRoomComponent>().Notices.Clear();
-                Log.Info($"Brawl practice created: room={room.Id} player={player.Id} level={level.Id} hero={request.HeroId} bot={BotHeroId} units={response.Units.Count}");
+                Log.Info($"Brawl practice created: room={room.Id} player={player.Id} level={level.Id} hero={request.HeroId} bot={botHeroId} units={response.Units.Count}");
             }
             catch
             {

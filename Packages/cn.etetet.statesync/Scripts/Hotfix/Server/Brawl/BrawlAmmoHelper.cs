@@ -3,17 +3,17 @@ namespace ET.Server
 {
     public static class BrawlAmmoHelper
     {
-        // 本轮约定的重生资源规则；首次入场仍为满弹。
-        private const double RespawnAmmoRatio = 1d / 3;
+        // 首次入场与重生统一从容量的三分之一开始，保留小数进度。
+        private const double InitialAmmoRatio = 1d / 3;
 
-        public static void Initialize(Unit unit, BrawlSkillConfig skill, bool isRespawn, long now)
+        public static void Initialize(Unit unit, BrawlSkillConfig skill, long now)
         {
             if (skill.AmmoCapacity < 0 || !float.IsFinite(skill.ReloadTime) || skill.ReloadTime < 0)
                 throw new ArgumentException($"技能 {skill.Id} 的弹药容量或装填时间非法。");
             PropertyComponent properties = unit.GetComponent<PropertyComponent>();
             properties.Set(PropertyId.MaxAmmo, skill.AmmoCapacity);
             properties.Set(PropertyId.BaseReloadRate, skill.ReloadTime > 0 ? 1000d / BrawlUnitLifeHelper.Milliseconds(skill.ReloadTime) : 0);
-            properties.Set(PropertyId.Ammo, skill.AmmoCapacity * (isRespawn ? RespawnAmmoRatio : 1));
+            properties.Set(PropertyId.Ammo, skill.AmmoCapacity * InitialAmmoRatio);
             ResetClock(unit, now);
         }
 

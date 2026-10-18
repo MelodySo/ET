@@ -6,7 +6,7 @@ namespace ET.Server
     public static class BrawlUnitFactory
     {
         public static Unit Create(UnitComponent units, int configId, BrawlPracticeUnitKind kind, BrawlFaction faction,
-            long playerId, float3 position, int participantSlot = -1, bool isRespawn = false)
+            long playerId, float3 position, int participantSlot = -1)
         {
             // ConfigId 在本模式中指向 BrawlHero/BrawlNPC，不调用原 MMO 的 Unit.Config()。
             Unit unit = units.AddChild<Unit, int>(configId);
@@ -43,7 +43,7 @@ namespace ET.Server
                 if (hero.NormalAttackSkillId > 0)
                 {
                     BrawlSkillConfig normal = units.Fiber().GetSingleton<BrawlSkillConfigCategory>().GetOrDefault(hero.NormalAttackSkillId);
-                    if (normal != null) BrawlAmmoHelper.Initialize(unit, normal, isRespawn, now);
+                    if (normal != null) BrawlAmmoHelper.Initialize(unit, normal, now);
                 }
                 BrawlSkillConfig super = hero.SuperSkillId > 0 ? units.Fiber().GetSingleton<BrawlSkillConfigCategory>().GetOrDefault(hero.SuperSkillId) : null;
                 BrawlSuperChargeHelper.Initialize(unit, super?.AmmoCapacity ?? 0, now);
@@ -79,7 +79,7 @@ namespace ET.Server
             }
             unit.AddComponent<StateComponent>();
             BrawlUnitLifeHelper.OnSpawn(unit, now);
-            if (kind == BrawlPracticeUnitKind.Bot && configId == units.Fiber().GetSingleton<BrawlAIConfigCategory>().HeroId)
+            if (kind == BrawlPracticeUnitKind.Bot && units.Fiber().GetSingleton<BrawlAIConfigCategory>().Trees.ContainsKey(configId))
                 unit.AddComponent<BrawlAIComponent>();
             units.Scene().GetComponent<BrawlLifecycleRoomComponent>().RosterDirty = true;
             return unit;

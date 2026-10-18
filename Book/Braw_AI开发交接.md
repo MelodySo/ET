@@ -1,5 +1,37 @@
 # Braw AI 开发交接
 
+## 2026-10-16 雪莉／柯尔特战斗 AI（当前版本）
+
+本节覆盖下方历史公牛规则。最新授权为实际实现并编译；不启动服务器、不进入 Unity Play，运行效果由用户验收。未修改或导出 Excel，保留工作区已有的 BrawlNPC.xlsx、BrawlSkill.xlsx 及 WalldoffStudios 资源改动。
+
+- 练习赛运行时互选对手：玩家雪莉 101 → 柯尔特 Bot 401；玩家柯尔特 401 → 雪莉 Bot 101。不是关卡编辑器预置 NPC；重生沿用本局保存的英雄，重新挂载 AI。其他英雄尚未配置练习赛配对，会明确报配置未支持。
+- 删除运行树中的 5 米感知限制。目标有效且未死亡就持续追击；按最新要求，每个技能分别使用 `max(0, SkillRangeParam1 - RangeMargin)` 作为 XZ 中心施放距离，余量默认 0.5 米。当前已导出配置下：雪莉普攻／大招 7.17 米、柯尔特普攻 8.5 米、大招 11.5 米。大招不再受普攻停距约束；大招耗尽后，若目标还在普攻范围外则继续接近。目标出生期间可以追踪，但等出生结束才攻击；自身死亡、出生、受控时不行动。
+- 两棵独立可编辑树，复用节点实现。选择顺序：已有连发则停住等结束 → 大招位置与大招施放 → 普攻位置与普攻施放 → 普攻位置畅通则原地等弹药／冷却 → 继续追击。受阻时即使距离已足够也继续绕路；无可达路径时沿用原寻路的停止行为。
+- 普攻、大招分别沿 `英雄 → 对应槽位技能 → 弹丸 → CollisionRuleGroupId` 解析规则，复用 `BrawlCollisionRuleHelper.Resolve/Match`，只取 `BlockProjectile` 决定墙体遮挡；`ApplyHitEvents` 不等于阻挡，也不在视线查询中执行伤害／破墙。当前规则下，地形 Wall 挡两者，可摧毁墙／桶挡普攻但不挡大招；以后跟随规则组、标签及阵营匹配变化，不再由大招槽位或布尔开关假定穿墙。
+- 视线仍是 Bot 与目标之间的有限矩形，默认宽 0.2 米，与子弹尺寸、散射和发射器无关。本轮候选仍限定地形 Wall 和单位 Tile，草丛、水、英雄不作为视线障碍；死亡或出生中的墙体跳过。地形墙使用 Tile 标签及 NeutralHostile 阵营，与实际弹丸一致。实际子弹命中、穿透与破墙仍由原碰撞流程结算。
+- `BrawlAICombatHelper` 直接调用已有 `BrawlSkillCastHelper.TryStart`，复用资源消耗、冷却、充能、连发与 `G2C_BrawlSkillUse`，没有新增协议或枪口特效。瞄准当前目标位置，不预判；单次连发沿用施放时锁定的方向，期间停止移动。Bot 普攻决策间隔使用技能配置 CooldownTime（至少一 Tick），避免雪莉瞬间耗完三发；不改变玩家普攻规则。
+
+### 资源、编辑和代码入口
+
+1. Unity 菜单 `Brawl/AI/Create or Select Shelly and Colt Combat` 创建缺失资产、选中柯尔特并导出；已有树不覆盖。资源为 `Packages/cn.etetet.statesync/Settings/BrawlAI/ShellyCombat.asset` 和 `ColtCombat.asset`。
+2. Inspector 的 Tree → `Open BehaviorTreeEditor` 编辑节点；Save 保存，`Brawl/AI/Export Selected AI` 或树窗口 Export 导出全部已配对树。HeroId 是本树英雄，OpponentHeroId 是练习赛对手，互为配对；OpponentHeroId=0 的历史树不参与导出。
+3. `BTBrawlAttackPosition` 配置 Slot、RangeMargin（默认 0.5 米）、SightWidth（默认 0.2 米）；不再保存固定 Distance 或 IgnoreDestroyableWalls。`BTBrawlUseSkill` 选择 NormalAttack 或 Super；`BTBrawlHasActiveCast` 防止连发中重复施放。射程跟随各技能已加载配置，调整普攻余量时也应同步等待装填分支。导出器迁移旧节点时按同一 Sequence 的施法动作推导槽位，等待分支取普攻；保留树结构及已有有效槽位。
+4. `BrawlAIConfigCategory` 以 Trees 按英雄索引，PracticeOpponents 保存配对。导出只更新 statesync 的 Client／ClientServer／Server 三份 `BrawlAIConfigCategoryFactory_Config.cs`，未重导 MMO Spell／Buff、Luban 或其他资产。
+5. 服务端：`BrawlPracticeHelper` 选对手，`BrawlUnitFactory` 挂 AI，`BrawlAIHelper` 驱动树和现有 A*，`BrawlAICombatHelper` 判攻击位置／施放，`BrawlAISightHelper` 查询墙体；Share 的 `BrawlAISightGeometryHelper` 完成矩形和圆形障碍相交。
+6. 旧 `BullChase.asset` 保留为历史资产。`Brawl/Verification/RunAI` 旧脚本断言“无攻击、5 米内追击”，菜单现只提示已停用，不自动登录或进场。
+
+### 验证范围与手测清单
+
+- `Statesync_BrawlCombatAI_Test`：双向配对、7.17／8.5／11.5 米边界、大招优先与耗尽后追到普攻距离、技能射程改变后阈值变化、缺弹等待、挡墙后继续追击、各技能独立规则组、更换弹丸规则组与 BlockProjectile 后判断变化、阵营匹配、只触发效果不阻挡、视线查询无施法副作用、地形墙与草、死亡墙清除、连发不重入及旋转矩形。旧 `Statesync_BrawlAI_Test` 验证超过 5 米仍追击，保留绕障、不可达、边界与重生覆盖。用例本轮只编译，未执行。
+- 本次技能射程／碰撞规则接入已完成 Unity 刷新及行为树导出，三份 CodeMode 工厂内容一致。`dotnet build ET.sln` 成功：0 错误、14 个既有 HybridCLR CS0649 警告，74.48 秒，日志 `Temp/BrawlAI-skill-rules-build.log`。未启动服务器、进入 Unity Play 或运行测试；资源导出和编译通过不代表实机效果通过。前一版固定距离构建记录保留在 `Temp/BrawlCombatAI-build.log`。
+- 用户启动新编译的服务器后，分别选择雪莉、柯尔特进入练习赛，确认对手互换；远离攻击范围仍应追来，普通攻击约在柯尔特 8.5／雪莉 7.17 米处停住。主动贴近不会触发后退，首版没有保持最小距离或侧移。
+- 消耗弹药后应原地等待装填，连发期间不继续贴脸；让 Bot 命中获得大招充能，检查柯尔特可在 11.5 米优先开大，放完后继续接近到 8.5 米普攻；雪莉两种技能均在 7.17 米内。首次出生的大招并非满充能。
+- 隔可摧毁墙时，无大招应绕路寻找能普攻的位置，有可用大招应停在规定距离内直接开大；不可摧毁地形墙应挡住两种技能；草丛不影响这个简单视线判断。
+- 玩家死亡期间 Bot 停止追踪；玩家重生后恢复。击杀 Bot 后，应以原对手英雄重新出生并恢复行为；退出重进不沿用旧路径、连发或普攻计时。
+- 待优化：射程边界迟滞、走位／后退、发射器专属命中预测、复杂目标选择、大量 Bot 性能和视线缓存。本版不以矩形视线保证每颗子弹都能命中。
+
+## 2026-10-15 历史公牛版本（以下规则已被上节替代）
+
 状态：用户接管手测，已停止联调；实现及服务端回归通过，完整实机验收未完成（2026-10-15）。
 
 ## 需求与运行规则

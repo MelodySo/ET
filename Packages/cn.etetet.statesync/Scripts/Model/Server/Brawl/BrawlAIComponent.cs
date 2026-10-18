@@ -15,5 +15,6 @@ namespace ET.Server
         public float CellSize;
         public bool Chasing;
         public int Plans;
+        public long NextNormalAttackAt;
     }
 }
