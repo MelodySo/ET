@@ -55,14 +55,7 @@ namespace ET.Client
 
         private static void Destroy3DDisplay(this YIUI3DDisplayChild self)
         {
-            if (self.m_ShowTexture != null)
-            {
-                RenderTexture.ReleaseTemporary(self.m_ShowTexture);
-                self.m_ShowTexture                          = null;
-                self.UI3DDisplay.m_ShowImage.texture        = null;
-                self.UI3DDisplay.m_ShowCamera.targetTexture = null;
-                self.UI3DDisplay.m_ShowCamera.enabled       = false;
-            }
+            self.ReleaseRenderTexture();
 
             self.DisableMeshRectShadow();
 
@@ -75,6 +68,16 @@ namespace ET.Client
         [EntitySystem]
         private static void LateUpdate(this YIUI3DDisplayChild self)
         {
+            if (self.m_UI3DDisplay == null || !self.m_UI3DDisplay.isActiveAndEnabled) return;
+            // Canvas 随窗口尺寸变化时，继续维持与初始化一致的三维尺寸。
+            Transform fitRoot = self.UI3DDisplay.m_FitScaleRoot;
+            if (fitRoot != null)
+            {
+                Vector3 parentScale = fitRoot.parent != null ? fitRoot.parent.lossyScale : Vector3.one;
+                Vector3 localScale = self.UI3DDisplay.transform.localScale;
+                if (Mathf.Abs(parentScale.x) > Mathf.Epsilon && Mathf.Abs(parentScale.y) > Mathf.Epsilon && Mathf.Abs(parentScale.z) > Mathf.Epsilon)
+                    fitRoot.localScale = new Vector3(localScale.x / parentScale.x, localScale.y / parentScale.y, localScale.z / parentScale.z);
+            }
             if (!self.UI3DDisplay.m_AutoSyncLookCamera)
                 return;
 
@@ -89,6 +92,7 @@ namespace ET.Client
         [EntitySystem]
         private static void YIUIEnable(this YIUI3DDisplayChild self)
         {
+            if (self.m_UI3DDisplay == null || !self.m_UI3DDisplay.isActiveAndEnabled) return;
             if (self.UI3DDisplay.m_ShowObject == null || self.m_ShowTexture != null) return;
 
             self.m_ShowTexture = RenderTexture.GetTemporary(self.UI3DDisplay.m_ResolutionX, self.UI3DDisplay.m_ResolutionY, self.UI3DDisplay.m_RenderTextureDepthBuffer);
@@ -109,22 +113,37 @@ namespace ET.Client
         [EntitySystem]
         private static void YIUIDisable(this YIUI3DDisplayChild self)
         {
-            if (self.m_ShowTexture == null) return;
+            self.ReleaseRenderTexture();
+        }
 
-            RenderTexture.ReleaseTemporary(self.m_ShowTexture);
+        [YIUIInvoke(YIUI3DDisplayInvoke.OnEnableInvoke)]
+        private static void OnDisplayEnabled(this YIUI3DDisplayChild self)
+        {
+            self.YIUIEnable();
+        }
+
+        [YIUIInvoke(YIUI3DDisplayInvoke.OnDisableInvoke)]
+        private static void OnDisplayDisabled(this YIUI3DDisplayChild self)
+        {
+            self.YIUIDisable();
+        }
+
+        private static void ReleaseRenderTexture(this YIUI3DDisplayChild self)
+        {
+            // 先断开相机／UI 引用，再归还临时 RT；Unity 对象可能已经被场景卸载。
+            UI3DDisplay display = self.m_UI3DDisplay;
+            if (display != null && display.m_ShowImage != null)
+            {
+                display.m_ShowImage.texture = null;
+                display.m_ShowImage.enabled = false;
+            }
+            if (display != null && display.m_ShowCamera != null)
+            {
+                display.m_ShowCamera.targetTexture = null;
+                display.m_ShowCamera.enabled = false;
+            }
+            if (self.m_ShowTexture != null) RenderTexture.ReleaseTemporary(self.m_ShowTexture);
             self.m_ShowTexture = null;
-
-            if (self.UI3DDisplay.m_ShowImage != null)
-            {
-                self.UI3DDisplay.m_ShowImage.texture = null;
-                self.UI3DDisplay.m_ShowImage.enabled = false;
-            }
-
-            if (self.UI3DDisplay.m_ShowCamera != null)
-            {
-                self.UI3DDisplay.m_ShowCamera.targetTexture = null;
-                self.UI3DDisplay.m_ShowCamera.enabled       = false;
-            }
         }
     }
 }

@@ -100,6 +100,7 @@ namespace ET.Client
                     self.TrainingSession = null;
                     self.HeroTrialView.SetActive(false);
                     self.HeroDetailText.text += $"\n\n进入{session.Title}失败：{exception.Message}";
+                    BrawlHeroPreviewHelper.Resume(self);
                 }
             }
         }
@@ -114,6 +115,7 @@ namespace ET.Client
             if (self == null) return;
             self.TrainingSession = null;
             self.HeroTrialView.SetActive(false);
+            BrawlHeroPreviewHelper.Resume(self);
         }
 
         public static void Cancel(LobbyPanelComponent self)
@@ -128,6 +130,8 @@ namespace ET.Client
 
         private static void HideLobby(LobbyPanelComponent self, BrawlTrainingSession session)
         {
+            // CanvasGroup 透明不会停掉相机和 Animator；进入战斗时主动释放大厅预览。
+            BrawlHeroPreviewHelper.Release(self.HeroDetails);
             GameObject lobby = self.UIBase.OwnerRectTransform.gameObject;
             session.LobbyGroup = lobby.GetComponent<CanvasGroup>();
             session.CreatedLobbyGroup = session.LobbyGroup == null;
@@ -191,8 +195,9 @@ namespace ET.Client
                 if (session.CancelRequested) return;
                 string address = TerrainAddress(style, level.MapGrid[index]);
                 if (string.IsNullOrWhiteSpace(address)) continue;
-                await BrawlModelHelper.InstantiateModel(session, address, session.TerrainRoot.transform, $"Tile_{index}_{address}",
+                GameObject tile = await BrawlModelHelper.InstantiateModel(session, address, session.TerrainRoot.transform, $"Tile_{index}_{address}",
                     CellPosition(index, level, session.CellSize));
+                BrawlTerrainRenderHelper.Register(session, tile, index, level.ColumnCount, level.MapGrid[index]);
                 // 保留 Prefab 原有旋转和缩放。
             }
         }
@@ -331,6 +336,7 @@ namespace ET.Client
             catch (Exception exception) { Log.Error(exception); }
             finally
             {
+                BrawlTerrainRenderHelper.Clear(session);
                 BrawlSkillAimVisualHelper.Clear(session);
                 BrawlCharacterAnimationHelper.Clear(session);
                 BrawlSkillUseViewHelper.Clear(session);

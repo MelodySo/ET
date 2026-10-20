@@ -20,6 +20,8 @@ namespace ET.Client
         public const string OnDragInvoke        = "YIUI3DDisplayInvoke.OnDragInvoke";
         public const string OnPointerDownInvoke = "YIUI3DDisplayInvoke.OnPointerDownInvoke";
         public const string OnPointerUpInvoke   = "YIUI3DDisplayInvoke.OnPointerUpInvoke";
+        public const string OnEnableInvoke      = "YIUI3DDisplayInvoke.OnEnableInvoke";
+        public const string OnDisableInvoke     = "YIUI3DDisplayInvoke.OnDisableInvoke";
     }
 }
 
@@ -120,6 +122,14 @@ namespace YIUIFramework
         [NonSerialized]
         [OdinSerialize]
         [ShowInInspector]
+        [LabelText("横向拖满宽度旋转角度（0沿用原速度）")]
+        [ShowIf("m_CanDrag")]
+        [MinValue(0)]
+        public float m_DragDegreesPerWidth;
+
+        [NonSerialized]
+        [OdinSerialize]
+        [ShowInInspector]
         [LabelText("显示对象的位置偏移值")]
         public Vector3 m_ShowOffset = Vector3.zero;
 
@@ -187,6 +197,26 @@ namespace YIUIFramework
         [NonSerialized]
         [HideInInspector]
         public bool OnClick; //需要手动开启是否需要点击事件
+
+        // 动态创建的展示控件也可能直接随 GameObject 启停，不一定经过 YIUI 窗口事件。
+        private void OnEnable()
+        {
+            Entity child = YIUI3DDisplayChild;
+            if (child != null) YIUIInvokeSystem.Instance?.Invoke(child, YIUI3DDisplayInvoke.OnEnableInvoke);
+        }
+
+        private void OnDisable()
+        {
+            Entity child = YIUI3DDisplayChild;
+            if (child != null) YIUIInvokeSystem.Instance?.Invoke(child, YIUI3DDisplayInvoke.OnDisableInvoke);
+        }
+
+        private void OnDestroy()
+        {
+            Entity child = YIUI3DDisplayChild;
+            m_YIUI3DDisplayChildRef = default;
+            child?.Dispose();
+        }
 
         public void OnDrag(PointerEventData eventData)
         {

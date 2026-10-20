@@ -14,6 +14,7 @@ namespace ET.Client
         public UnityEngine.SceneManagement.Scene PreviousScene;
         public GameObject RuntimeRoot;
         public GameObject TerrainRoot;
+        public readonly BrawlTerrainRenderState TerrainRendering = new();
         public GameObject Hero;
         public Camera BattleCamera;
         public EntityRef<BrawlCameraComponent> CameraController;

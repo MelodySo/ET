@@ -1,6 +1,6 @@
 # Brawl 客户端战斗表现
 
-更新日期：2026-10-16。本文记录已确认方案、实施结果与待办。出生／攻击／死亡及施法通知见第十二节，移动速度校准见第十一节；前文保留历史记录。
+更新日期：2026-10-19。本文记录已确认方案、实施结果与待办。地形／静态 NPC 实例化与运行验证见第十三节，出生／攻击／死亡及施法通知见第十二节，移动速度校准见第十一节；前文保留历史记录。
 
 2026-10-16 后续 AI 授权已实现：练习赛雪莉／柯尔特互为对手，并调用现有权威施法入口。Bot 的攻击方向、开始／逐发／结束事件复用第十二节 `G2C_BrawlSkillUse`，由同一客户端角色动画代码显示；没有新增枪口特效或修改动画资源。AI 规则与验证范围见 [Braw_AI开发交接](C:/Work/UnityProjects/ET/Book/Braw_AI开发交接.md) 首节。本轮仅编译，玩家与 Bot 攻击动画、连发及死亡中断需由用户实机验收。下方旧“保留公牛 AI 不动”约束只描述此前客户端任务，不限制此次已明确授权的 AI 开发。
 
@@ -366,3 +366,51 @@
 - 21 个角色的出生/攻击/死亡映射已由 Unity 生成并保存；24 个独立替换键、引用有效性与运行时 Override 实例隔离检查通过。默认共享 Override、MaskTint、原始动画导入设置未修改。
 - `dotnet build ET.sln` 最终成功：0 错误、14 个既有 HybridCLR CS0649 警告，耗时 54.54 秒。双端模型/逻辑、客户端 ModelView/HotfixView、Editor 与扩展测试代码均参与编译。日志：`Temp/BrawlAnimation-actions-final-build.log`。
 - 早期尝试遇到旧服务器进程锁 DLL；用户关闭服务器后最终构建成功。代理没有停止或启动服务器，没有进入 Unity Play，没有执行运行测试。出生、死亡姿态以及移动中上半身攻击的实际观感仍需人工验证。
+
+## 十三、地形与静态 NPC GPU 实例化（2026-10-19）
+
+本节已获用户授权在 Unity Play 中运行两张地图并修改客户端渲染。没有修改服务器、协议、Excel、AI、寻路、碰撞、Prefab、FBX、共享材质或全局画质设置。
+
+### 高批次来源
+
+- 10201：120格草（每格1694顶点、1材质）、18格地形墙 Wall_Tile_X（300顶点、2材质）；服务器生成26个 Wall_Tile_Block1（553顶点、3材质）和8个木桶（2291顶点、3材质）。用户看到的三材质墙主要是NPC墙，不能只优化MapGrid地形。
+- 10101：22格沙漠墙（1028顶点、3材质）、16个NPC墙、32个宝箱（870顶点、4材质）。还保留场景里的山体、地面等普通Renderer。
+- 原来各模型单独提交子网格，颜色和阴影阶段重复绘制。当前URP主光使用2048阴影贴图、4级联。每块墙实际参与几个阴影级联受裁剪影响，不能把“每材质4 Batch”当作所有位置的固定规则。材质Shader的7个Pass也不等于每帧执行7次；本轮没有逐条Frame Debugger枚举所有Pass。
+- SRP Batcher开启、Dynamic Batching关闭、源材质未开启Instancing。SRP Batcher主要减少状态准备成本，不会把所有相同网格合成一次绘制。上述多数网格也超过动态合批的300顶点／900属性限制，因此采用显式GPU实例化。参考Unity官方[GPU Instancing](https://docs.unity3d.com/2022.3/Documentation/Manual/GPUInstancing.html)和[DrawMeshInstanced](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Graphics.DrawMeshInstanced.html)。
+
+### 实际实现与入口
+
+- `Scripts/ModelView/Client/YIUIComponent/Lobby/`：`BrawlTrainingSession.TerrainRendering`持有`BrawlTerrainRenderState`；`BrawlTerrainBatch`缓存矩阵和对象归属；`BrawlStaticRenderObject`保存原Renderer和根变换。所有数据和运行时材质归属本局，没有静态可变缓存。
+- `Scripts/HotfixView/Client/YIUISystem/Lobby/BrawlTerrainRenderHelper.cs`：按8×8格空间块、Mesh、原材质、子网格、Layer、投射／接收阴影和光照探针模式分组。每份原材质只复制一次并开启Instancing，原资产不变；每批最多1023实例。稳定帧直接复用矩阵列表，不重新扫地形Transform／实例化材质。打包客户端由Update向本局BattleCamera调用DrawMeshInstanced；编辑器Update只确保订阅beginCameraRendering，由该回调向本局BattleCamera或SceneView摄像机各提交一次，以支持Game／Scene暂停重绘，不重复绘制。回调由本局TerrainRendering持有，Clear时注销；UNITY_EDITOR条件之外不订阅回调。此规则修复了初版“Game正常但Scene看不到墙草”的遗漏。
+- `BrawlTrainingHelper.LoadTerrain`沿用YooAsset加载流程并登记墙／草。保留GameObject、原材质和Renderer，只关闭被接管的Renderer；不删除碰撞或改变单位数据。水、透明排序材质、未知Shader、动画、LOD、脚本驱动资源、特殊渲染状态及不支持GPU实例化的平台保留原路径。
+- `BrawlUnitRosterViewHelper`对无动画静态NPC登记，单位移除注销，重生／视图重建重新登记。运行中检测已登记NPC根变换或Active状态变化即回退，避免旧位置残影；带脚本或动画的子层级原本就不接管。英雄、Bot、弹丸、特效不参加本次静态批次。
+- `BrawlPracticeClientComponentSystem.Update`在原表现更新之后提交批次。Destroy同步释放运行时材质，`BrawlTrainingHelper.Cleanup`也做幂等清理，覆盖正常退出、失败、根场景销毁和直接停止Play。
+- `BrawlProjectilePresentation.OnGrassCleared`消费既有权威清草通知：隐藏原地形对象，同时从批次移除对应矩阵。先前该显示回调为空；本次没有修改服务器清草或重新设计协议。
+- 本地GraphicsSettings现为`Instancing stripping=Keep All`，本轮未改该设置。以后调整Shader剔除策略时，必须保留这些运行时实例化所需变体。此轮只验证编辑器，尚未验证玩家构建与移动端。
+
+### 运行采样
+
+条件：Unity2022.3.62f3、URP14、GTX660，Game视图993×560；原分辨率、FOV15、45°俯角、阴影、光照不变。切换同房间原Renderer／GPU实例化，预热30帧后记录120个不同游戏帧的UnityStats。不是关闭阴影或减少场景内容换来的结果。
+
+| 地图 | 原始Batches中位数 | 实例化Batches中位数 | 原始／实例化Draw Calls中位数 | Batches减少 |
+| --- | ---: | ---: | ---: | ---: |
+| 10101 | 534 | 162 | 534 / 162 | 69.7% |
+| 10201 | 506 | 127 | 506 / 132 | 74.9% |
+
+10101相机位置(0.5,50,-54)，10201为(-1.5,50,-62.5)。10101仅地形+NPC注册70个对象、59个空间/材质批次、10份运行时材质；10201完整地图172个对象、35个批次、9份材质。这里“批次缓存数量”是提交组数，与包含多个渲染阶段的UnityStats Batches不是同一个数。
+
+10201有正在战斗的Bot，弹丸、死亡重生与木桶变化会影响统计。原始另一次采样中位数513，优化另一次118；最终两窗口范围分别506～515与124～133。10101范围534～534与161～162。没有冻结服务器回放，因此不把小幅差异解释成缓存不稳定。
+
+代价：空间块按整体裁剪，保留相同网格和阴影。10101统计三角形约12.54万→14.36万，10201约54.12万→57.88万；SetPass中位数也从12→25、13→46。减少的是重复绘制提交，不是降低模型面数或消除草丛过绘制。没有CPU/GPU帧耗时及独立包FPS基准，不能宣称帧率提高70%～75%。若继续优化GPU负载，优先评估草模型简化／LOD和分块尺寸，再按实测决定阴影策略。
+
+原始报告保存在`Temp/Brawl-10101-before-final.txt`、`Temp/Brawl-10101-after.txt`、`Temp/Brawl-10201-before-final.txt`、`Temp/Brawl-10201-after-final.txt`；截图在`Temp/UnityBridge/Screenshots/`。Temp不纳入版本控制，本节保留关键数据供交接。
+
+### 验证结果与边界
+
+1. 两图从真实登录、英雄详情、试用进入；比较墙、草、材质和投影，移动相机后无新增缺块。玩家移动、Bot战斗继续走原权威流程。
+2. 10101通过客户端正常施法入口近距离普攻宝箱，服务器单位数50→49，实例同步移除、没有残影。约10秒后同位置新单位ID、5000血、重新登记为实例；没有直接改生命值。记录在`Temp/Brawl-crate-hit.txt`、`Temp/Brawl-crate-reborn.txt`。
+3. 10201直接调用显示清草回调测试格30／31：草消失，切回普通Renderer仍隐藏；新房间恢复138格地形且格31Active=true。本项是显示回调验证，未通过真实大招验证清草协议全链路。
+4. 正常退回大厅释放本局材质。修复直接停止Play遗漏后，从0份开始进完整10201得到9份，直接停止Play归零；`Temp/Brawl-render-cleanup-final.txt`保存结果。结束时Unity退出Play，未停止用户启动的服务器。
+5. Unity编译成功，最终运行Error查询0条；用户停服后，最终完整`dotnet build ET.sln`通过：0错误、14个既有HybridCLR CS0649警告，耗时37.70秒，日志`Temp/Brawl-render-build-verified.log`。此前文件锁造成的复制失败已通过停服后补跑解决；未重新启动服务器或进入Play。
+
+编辑器入口为`Brawl/Rendering/Render Diagnostics`。进入关卡固定相机，选择“原始Renderer（对照）”采样，再选择“GPU实例化（默认）”采样；新进场默认实例化。点击“导出当前渲染对象信息”可看到材质、网格顶点数、各单位登记状态与临时材质数量。自动化命令入口`Execute Diagnostics Command`使用Temp/BrawlRenderCommand.txt，仅供编辑器测试，不进入玩家构建。

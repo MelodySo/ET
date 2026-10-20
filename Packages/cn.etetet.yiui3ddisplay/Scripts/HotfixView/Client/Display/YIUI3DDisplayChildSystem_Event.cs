@@ -48,8 +48,19 @@ namespace ET.Client
         {
             if (!self.m_DragTarge || !(self.UI3DDisplay.m_DragSpeed > 0.0f)) return;
 
-            var delta = eventData.delta.x;
-            var deltaRot = -self.UI3DDisplay.m_DragSpeed * delta * Time.deltaTime;
+            float deltaRot;
+            if (self.UI3DDisplay.m_DragDegreesPerWidth > 0 && self.UI3DDisplay.transform is RectTransform rect && rect.rect.width > 0)
+            {
+                // UGUI delta 已是本次事件位移，不再乘帧间隔；换算到控件局部坐标适配 Canvas 缩放。
+                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, eventData.position, eventData.pressEventCamera, out Vector2 current) ||
+                    !RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, eventData.position - eventData.delta, eventData.pressEventCamera, out Vector2 previous)) return;
+                deltaRot = -(current.x - previous.x) / rect.rect.width * self.UI3DDisplay.m_DragDegreesPerWidth;
+            }
+            else
+            {
+                // 未启用按宽度旋转的既有控件保留原速度语义，暂停游戏时仍可操作 UI。
+                deltaRot = -self.UI3DDisplay.m_DragSpeed * eventData.delta.x * Time.unscaledDeltaTime;
+            }
             var dragTsf = self.m_DragTarge.transform;
 
             if (self.UI3DDisplay.m_MultipleTargetMode)

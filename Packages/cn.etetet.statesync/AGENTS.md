@@ -1,5 +1,13 @@
 # cn.etetet.statesync
 
+## 地形与静态 NPC 实例化（2026-10-19）
+
+- 客户端 `BrawlTerrainRenderHelper` 使用会话持有的批次和运行时材质，以8×8格分块调用DrawMeshInstanced；地形墙／草及静态NPC共用，不改变服务器格子、碰撞、AI或共享美术资源。
+- `LoadTerrain`登记地形；`BrawlUnitRosterViewHelper`负责NPC模型加载登记、移除注销、根变换变化时回退；`BrawlPracticeClientComponentSystem.Update`提交绘制、Destroy同步释放材质，训练会话Cleanup也幂等清理。不得省略直接停止Play路径的资源释放。
+- 编辑器Game／Scene视图通过本局持有的beginCameraRendering回调绘制，严格筛选本局BattleCamera或CameraType.SceneView；编辑器Update只确保订阅，不能重复提交绘制，支持暂停检查。Clear必须注销回调，避免旧房间残留；打包客户端不订阅该回调，仍由Update绘制BattleCamera。
+- 已有清草显示通知接入移除；禁止客户端自行决定清草。原Renderer兼容回退，保留其组件和模型生命周期。新Shader／动态资源不能跳过支持性检查强制加入静态批次。
+- `Brawl/Rendering/Render Diagnostics`可同房间切换对照及采样；实测、限制与代码入口见Book/Brawl客户端战斗表现.md第十三节和本包Test.md。
+
 ## 技能冷却（2026-10-18最新）
 
 BrawlSkillCastHelper对所有发射器的普攻和大招统一读取技能CooldownTime，不再保留“雪莉普攻无CD”例外；本节覆盖下文历史无CD描述。普攻/大招独立冷却，从服务器成功施放开始计时，连发中仍不允许重入。边界回归在Statesync_BrawlRevolver_Test。
@@ -52,7 +60,8 @@ BrawlSkillCastHelper对所有发射器的普攻和大招统一读取技能Cooldo
 - 状态归属 LobbyPanelComponent；事件闭包通过 EntityRef 获取存活 owner。
 - 列表读取 BrawlHeroConfigCategory，暂以 UnlockPrice=0 表示默认已解锁，等级统一为 1；未接账号英雄资产或培养系统。
 - 详情由 BrawlHeroDetailHelper 创建蓝色三列布局与技能弹窗，显示模型、定位、品质、描述、BaseHp + HpGrowthPerLevel、技能关联弹丸的 Value + ValueGrowthPerLevel；等级固定1／最高11，无升级入口。普通技能就是 NormalAttackSkillId，不展示 SpecialSkillId。
-- BrawlHeroPreviewHelper 通过 YooAsset 加载英雄 ModelPath，只渲染一次待机定格并立即销毁临时舞台；预览纹理与请求版本归属 LobbyPanelComponent.HeroDetails，切换／关页／销毁时释放。异步使用 EntityRef 和版本校验，禁止迟到加载覆盖新英雄。资源、协议和战斗逻辑不受影响。
+- BrawlHeroPreviewHelper 通过 YooAsset 加载英雄 ModelPath，复用 cn.etetet.yiui3ddisplay 的 UI3DDisplay + YIUI3DDisplayChild 持续渲染 600×800 RT，沿用 Prefab 原 Animator／Override 播放 Idle，横向拖拽绕 Y 轴旋转。RT 由 YIUI 管理，舞台／资源句柄／EntityRef／请求版本归属 LobbyPanelComponent.HeroDetails；切换／关页／销毁／进入练习赛时释放，退回大厅恢复。异步使用 EntityRef 和版本校验，禁止迟到加载覆盖新英雄。Root Motion、音效、粒子与动画事件关闭，不接战斗状态。
+- 3DDisplay 依赖已加入主包；展示层为 YIUIConstHelper.Const.YIUI3DLayer（TagManager 的 YIUI3DLayer）。不能仅添加 Runtime 组件而漏掉 ModelView／HotfixView 的 CodeMode 引用。2026-10-19 实时预览本轮按用户要求未编译、未运行，验收清单见 Book/Brawl开发交接.md 最新章节。
 - 已解锁、未解锁均可试用。训练场和练习赛均请求服务器创建房间。详情 UI 本轮未编译、未 Play，待用户验收；字段来源与清单位于 Book/Brawl开发交接.md 最新章节。
 
 ## 服务器练习赛第一版

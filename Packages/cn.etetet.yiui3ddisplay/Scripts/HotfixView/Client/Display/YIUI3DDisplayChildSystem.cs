@@ -26,7 +26,7 @@ namespace ET.Client
         private static void Destroy(this YIUI3DDisplayChild self)
         {
             self.Destroy3DDisplay();
-            self.UI3DDisplay.m_YIUI3DDisplayChildRef = default;
+            if (self.m_UI3DDisplay != null) self.m_UI3DDisplay.m_YIUI3DDisplayChildRef = default;
             self.m_UI3DDisplay                       = null;
             self.m_OnClickedEntity                   = default;
         }

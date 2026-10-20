@@ -19,6 +19,7 @@ namespace ET.Client
             BrawlSkillJoystickHelper.Update(self.Session);
             BrawlSkillViewHelper.UpdateAmmo(self.Session);
             BrawlProjectileViewHelper.Update(self.Session);
+            BrawlTerrainRenderHelper.Draw(self.Session);
         }
 
         [EntitySystem]
@@ -29,6 +30,8 @@ namespace ET.Client
             BrawlProjectileViewHelper.Clear(self.Session);
             BrawlSkillUseViewHelper.Clear(self.Session);
             BrawlAIPlayVerification.Abort(self.Session);
+            // 停止 Play/根场景销毁时异步退出流程可能来不及结束，运行时材质必须同步释放。
+            BrawlTerrainRenderHelper.Clear(self.Session);
             self.Session = null;
         }
     }

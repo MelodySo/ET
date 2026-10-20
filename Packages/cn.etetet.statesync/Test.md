@@ -1,5 +1,21 @@
 # Brawl NPC 阻挡验证
 
+## 2026-10-19 Scene 显示补修
+
+- 10201实例化开启：138格地形、34个NPC、35批、9份材质；Scene恢复墙草木桶，暂停后缩放Scene仍显示；Game暂停截图Temp/UnityBridge/Screenshots/game_20261019_074451_51fea66c2c5f44af939c878eed528cb9.png可见地形与NPC。
+- 直接退出Play后材质归零，记录Temp/Brawl-scene-view-cleanup.txt；Clear注销本局编辑器摄像机回调。编辑器Game和Scene使用各自渲染前回调，Update不重复提交；正式客户端Update绘制路径不变。
+- Unity编译通过；完整构建ET.Core.dll输出复制因运行服务器PID8144文件锁失败（Temp/Brawl-scene-view-build.log），未停止或重启服务器。补修诊断窗口重载后空路径误启动采样；本轮不重新统计两张地图性能。
+- 诊断窗口补修后重新进入10201，检查全部166条Console日志：错误／异常0条，记录Temp/Brawl-scene-view-console.json。最后保留Play中的10201，Scene和Game可继续查看。
+
+## 2026-10-19 地形与静态 NPC 实例化（Unity 实测通过）
+
+- 用户授权运行测试，复用用户启动的服务器。通过真实登录、雪莉详情、试用进入 10101／10201；相机、分辨率、SRP Batcher 与四级联阴影相同，120 帧采样。10101 Batches 中位数534→162；10201同房间506→127（战斗波动）。截图与原始统计保存在 Temp/UnityBridge/Screenshots 和 Temp/Brawl-*-before/after*.txt；完整条件见 Book/Brawl客户端战斗表现.md 第十三节。
+- 两图正常进场、移动、墙草阴影、原始／实例化切换及退出重进已验证。10101真实客户端普攻打破近处宝箱：50→49单位、实例移除无残影；约10秒后新单位ID、5000血、实例重新登记。
+- 草显示回调验证：10201格30／31清除后两种渲染路径均隐藏，重新进入新房间格31恢复Active=true；未通过实际大招测试清草协议全链路，也未修改服务器清草结果。
+- 修复并验证停止Play清理：清理早期测试遗留后，本轮材质0→进场9→直接停止Play0。正常退回大厅释放本局材质；退场与重进未复用旧房间显示数据。运行Error查询0条，测试结束退出Play。
+- 编辑器复测：`Brawl/Rendering/Render Diagnostics` → 进入关卡 → 固定相机 → 原始Renderer → 采样120帧 → GPU实例化 → 采样120帧。场景物体明细可另导出；CPU/GPU帧耗时、独立包／移动设备性能未测，不据DrawCall降幅推算FPS。
+- 最终Unity编译通过；用户停服后，最终完整`dotnet build ET.sln`通过：0错误、14个既有HybridCLR CS0649警告，耗时37.70秒，日志`Temp/Brawl-render-build-verified.log`。此前文件锁复制失败已解决，结束时Unity退出Play，未重新启动服务器。
+
 ## 2026-10-19 英雄详情扩展（仅静态检查，待用户实测）
 
 - 主页面：左侧英雄名／定位／品质／描述，中间模型待机定格，右侧固定战力1／最高11、生命值、普攻、超级技能；升级按钮不创建。普通技能从 NormalAttackSkillId 获取，SpecialSkillId 不展示。

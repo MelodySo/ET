@@ -1,6 +1,8 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using YIUIFramework;
+using YooAsset;
 
 namespace ET.Client
 {
@@ -25,7 +27,10 @@ namespace ET.Client
         public BrawlHeroSkillDetailView SuperSkill;
         public RawImage PreviewImage;
         public TextMeshProUGUI PreviewStatus;
-        public RenderTexture PreviewTexture;
+        public UI3DDisplay PreviewDisplay;
+        public EntityRef<YIUI3DDisplayChild> PreviewDisplayChild;
+        public GameObject PreviewStage;
+        public AssetHandle PreviewHandle;
         public int PreviewVersion;
     }
 }

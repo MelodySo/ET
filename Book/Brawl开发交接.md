@@ -1,5 +1,35 @@
 # Brawl Demo 开发交接
 
+## 2026-10-19 英雄详情实时 Idle 与拖拽（待用户验收）
+
+- 本节覆盖下方英雄详情初版的“一次渲染待机定格”描述。改为实时 600×800 透明 RenderTexture，直接复用 `cn.etetet.yiui3ddisplay` 的 `UI3DDisplay + YIUI3DDisplayChild`；没有另写渲染 Update 或拖拽系统。
+- 原组件提供：RT／展示相机管理、屏幕外 Animator 更新、Y 轴拖拽、旋转重置、位置／缩放／分辨率设置、相机参数同步、多目标展示、模型点击与射线检测。本轮使用单模型、RT、拖拽与生命周期；不启用多目标、点击射线、反射面或阴影面。
+- 沿用各英雄 Prefab 自带 Animator、Avatar 与 Override，保持固定武器。Brawl 控制器只在初始化时将 MoveX／MoveZ 置零、LocomotionSpeed 置 1，关闭其他动作层，进入 Locomotion.Move；之后由 Animator 正常持续播放，使用 UnscaledTime，不每帧重置状态。其它控制器保留原默认状态。Root Motion、动画事件、购买包脚本、声音、粒子与碰撞均关闭。
+- 在模型 RawImage 上横向拖动，复用 3DDisplay 的 Y 轴旋转；竖向拖动不俯仰，不影响战斗面向。原组件新增可选 m_DragDegreesPerWidth，本页设为 360（横向拖满预览宽度旋转一周），按控件局部位移计算，不乘帧间隔；其它既有控件默认 0 沿用旧速度语义。拖拽目标为包装根，保留原模型缩放和骨骼动画；切换英雄／重开详情恢复默认朝向。构图按绕 Y 轴旋转的包围范围留边，3DDisplay 的 LateUpdate 持续补偿 Canvas 缩放；最终大小、亮度和手感仍需人工确认。
+- `BrawlHeroPreviewHelper` 负责加载、Idle 和构图；`BrawlHeroDetailView` 持有展示 EntityRef、舞台和 YooAsset 句柄。模型显示期间保留加载句柄，切换／关页释放；迟到加载只释放自己的句柄，不能覆盖新模型。动态 UI 启停通过 3DDisplay 的 OnEnable／OnDisable 通知幂等释放／恢复临时 RT，销毁兼容 Unity 对象先释放的顺序。
+- `BrawlTrainingHelper` 隐藏大厅前释放预览，正常退出或进场失败恢复当前英雄；大厅的 CanvasGroup.alpha=0 不会自动停止 Animator／摄像机，因此不能省略该接入。
+- statesync 增加 `cn.etetet.yiui3ddisplay` 依赖，TagManager 补齐 `YIUI3DLayer`。已按当前 Client 模式用现有 ET.CodeMode 工具生成本地程序集引用；没有手改 csproj 或手写 meta。在其他工作区同步后若主包引用未更新，重新选择 statesync 主包并执行 `ET/Init/CodeMode`，再等待 Unity 正常导入。
+- 验证范围：只进行源代码、依赖及本次差异检查；按用户要求没有编译、没有启动服务器／Unity、没有进入 Play 或执行测试。新增规范文档的 meta 由 Unity 下次正常导入生成。保留此前 GPU 实例化和字体改动，未修改服务器、协议、Excel、Prefab 或共享动画资源。
+- 明早手测：分别打开雪莉／柯尔特详情，观察 Idle 连续播放；左右拖动一周检查正侧背面、武器边界及松手后保持朝向；竖向拖动不改变俯仰；属性弹窗／试用弹窗覆盖模型并阻止拖穿；快速返回列表切换英雄不串模型；关闭重开详情、进入 10101／10201 后退回大厅应恢复预览；检查控制台异常以及关闭详情后不再有 BrawlHeroPortraitStage。若调整窗口尺寸，也检查模型大小与构图是否稳定。
+
+## 2026-10-19 Scene 视图实例化补修
+
+- 初版只向BattleCamera提交实例且关闭了原Renderer，因此Game正常，Scene看不到墙／草／静态NPC。现编辑器通过本局持有的beginCameraRendering回调，为BattleCamera及SceneView摄像机分别提交一次；Game和Scene暂停重绘也可见。正式客户端仍由Update绘制，无服务器或资源改动。
+- 10201实测实例化开启（138格地形、34个静态NPC、35批、9份运行时材质），Scene墙草木桶恢复，暂停缩放Scene仍可见，Game暂停截图正常；直接退出Play后运行时材质为0，回调在Clear中注销。顺带修复渲染诊断窗口脚本重载后空路径误启动采样的问题。
+- Unity编译通过；本轮完整构建的ET.Core.dll输出复制被运行中的服务器PID8144锁定，日志Temp/Brawl-scene-view-build.log，不把文件锁失败标记为完整构建通过。不需要重启服务器才能应用此客户端修复。
+- 诊断窗口补修后重新登录并进入10201，检查当前全部166条Console日志，错误／异常0条（Temp/Brawl-scene-view-console.json）；结束保留Play中的练习赛，供用户继续查看Scene和Game。
+
+## 2026-10-19 墙、草与静态 NPC GPU 实例化（Unity 实测）
+
+- 10101、10201 已通过真实登录／试用入口运行验证。`BrawlTerrainRenderHelper` 按 8×8 格空间块、网格、子网格、材质与绘制状态缓存实例，使用 `Graphics.DrawMeshInstanced` 提交；保留 SRP Batcher、四级联阴影和原有画质。不是只勾共享材质的 Instancing，也没有开启动态合批。
+- 范围覆盖地形墙／草、没有动画的 NPC 墙／木桶／宝箱。10201 原始地图有 120 格草、18 格地形墙、26 个三材质 NPC 墙与 8 个三材质木桶；10101 有 22 格沙漠墙、16 个 NPC 墙、32 个四材质宝箱。高批次来源是这些重复 Renderer 分材质、颜色／阴影重复提交。
+- GTX 660、Unity 2022.3.62f3、Game 993×560、同房间同相机各采样 120 帧：10101 Batches 中位数 **534→162**；10201 **506→127**，Draw Calls **506→132**。10201 战斗期间有弹丸、角色死亡重生和木桶变化，另一次优化采样为 118 Batches；不能据此声称 FPS 提升相同比例。
+- `BrawlTrainingSession.TerrainRendering` 持有数据和独立运行时材质，进场登记、稳定帧复用矩阵；NPC 移除／重生／视图重建同步注销或重建。发现静态 NPC 根变换变化或隐藏则回退原 Renderer。未知 Shader、透明排序、动画、LOD、脚本、特殊渲染状态和不支持实例化的设备不强行合批。
+- 资源释放覆盖正常退场、异常清理、客户端组件销毁和直接停止 Play。实测完整 10201 为 9 份运行时材质，停止 Play 后归零。原 Prefab、共享材质、FBX、服务器、协议、配置、碰撞和 AI 未改。
+- 已有 `OnGrassCleared` 现接入批次移除；仍只消费服务器通知，不决定清草。本轮用编辑器调用显示回调验证两格草隐藏、切回原渲染不复现、新房间恢复；未以实际大招贯通清草网络测试。10101 宝箱则通过真实普攻打破，单位数 50→49，再按配置重生为新 ID、5000 血、重新实例化。
+- 编辑器入口：`Brawl/Rendering/Render Diagnostics`，支持原始 Renderer／GPU 实例化切换、120 帧采样和对象信息导出，报告在 `Temp/`。技术细节、代价与验证记录见 [客户端战斗表现第十三节](Brawl客户端战斗表现.md)。
+- 验证状态：最终 Unity 编译成功、运行错误查询 0 条；用户停服后，最终完整 `dotnet build ET.sln` 通过：0 错误、14 个既有 HybridCLR CS0649 警告，耗时 37.70 秒，日志 `Temp/Brawl-render-build-verified.log`。结束时 Unity 已退出 Play，未重新启动服务器。
+
 ## 2026-10-19 英雄详情 UI（待用户实测）
 
 - 英雄列表点击后，进入蓝色纯色 Image 详情页：左侧姓名、定位、品质、英雄描述；中央为配置模型的待机定格预览；右侧显示战力等级、生命值、普攻与超级技能。布局参照用户提供的两张截图，升级按钮不创建，战力等级固定显示 **1**、最高 **11**，不接账号培养或修改战斗等级。

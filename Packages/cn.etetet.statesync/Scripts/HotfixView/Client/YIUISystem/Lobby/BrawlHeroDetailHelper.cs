@@ -28,12 +28,13 @@ namespace ET.Client
             Stretch(portrait, new Vector2(0.30f, 0.07f), new Vector2(0.70f, 0.96f));
             view.PreviewImage = Rect("ModelPreview", portrait).gameObject.AddComponent<RawImage>();
             Stretch(view.PreviewImage.rectTransform, Vector2.zero, Vector2.one);
-            view.PreviewImage.raycastTarget = false;
+            view.PreviewImage.raycastTarget = true;
             view.PreviewImage.enabled = false;
             AspectRatioFitter fit = view.PreviewImage.gameObject.AddComponent<AspectRatioFitter>();
             fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fit.aspectRatio = BrawlHeroPreviewHelper.AspectRatio;
             view.PreviewStatus = Text(self, portrait, "ModelStatus", "", 24, 0.04f, 0.38f, 0.96f, 0.62f);
+            Text(self, portrait, "RotationHint", "左右拖动旋转", 19, 0.10f, 0, 0.90f, 0.05f).color = new Color(0.70f, 0.90f, 1);
 
             RectTransform banner = Box(root, "NameBanner", new Color(0.56f, 0.85f, 0.96f), 0, 0.66f, 0.29f, 0.90f);
             view.Name = Text(self, banner, "HeroName", "", 58, 0.13f, 0.38f, 0.96f, 0.95f, TextAlignmentOptions.Left);

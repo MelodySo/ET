@@ -46,6 +46,7 @@ namespace ET.Client
                 BrawlPracticeUnitView view = session.PracticeUnits[i];
                 if (present.Contains(view.UnitId)) continue;
                 view.Removed = true;
+                BrawlTerrainRenderHelper.RemoveNPC(session, view.UnitId);
                 BrawlCharacterAnimationHelper.Release(session, view.Model);
                 if (view.Model != null) UnityEngine.Object.Destroy(view.Model);
                 session.PracticeUnits.RemoveAt(i);
@@ -61,6 +62,7 @@ namespace ET.Client
                 if (view.Model != null)
                 {
                     BrawlCharacterAnimationHelper.UpdateLife(view, session.RenderTick);
+                    BrawlTerrainRenderHelper.RefreshNPC(session, view);
                     if (view.UnitId == session.MyUnitId) session.Hero = view.Model;
                 }
             }
@@ -101,6 +103,7 @@ namespace ET.Client
                 foreach (Animator animator in model.GetComponentsInChildren<Animator>(true)) animator.applyRootMotion = false;
                 model.SetActive(true);
                 BrawlCharacterAnimationHelper.UpdateLife(view, session.RenderTick);
+                BrawlTerrainRenderHelper.RegisterNPC(session, view);
                 if (view.UnitId == session.MyUnitId) session.Hero = model;
             }
             catch (Exception exception)
