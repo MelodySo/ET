@@ -12,7 +12,7 @@ namespace ET.Server
             Record(unit, BrawlSkillUsePhase.Started, now);
         }
 
-        public static void Record(Unit unit, BrawlSkillUsePhase phase, long now)
+        public static void Record(Unit unit, BrawlSkillUsePhase phase, long now, BrawlSkillStep step = default)
         {
             BrawlSkillCastComponent cast = unit.GetComponent<BrawlSkillCastComponent>();
             if (cast.PresentationCastId == 0) return;
@@ -22,7 +22,12 @@ namespace ET.Server
                 EventId = ++room.SkillEventSequence, CastId = cast.PresentationCastId,
                 UnitId = unit.Id, SkillId = cast.SkillId, Slot = cast.Slot,
                 Tick = now / BrawlMovementSettings.TickMilliseconds, Phase = phase,
-                DirectionX = cast.Direction.x, DirectionZ = cast.Direction.y, Sustained = cast.Sustained,
+                DirectionX = cast.Direction.x, DirectionZ = cast.Direction.y,
+                LockFacing = cast.Plan.LockFacing, FaceDirection = cast.Plan.FaceDirection,
+                ImmediatePresentation = cast.Plan.ImmediatePresentation,
+                StepId = step.Id, PresentationId = step.PresentationId,
+                DurationMilliseconds = step.PresentationDurationMilliseconds, Radius = step.PresentationRadius,
+                PositionX = unit.Position.x, PositionY = unit.Position.y, PositionZ = unit.Position.z,
             });
         }
 
@@ -40,7 +45,11 @@ namespace ET.Server
                 item.EventId = notice.EventId; item.CastId = notice.CastId; item.UnitId = notice.UnitId;
                 item.SkillId = notice.SkillId; item.Slot = (int)notice.Slot; item.Tick = notice.Tick;
                 item.Phase = (int)notice.Phase; item.DirectionX = notice.DirectionX;
-                item.DirectionZ = notice.DirectionZ; item.Sustained = notice.Sustained;
+                item.DirectionZ = notice.DirectionZ; item.LockFacing = notice.LockFacing;
+                item.FaceDirection = notice.FaceDirection; item.ImmediatePresentation = notice.ImmediatePresentation;
+                item.StepId = notice.StepId; item.PresentationId = notice.PresentationId;
+                item.DurationMilliseconds = notice.DurationMilliseconds; item.Radius = notice.Radius;
+                item.PositionX = notice.PositionX; item.PositionY = notice.PositionY; item.PositionZ = notice.PositionZ;
                 message.Events.Add(item);
             }
             // 当前练习房间只有一个真实连接，Bot 与玩家事件一起发给该连接。

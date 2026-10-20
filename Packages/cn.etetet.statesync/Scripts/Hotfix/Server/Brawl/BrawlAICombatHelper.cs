@@ -37,7 +37,7 @@ namespace ET.Server
         {
             Unit target = BrawlAIHelper.GetTarget(unit);
             BrawlSkillCastComponent cast = unit.GetComponent<BrawlSkillCastComponent>();
-            if (target == null || cast.Launches == null || BrawlUnitLifeHelper.CannotAct(unit))
+            if (target == null || cast.Plan == null || BrawlUnitLifeHelper.CannotAct(unit))
             { BrawlAIHelper.Idle(unit); return; }
             BrawlAIComponent ai = unit.GetComponent<BrawlAIComponent>();
             BrawlMoveComponent move = unit.GetComponent<BrawlMoveComponent>();

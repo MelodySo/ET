@@ -15,8 +15,14 @@
   },
   "relatedPackages": {},
   "dependencies": {
+    "cn.etetet.core": "4.0.0",
+    "cn.etetet.memorypack": "1.10.0",
+    "cn.etetet.sourcegenerator": "0.0.5",
     "cn.etetet.yiuiframework": "3.0.0",
-    "cn.etetet.yiuigm": "3.0.1"
+    "cn.etetet.yiuigm": "3.0.1",
+    "cn.etetet.yiuiinvoke": "4.0.3",
+    "cn.etetet.yiuiloopscrollrectasync": "3.0.1",
+    "cn.etetet.yiuitips": "3.0.2"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/@ET-Packages"

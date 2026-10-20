@@ -1,5 +1,37 @@
 # Brawl Demo 开发交接
 
+## 2026-10-20 技能步骤与桩的延迟旋风斩（待运行验收）
+
+本节覆盖旧“仅延迟弹丸计划”及桩方案中的 Started／Fired 两阶段限制。已按本轮确认实现：前摇可移动，圆心跟随角色，到释放时取当前位置；可隔墙伤害敌人，不伤墙、不清草。三连击仍只是扩展能力示例，本轮未做击飞或连招玩法。
+
+### 实际代码链路
+
+- `IBrawlSkillEmitter.Build → BrawlSkillPlan / BrawlSkillStep / BrawlSkillEffect`：技能结构用代码表达。步骤可以只有表现或含多个效果，数值继续来自现有技能／弹丸表；没有新增万能配置表、节点编辑器或异步延迟任务。
+- `BrawlSkillCastHelper → BrawlSkillSequenceHelper → BrawlSkillEffectHelper`：一次校验和资源消耗，按服务器50ms Tick推进绝对时刻；死亡／眩晕／击飞取消未执行步骤。当前效果类型为飞行弹丸、瞬时圆形伤害。
+- 霰弹仍同一时刻发射整轮；柯尔特保留原逐发时间和方向锁定，射击位置跟随人物。旧Launches字段改为Plan，冷却、装填和AI活动技能查询同步适配。
+- `BrawlSkillUseNoticeHelper → G2C_BrawlSkillUse → BrawlSkillUseViewHelper → BrawlSkillPresentationHelper`：保留Started／Completed／Interrupted，原Phase=2改为StepExecuted，以StepId和PresentationId区分具体步骤。通知包含执行原点、半径、表现时长和锁向／时序策略；双端必须一起更新。
+
+### 桩与配置位置
+
+- `BrawlHero.xlsx`：501，模型`BasicMaleNoWeaponDefault`，普攻50101，大招／特殊技能0。基础生命3900、每级390、移速3和角色碰撞尺寸暂沿用雪莉；独立新增，不覆盖武士。尚无桩Bot和练习赛配对，使用10101训练场。
+- `BrawlSkill.xlsx / BrawlSkill`：50101，发射器Whirlwind=5，圆形半径3米，EmitterParam2为前摇0.3秒；弹药3格、装填1.5秒／格、冷却1秒。步骤组合位于`BrawlWhirlwindEmitter.cs`。
+- 同文件`BrawlProjectile`：50101，基础伤害1050、每级105，命中上限0（不限目标数），不生成飞行显示模型。圆形范围取技能半径，身体碰到边缘按现有相交语义命中。
+- 同文件`BrawlCollisionRule`：规则301／组3，敌对Battle目标有效、排除Tile，不阻挡；不匹配草。木桩NPC401是Battle目标，可以受伤。圆内每个目标每次脉冲最多命中一次；多个独立效果目前各自结算，未实现跨效果合并去重策略。
+
+### 客户端表现与生命周期
+
+- 0秒步骤立即显示跟随插值人物位置的金色空心环；0.3秒由服务器确认释放，停止金环并显示短暂金色圆形脉冲。客户端不按本地0.3秒自行触发释放；迟到两段同批到达时不补播完整前摇。
+- 金环与释放圆形复用已加载的自有范围材质，Mesh和实例归会话持有。完成／打断清理金环，释放圆形自然淡出；死亡、移除、退出和直接停止Play清理残留。无Animator不影响效果通知消费。
+- 没找到现成空手旋风Clip；释放阶段临时将该模型原空手攻击Clip映射到独立运行时Override的FullHero01，播放全身动作并做一圈纯显示旋转。蓄力阶段以金环表现，移动动画继续。Root Motion关闭，不修改权威面向、移动、碰撞或共享动画资源。
+- 枪械继续按RenderTick播放，桩两段使用即时确认通知；位置仍按原移动插值，不加入预测。网络较差时表现间隔不保证严格0.3秒，伤害时刻始终由服务器决定。
+
+### 验证与后续
+
+- 新增`Statesync_BrawlSkillSequence_Test`；同步适配原霰弹、柯尔特、弹药和AI回归用例。最终完整`dotnet build ET.sln`通过：0错误、0警告，22.56秒；日志`Temp/Brawl-skill-sequence-build-final.log`。用例仅编译，未执行；本轮未启动服务器或进入Unity Play，实际观感待用户验收。UnityBridge最终查询超时，未取得修复依赖后的Unity内编译回执。
+- Unity验收：更新双端代码／配置，选择“桩”→试用→训练场10101；移动中普攻看金环跟随，约0.3秒后一次圆形释放；圆内多个木桩各扣1050，圆外不扣，连续快速点击不突破1秒冷却。隔墙敌人可受伤，墙／草保留。
+- 再验证雪莉和柯尔特：霰弹数量、连发间隔、边移动边射击、冷却和装填保持原样。退出重进后无旧金环和旧旋转。
+- 后续：正式旋风动作与美术特效、音效；技能特定动作资源映射；多次按键连招、条件分支、矩形瞬时伤害、击飞及跨效果叠伤规则。蚂蚁／增益／边缘伤害明确不在首版。
+
 ## 2026-10-19 英雄详情实时 Idle 与拖拽（待用户验收）
 
 - 本节覆盖下方英雄详情初版的“一次渲染待机定格”描述。改为实时 600×800 透明 RenderTexture，直接复用 `cn.etetet.yiui3ddisplay` 的 `UI3DDisplay + YIUI3DDisplayChild`；没有另写渲染 Update 或拖拽系统。

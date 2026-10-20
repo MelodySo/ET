@@ -1,5 +1,15 @@
 # Brawl NPC 阻挡验证
 
+## 2026-10-20 技能步骤与旋风斩（编译通过，待运行验收）
+
+- `Statesync_BrawlSkillSequence_Test`：纯表现前摇不造成伤害；300ms 后以施法者当前位置执行一次圆形伤害；跨墙同时命中多个敌人，不伤自身／墙，不清草，不伤友军／无敌目标；同一目标不重复命中；前摇期间不能重入，死亡／眩晕取消剩余步骤。
+- 现有 `Statesync_BrawlProjectile_Test`、`Statesync_BrawlRevolver_Test`、`Statesync_BrawlColtSuper_Test`、`Statesync_BrawlAmmo_Test`、`Statesync_BrawlCombatAI_Test`：霰弹数量、连发时刻、独立冷却、装填暂停与 AI 活动施法判断不退化。
+- 客户端手测：金环收到确认后出现并跟随角色；释放步骤结束金环并播放圆形效果；重复通知不重播，退出／死亡／重建后没有旧金环；雪莉／柯尔特原攻击动画与锁向保持原行为。
+- 配置经 `ET.ExcelMcp` 写入并由 `ET.ExcelExporter` 导出；新英雄501、技能／弹丸50101、碰撞规则301已核对三种CodeMode的生成结果。协议经 `ET.Proto2CS` 导出。
+- 完整 `dotnet build ET.sln` 通过：0错误、14个既有HybridCLR CS0649警告，耗时26.47秒，日志 `Temp/Brawl-skill-sequence-build.log`。补充多目标断言后最终构建再次通过：0错误、0警告，22.56秒，日志 `Temp/Brawl-skill-sequence-build-final.log`。以上自动化用例仅参与编译，尚未执行；不将预期覆盖项记为运行通过。
+- 编译顺带修复原 `cn.etetet.yiui3ddisplay` 缺失的core／yiuitips及递归依赖声明，未修改该包展示行为。本轮未启动服务器、未进入Unity Play，实际观感与回归留待用户测试。
+- Unity初次Refresh已生成新脚本的.meta和工程引用，但当时编译被上述包依赖问题阻止；修复后完整解决方案编译通过，UnityBridge的最终Ping查询超时，未取得最终Unity内编译成功回执。没有重启编辑器或反复刷新。
+
 ## 2026-10-19 Scene 显示补修
 
 - 10201实例化开启：138格地形、34个NPC、35批、9份材质；Scene恢复墙草木桶，暂停后缩放Scene仍显示；Game暂停截图Temp/UnityBridge/Screenshots/game_20261019_074451_51fea66c2c5f44af939c878eed528cb9.png可见地形与NPC。

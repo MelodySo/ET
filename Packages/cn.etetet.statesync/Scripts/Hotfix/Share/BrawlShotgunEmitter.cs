@@ -6,6 +6,9 @@ namespace ET
     [EnableClass]
     public sealed class BrawlShotgunEmitter : IBrawlSkillEmitter
     {
+        public BrawlSkillPlan Build(BrawlSkillConfig skill, BrawlProjectileConfig projectile, int level)
+            => BrawlSkillPlanHelper.FromProjectiles(Emit(skill, projectile, level));
+
         public BrawlProjectileLaunch[] Emit(BrawlSkillConfig skill, BrawlProjectileConfig projectile, int level)
         {
             if (skill.SkillRangeType != (int)BrawlSkillRangeType.Sector || skill.SkillCastRangeType != 0 ||

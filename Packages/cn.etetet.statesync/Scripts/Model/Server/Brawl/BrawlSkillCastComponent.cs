@@ -4,7 +4,7 @@ namespace ET.Server
     [ComponentOf(typeof(Unit))]
     public sealed class BrawlSkillCastComponent : Entity, IAwake
     {
-        public BrawlProjectileLaunch[] Launches;
+        public BrawlSkillPlan Plan;
         public BrawlCollisionRuleConfig[] Rules;
         public int NextIndex;
         public long StartedAt;
@@ -17,6 +17,5 @@ namespace ET.Server
         public long PresentationCastId;
         public int SkillId;
         public BrawlSkillSlot Slot;
-        public bool Sustained;
     }
 }

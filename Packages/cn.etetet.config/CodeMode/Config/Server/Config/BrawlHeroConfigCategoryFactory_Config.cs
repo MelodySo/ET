@@ -26,7 +26,8 @@ public sealed class BrawlHeroConfigCategoryFactory_Config : IConfigFactory
             [ 301 ] = new ET.BrawlHeroConfig(301, 3, 7, 30101, 30102, 30103, 3500, 350, 4, 20, 0.3f, 1.2f, 1),
             [ 401 ] = new ET.BrawlHeroConfig(401, 3, 4, 40101, 40102, 40103, 4000, 400, 4, 30, 0.3f, 1.2f, 1),
             [ 1001 ] = new ET.BrawlHeroConfig(1001, 6, 6, 1001001, 1001002, 1001003, 4500, 450, 1, 100, 0.3f, 1.2f, 1),
-            [ 202 ] = new ET.BrawlHeroConfig(202, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0f, 0f, 0)
+            [ 202 ] = new ET.BrawlHeroConfig(202, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0f, 0f, 0),
+            [ 501 ] = new ET.BrawlHeroConfig(501, 1, 1, 50101, 0, 0, 3900, 390, 3, 0, 0.3f, 1.2f, 1)
         });
     }
 }

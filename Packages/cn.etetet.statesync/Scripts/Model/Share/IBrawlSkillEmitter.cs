@@ -1,8 +1,8 @@
 namespace ET
 {
-    /// <summary>无实体生命周期的发射算法；不处理网络、模型、伤害或弹药。</summary>
+    /// <summary>代码定义技能步骤，不处理实体生命周期、网络或弹药消耗。</summary>
     public interface IBrawlSkillEmitter
     {
-        BrawlProjectileLaunch[] Emit(BrawlSkillConfig skill, BrawlProjectileConfig projectile, int level);
+        BrawlSkillPlan Build(BrawlSkillConfig skill, BrawlProjectileConfig projectile, int level);
     }
 }

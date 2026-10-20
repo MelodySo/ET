@@ -19,7 +19,11 @@ namespace ET.Client
                 {
                     EventId = item.EventId, CastId = item.CastId, UnitId = item.UnitId, SkillId = item.SkillId,
                     Slot = (BrawlSkillSlot)item.Slot, Tick = item.Tick, Phase = (BrawlSkillUsePhase)item.Phase,
-                    DirectionX = item.DirectionX, DirectionZ = item.DirectionZ, Sustained = item.Sustained,
+                    DirectionX = item.DirectionX, DirectionZ = item.DirectionZ, LockFacing = item.LockFacing,
+                    FaceDirection = item.FaceDirection, ImmediatePresentation = item.ImmediatePresentation,
+                    StepId = item.StepId, PresentationId = item.PresentationId,
+                    DurationMilliseconds = item.DurationMilliseconds, Radius = item.Radius,
+                    PositionX = item.PositionX, PositionY = item.PositionY, PositionZ = item.PositionZ,
                 });
             }
         }
@@ -30,34 +34,34 @@ namespace ET.Client
             for (int i = 0; i < session.PendingSkillUseEvents.Count;)
             {
                 BrawlSkillUseNotice notice = session.PendingSkillUseEvents[i];
-                if (notice.Tick > session.RenderTick) break;
-                bool expired = session.RenderTick - notice.Tick > BrawlMovementSettings.MaxCatchUpTicks;
+                // 即时步骤不能被前面等待插值的枪械通知堵住；同一施法所有步骤采用一致时间线。
+                if (!notice.ImmediatePresentation && notice.Tick > session.RenderTick) { ++i; continue; }
+                double timeline = notice.ImmediatePresentation ? session.LastServerTick : session.RenderTick;
+                bool expired = timeline - notice.Tick > BrawlMovementSettings.MaxCatchUpTicks;
                 BrawlPracticeUnitView unit = session.PracticeUnits.Find(v => v.UnitId == notice.UnitId);
                 // 名单/模型可能稍晚于事件；有限等待，加载完成后不补播很久以前的攻击。
                 if (!expired && (unit == null || unit.Model == null)) { ++i; continue; }
                 session.PendingSkillUseEvents.RemoveAt(i);
-                BrawlCharacterAnimationView view = unit?.Animation;
-                if (view == null) continue;
                 if (notice.Phase == BrawlSkillUsePhase.Completed || notice.Phase == BrawlSkillUsePhase.Interrupted)
                 {
-                    BrawlCharacterAnimationHelper.EndCast(view, notice.CastId, notice.Phase == BrawlSkillUsePhase.Interrupted);
+                    BrawlSkillPresentationHelper.Consume(session, unit, notice);
                 }
                 else if (!expired)
                 {
-                    if (notice.Phase == BrawlSkillUsePhase.Started) BrawlCharacterAnimationHelper.BeginCast(view, notice);
-                    else if (notice.Phase == BrawlSkillUsePhase.Fired && view.ActiveCastId == notice.CastId)
-                        BrawlCharacterAnimationHelper.PlayAttack(view, notice.Slot == BrawlSkillSlot.Super,
-                            new Vector3(notice.DirectionX, 0, notice.DirectionZ));
+                    BrawlSkillPresentationHelper.Consume(session, unit, notice);
                 }
-                if (unit.UnitId == session.MyUnitId)
+                BrawlCharacterAnimationView view = unit?.Animation;
+                if (view != null && unit.UnitId == session.MyUnitId)
                     session.FacingDirection = new Vector2(view.FacingDirection.x, view.FacingDirection.z);
             }
+            BrawlSkillPresentationHelper.Update(session);
         }
 
         public static void Clear(BrawlTrainingSession session)
         {
             session.PendingSkillUseEvents.Clear();
             session.LastSkillUseEventId = 0;
+            BrawlSkillPresentationHelper.Clear(session);
         }
     }
 }

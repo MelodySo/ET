@@ -29,7 +29,8 @@ public sealed class BrawlSkillConfigCategoryFactory_Config : IConfigFactory
             [ 100101 ] = new ET.BrawlSkillConfig(100101, 100101, 1, 4, 0, 0f, 0f, 1, 0f, 0f, 1, 1, 0f, 0f, 1, 0f, 0f),
             [ 30101 ] = new ET.BrawlSkillConfig(30101, 30101, 2, 3, 1, 0.1f, 0f, 3, 1f, 1f, 2, 1, 3f, 1.5f, 0, 0f, 0f),
             [ 40101 ] = new ET.BrawlSkillConfig(40101, 40101, 6, 2, 1, 0f, 0.16f, 3, 1.6f, 0.8f, 1, 1, 9f, 0.7f, 0, 0f, 0f),
-            [ 40102 ] = new ET.BrawlSkillConfig(40102, 40102, 12, 2, 1, 0f, 0.08333f, 1, 0f, 1f, 1, 1, 12f, 1f, 0, 0f, 0f)
+            [ 40102 ] = new ET.BrawlSkillConfig(40102, 40102, 12, 2, 1, 0f, 0.08333f, 1, 0f, 1f, 1, 1, 12f, 1f, 0, 0f, 0f),
+            [ 50101 ] = new ET.BrawlSkillConfig(50101, 50101, 1, 5, 1, 0.3f, 0f, 3, 1.5f, 1f, 1, 3, 3f, 0f, 0, 0f, 0f)
         });
     }
 }

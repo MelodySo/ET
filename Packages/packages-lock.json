@@ -482,6 +482,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
+        "cn.etetet.brawl": "1.0.0",
         "cn.etetet.core": "4.0.0",
         "cn.etetet.config": "4.0.0",
         "cn.etetet.proto": "4.0.0",
@@ -498,6 +499,7 @@
         "cn.etetet.actorlocation": "4.0.0",
         "cn.etetet.aoi": "4.0.0",
         "cn.etetet.yiuiframework": "4.0.0",
+        "cn.etetet.yiui3ddisplay": "3.1.0",
         "cn.etetet.yooassets": "4.0.0",
         "cn.etetet.yiuitips": "4.0.0",
         "cn.etetet.yiuigm": "4.0.0",
@@ -598,8 +600,13 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
+        "cn.etetet.core": "4.0.0",
+        "cn.etetet.memorypack": "1.10.0",
+        "cn.etetet.sourcegenerator": "0.0.5",
         "cn.etetet.yiuiframework": "3.0.0",
-        "cn.etetet.yiuigm": "3.0.1"
+        "cn.etetet.yiuigm": "3.0.1",
+        "cn.etetet.yiuiinvoke": "4.0.3",
+        "cn.etetet.yiuiloopscrollrectasync": "3.0.1"
       }
     },
     "cn.etetet.yiuieffect": {

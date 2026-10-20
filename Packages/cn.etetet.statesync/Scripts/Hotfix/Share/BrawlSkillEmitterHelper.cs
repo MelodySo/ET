@@ -9,6 +9,7 @@ namespace ET
             {
                 BrawlEmitterType.Shotgun => new BrawlShotgunEmitter(),
                 BrawlEmitterType.Revolver => new BrawlRevolverEmitter(),
+                BrawlEmitterType.Whirlwind => new BrawlWhirlwindEmitter(),
                 _ => null,
             };
         }

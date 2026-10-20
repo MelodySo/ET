@@ -673,7 +673,25 @@ namespace ET
         [MemoryPackOrder(8)]
         public float DirectionZ { get; set; }
         [MemoryPackOrder(9)]
-        public bool Sustained { get; set; }
+        public bool LockFacing { get; set; }
+        [MemoryPackOrder(10)]
+        public bool FaceDirection { get; set; }
+        [MemoryPackOrder(11)]
+        public bool ImmediatePresentation { get; set; }
+        [MemoryPackOrder(12)]
+        public int StepId { get; set; }
+        [MemoryPackOrder(13)]
+        public int PresentationId { get; set; }
+        [MemoryPackOrder(14)]
+        public long DurationMilliseconds { get; set; }
+        [MemoryPackOrder(15)]
+        public float Radius { get; set; }
+        [MemoryPackOrder(16)]
+        public float PositionX { get; set; }
+        [MemoryPackOrder(17)]
+        public float PositionY { get; set; }
+        [MemoryPackOrder(18)]
+        public float PositionZ { get; set; }
         public override void Dispose()
         {
             ObjectPool.Recycle(this);

@@ -26,7 +26,8 @@ public sealed class BrawlHeroConfigCategoryFactory_Config : IConfigFactory
             [ 301 ] = new ET.BrawlHeroConfig(301, @"武士", @"这是个武士", @"SamuraiDefault", 3, 7, 30101, 30102, 30103, 3500, 350, 4, 20, 0.3f, 1.2f, 1),
             [ 401 ] = new ET.BrawlHeroConfig(401, @"柯尔特", @"柯尔特是型秒乐园的大明星！他英俊潇洒，魅力四射，还会花式转枪，这些让他赢得了所有观众的心，不过雪莉除外。", @"VeteranDefault", 3, 4, 40101, 40102, 40103, 4000, 400, 4, 30, 0.3f, 1.2f, 1),
             [ 1001 ] = new ET.BrawlHeroConfig(1001, @"卡尔", @"牛逼卡尔", @"ChickenDefault", 6, 6, 1001001, 1001002, 1001003, 4500, 450, 1, 100, 0.3f, 1.2f, 1),
-            [ 202 ] = new ET.BrawlHeroConfig(202, @"艾尔·普里莫", @"艾尔·普里莫以迅雷之势连续打出4记愤怒铁拳。这墨西哥劲辣红椒味的拳头可以把对手打得满地找牙！", @"", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0f, 0f, 0)
+            [ 202 ] = new ET.BrawlHeroConfig(202, @"艾尔·普里莫", @"艾尔·普里莫以迅雷之势连续打出4记愤怒铁拳。这墨西哥劲辣红椒味的拳头可以把对手打得满地找牙！", @"", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0f, 0f, 0),
+            [ 501 ] = new ET.BrawlHeroConfig(501, @"桩", @"短暂蓄力后旋转攻击周围敌人。可移动蓄力，可隔墙命中，不破坏墙和草。", @"BasicMaleNoWeaponDefault", 1, 1, 50101, 0, 0, 3900, 390, 3, 0, 0.3f, 1.2f, 1)
         });
     }
 }

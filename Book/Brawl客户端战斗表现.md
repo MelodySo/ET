@@ -414,3 +414,17 @@
 5. Unity编译成功，最终运行Error查询0条；用户停服后，最终完整`dotnet build ET.sln`通过：0错误、14个既有HybridCLR CS0649警告，耗时37.70秒，日志`Temp/Brawl-render-build-verified.log`。此前文件锁造成的复制失败已通过停服后补跑解决；未重新启动服务器或进入Play。
 
 编辑器入口为`Brawl/Rendering/Render Diagnostics`。进入关卡固定相机，选择“原始Renderer（对照）”采样，再选择“GPU实例化（默认）”采样；新进场默认实例化。点击“导出当前渲染对象信息”可看到材质、网格顶点数、各单位登记状态与临时材质数量。自动化命令入口`Execute Diagnostics Command`使用Temp/BrawlRenderCommand.txt，仅供编辑器测试，不进入玩家构建。
+
+## 十四、技能步骤与桩的旋风斩（2026-10-20，待实机验收）
+
+本节覆盖上文旧的 Started／Fired 两阶段描述。具体技能不再被限制为“开始、发射”两种表现：服务器执行 `BrawlSkillPlan` 中的步骤，发送 `StepExecuted`，客户端依据 `PresentationId` 播放。Started／Completed／Interrupted 仍负责一次施法的生命周期。
+
+- 配置与步骤：英雄501，空手模型 `BasicMaleNoWeaponDefault`，普攻50101。技能／弹丸数值在 `Packages/cn.etetet.brawl/Luban/Config/Datas/BrawlSkill.xlsx`，步骤组合在 `BrawlWhirlwindEmitter.cs`。半径3米、前摇0.3秒、伤害1050／每级105、冷却1秒、弹药3格、装填1.5秒／格；不含蚂蚁、增益或边缘伤害。
+- 蓄力：收到服务器确认的第1步后，立即出现跟随人物显示位置的金色空心环，期间允许移动。客户端不计时决定伤害，也不自行决定技能是否释放。
+- 释放：服务器在前摇结束时，以角色当前位置做一次圆形伤害，再发送第2步。客户端结束蓄力环、显示短暂金色圆形闪光并播放全身旋转占位动作；表现中心使用当前插值人物位置，权威伤害中心使用服务器执行位置，不加入移动预测。网络延迟、插值及批量到包可能影响视觉时序。
+- 碰撞：规则301／组3只影响敌对Battle目标、排除Tile、不阻挡；墙和草不受影响，可隔墙命中。训练场宝箱木桩仍可受伤，每个目标在一次圆形脉冲内只结算一次。
+- 表现入口：`BrawlSkillUseViewHelper → BrawlSkillPresentationHelper`。范围材质复用已加载的 `Brawl/SkillAimPreview`，会话持有临时网格／对象，结束或打断清除蓄力环；释放圆形自然淡出。移除、死亡和退出清理残留，无Animator不会影响伤害结算。
+- 动画入口：`BrawlCharacterAnimationHelper.PlayWhirlwind`。未发现正式空手旋风Clip，首版把该模型原空手攻击Clip映射到独立运行时Override的FullHero01，配合纯显示Y轴旋转；动作结束恢复原朝向和FullBody权重。蓄力期间保留移动动画，Root Motion仍关闭。正式蓄力／旋风动画待美术替换，不把临时动作当作最终资源。
+- 原有枪械：雪莉齐射、柯尔特逐发改为相应的步骤，仍使用上半身攻击映射，仍按RenderTick消费通知；没有加入枪口特效或音效。
+- 验证：配置和协议已导出，最终完整 `dotnet build ET.sln` 通过（0错误、0警告）。新旧自动化用例仅编译未执行，未启动服务器或进入Unity Play；UnityBridge最终查询超时，未取得最终Unity内编译成功回执。用户验收入口为“桩→试用→训练场10101”，检查移动蓄力、释放伤害、隔墙、多个木桩、快速连点冷却、退出重进，并回归雪莉和柯尔特。桩暂未配置10201的Bot配对。
+- 后续：正式动作与特效、音效，以及按需增加矩形瞬时伤害等效果类型。步骤目前按固定时间排列，同一步可有多个效果；多次按键连招、条件分支、跨效果合并去重和击飞没有实现。

@@ -34,7 +34,7 @@ namespace ET.Test
                     { [PropertyId.Level] = 1, [PropertyId.MaxAmmo] = 3, [PropertyId.Ammo] = 3 });
                 BrawlSuperChargeHelper.Initialize(owner, 2, 0);
                 BrawlSuperChargeHelper.Add(owner, 0.4);
-                if (BrawlSkillCastHelper.TryStart(owner, skill, config, BrawlSkillSlot.Super, new float2(0, 1), 0.6f, 0) || cast.Launches != null)
+                if (BrawlSkillCastHelper.TryStart(owner, skill, config, BrawlSkillSlot.Super, new float2(0, 1), 0.6f, 0) || cast.Plan != null)
                     return Fail(101201, "Fractional super ammo allowed a cast.");
                 if (shots.SkillNotices.Count != 0) return Fail(101211, "Rejected cast must not publish a success notice.");
                 BrawlSuperChargeHelper.Add(owner, 1);
@@ -51,7 +51,7 @@ namespace ET.Test
                     return Fail(101212, "Success notice has wrong identity or rejected repeat generated a notice.");
                 BrawlLevelConfig level = new(1, 1, 20, 20, new int[400], Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
                 for (long now = 0; now <= 950; now += 50) BrawlSkillSequenceHelper.Tick(owner, level, 1, now);
-                if (shots.Children.Count != 12 || cast.Launches != null || BrawlSkillSequenceHelper.CanStart(cast, 950, BrawlSkillSlot.Super))
+                if (shots.Children.Count != 12 || cast.Plan != null || BrawlSkillSequenceHelper.CanStart(cast, 950, BrawlSkillSlot.Super))
                     return Fail(101205, "Super did not produce twelve shots or ended its cooldown early.");
                 cast.NextNormalCastAt = 0;
                 if (!BrawlSkillSequenceHelper.CanStart(cast, 950, BrawlSkillSlot.NormalAttack) ||

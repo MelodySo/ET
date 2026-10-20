@@ -48,7 +48,7 @@ namespace ET
         /// </summary>
         public readonly int ProjectilesPerVolley;
         /// <summary>
-        /// 技能发射器类型<br/>1 霰弹枪发射器<br/>2 左轮手枪发射器<br/>3 近战小刀发射器<br/>4 回旋镖发射器<br/>5 预留
+        /// 技能发射器类型<br/>1 霰弹枪发射器<br/>2 左轮手枪发射器<br/>3 近战小刀发射器（预留）<br/>4 回旋镖发射器（预留）<br/>5 延迟旋风斩
         /// </summary>
         public readonly int EmitterType;
         /// <summary>
@@ -56,7 +56,7 @@ namespace ET
         /// </summary>
         public readonly int EmitterParam1;
         /// <summary>
-        /// 技能发射器参数2（通常是发射间隔）
+        /// 技能发射器参数2（通常是发射间隔；类型5为旋风斩前摇秒数）
         /// </summary>
         public readonly float EmitterParam2;
         /// <summary>

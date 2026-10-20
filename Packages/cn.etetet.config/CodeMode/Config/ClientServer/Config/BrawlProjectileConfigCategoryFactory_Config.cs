@@ -29,7 +29,8 @@ public sealed class BrawlProjectileConfigCategoryFactory_Config : IConfigFactory
             [ 100101 ] = new ET.BrawlProjectileConfig(100101, @"卡尔丢出的回旋镖（回弹时不受阻挡影响）", @"", @"", @"", 1f, 0, 0f, 6f, 820, 82, 1, 0, 0, 0, 0, 0, 0f, 0),
             [ 30101 ] = new ET.BrawlProjectileConfig(30101, @"武士的小刀效果", @"", @"", @"", 0.3f, 0, 1f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f, 0),
             [ 40101 ] = new ET.BrawlProjectileConfig(40101, @"柯尔特的手枪子弹", @"Projectile 1", @"Hit 1", @"Flash 1", 0.04f, 1, 0f, 10f, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f, 1),
-            [ 40102 ] = new ET.BrawlProjectileConfig(40102, @"柯尔特的大招子弹", @"Projectile 14", @"Hit 14", @"Flash 14", 0.06f, 0, 0f, 10f, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f, 2)
+            [ 40102 ] = new ET.BrawlProjectileConfig(40102, @"柯尔特的大招子弹", @"Projectile 14", @"Hit 14", @"Flash 14", 0.06f, 0, 0f, 10f, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f, 2),
+            [ 50101 ] = new ET.BrawlProjectileConfig(50101, @"桩的瞬时圆形伤害，仅用于命中结算", @"", @"", @"", 3f, 0, 0f, 0f, 1050, 105, 1, 0, 0, 0, 0, 0, 0f, 3)
         });
     }
 }

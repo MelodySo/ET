@@ -26,7 +26,8 @@ public sealed class BrawlCollisionRuleConfigCategoryFactory_Config : IConfigFact
             [ 201 ] = new ET.BrawlCollisionRuleConfig(201, 2, 8, 32, 3, true, false),
             [ 202 ] = new ET.BrawlCollisionRuleConfig(202, 2, 40, 0, 3, false, true),
             [ 203 ] = new ET.BrawlCollisionRuleConfig(203, 2, 4, 0, 1, false, true),
-            [ 204 ] = new ET.BrawlCollisionRuleConfig(204, 2, 48, 0, 3, false, true)
+            [ 204 ] = new ET.BrawlCollisionRuleConfig(204, 2, 48, 0, 3, false, true),
+            [ 301 ] = new ET.BrawlCollisionRuleConfig(301, 3, 4, 8, 1, false, true)
         });
     }
 }

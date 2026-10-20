@@ -61,20 +61,20 @@ namespace ET.Test
                 BrawlSkillCastComponent cast = shelly.GetComponent<BrawlSkillCastComponent>();
                 PropertyComponent properties = shelly.GetComponent<PropertyComponent>();
                 BrawlAIHelper.Tick(shelly, level.Id, 1, player.Id, 1000);
-                if (math.lengthsq(move.DesiredDirection) == 0 || cast.Launches != null)
+                if (math.lengthsq(move.DesiredDirection) == 0 || cast.Plan != null)
                     return Fail(109102, "Shelly must chase beyond skill range minus 0.5m even when super is available.");
                 player.Position = new float3(7.67f - .5f, 0, 0);
                 BrawlAIHelper.Tick(shelly, level.Id, 1, player.Id, 1050);
-                if (cast.Launches == null || cast.Slot != BrawlSkillSlot.Super || math.lengthsq(move.DesiredDirection) != 0)
+                if (cast.Plan == null || cast.Slot != BrawlSkillSlot.Super || math.lengthsq(move.DesiredDirection) != 0)
                     return Fail(109103, "Shelly must stop at 7.17m and prefer super.");
                 BrawlSkillSequenceHelper.Tick(shelly, level, 1, 1050);
                 BrawlAIHelper.Tick(shelly, level.Id, 1, player.Id, 1100);
-                if (cast.Slot != BrawlSkillSlot.NormalAttack || cast.Launches == null)
+                if (cast.Slot != BrawlSkillSlot.NormalAttack || cast.Plan == null)
                     return Fail(109104, "Normal attack must follow when super is depleted.");
                 BrawlSkillSequenceHelper.Tick(shelly, level, 1, 1100);
                 properties.Set(PropertyId.Ammo, 0);
                 BrawlAIHelper.Tick(shelly, level.Id, 1, player.Id, 2000);
-                if (cast.Launches != null || math.lengthsq(move.DesiredDirection) != 0)
+                if (cast.Plan != null || math.lengthsq(move.DesiredDirection) != 0)
                     return Fail(109105, "Empty ammo must wait at attack position without moving closer.");
 
                 Unit wall = Create(units, 1, new float3(3, 0, 0));
@@ -85,11 +85,11 @@ namespace ET.Test
                     !BrawlAISightHelper.IsClear(units, level, 1, float2.zero, player.Position.xz, .2f, superRules, BrawlFaction.Red))
                     return Fail(109106, "Normal and super must filter destroyable walls independently.");
                 BrawlAIHelper.Tick(shelly, level.Id, 1, player.Id, 2025);
-                if (!shelly.GetComponent<BrawlAIComponent>().Chasing || math.lengthsq(move.DesiredDirection) == 0 || cast.Launches != null)
+                if (!shelly.GetComponent<BrawlAIComponent>().Chasing || math.lengthsq(move.DesiredDirection) == 0 || cast.Plan != null)
                     return Fail(109116, "Blocked normal attack with no super must chase around the wall, even within attack distance.");
                 properties.Set(PropertyId.SuperAmmo, 1);
                 BrawlAIHelper.Tick(shelly, level.Id, 1, player.Id, 2050);
-                if (cast.Launches == null || cast.Slot != BrawlSkillSlot.Super)
+                if (cast.Plan == null || cast.Slot != BrawlSkillSlot.Super)
                     return Fail(109107, "Destroyable wall must not gate the super branch through normal visibility.");
                 data.UnitLayerMask = BrawlUnitLayer.Tile;
                 if (BrawlAISightHelper.IsClear(units, level, 1, float2.zero, player.Position.xz, .2f, superRules, BrawlFaction.Red))
@@ -111,11 +111,11 @@ namespace ET.Test
                 player.Position = new float3(11.6f, 0, -5);
                 BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 3000);
                 BrawlSkillCastComponent coltCast = colt.GetComponent<BrawlSkillCastComponent>();
-                if (!colt.GetComponent<BrawlAIComponent>().Chasing || coltCast.Launches != null)
+                if (!colt.GetComponent<BrawlAIComponent>().Chasing || coltCast.Plan != null)
                     return Fail(109112, "Colt must chase beyond its super range minus margin.");
                 player.Position = new float3(11.5f, 0, -5);
                 BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 3050);
-                if (coltCast.Launches == null || coltCast.Slot != BrawlSkillSlot.Super || math.lengthsq(colt.GetComponent<BrawlMoveComponent>().DesiredDirection) != 0)
+                if (coltCast.Plan == null || coltCast.Slot != BrawlSkillSlot.Super || math.lengthsq(colt.GetComponent<BrawlMoveComponent>().DesiredDirection) != 0)
                     return Fail(109113, "Colt must start super at 11.5m without requiring normal attack range.");
                 long id = coltCast.PresentationCastId;
                 int notices = shots.SkillNotices.Count;
@@ -124,11 +124,11 @@ namespace ET.Test
                     return Fail(109114, "Active burst must not start another skill each AI tick.");
                 BrawlSkillSequenceHelper.Tick(colt, level, 1, 4050);
                 BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4100);
-                if (coltCast.Launches != null || !colt.GetComponent<BrawlAIComponent>().Chasing)
+                if (coltCast.Plan != null || !colt.GetComponent<BrawlAIComponent>().Chasing)
                     return Fail(109117, "After super is spent, Colt must close to its independent normal attack range.");
                 player.Position = new float3(8.5f, 0, -5);
                 BrawlAIHelper.Tick(colt, level.Id, 1, player.Id, 4150);
-                if (coltCast.Launches == null || coltCast.Slot != BrawlSkillSlot.NormalAttack || math.lengthsq(colt.GetComponent<BrawlMoveComponent>().DesiredDirection) != 0)
+                if (coltCast.Plan == null || coltCast.Slot != BrawlSkillSlot.NormalAttack || math.lengthsq(colt.GetComponent<BrawlMoveComponent>().DesiredDirection) != 0)
                     return Fail(109118, "Colt normal attack must stop at 8.5m.");
 
                 BrawlMoveComponent coltMove = colt.GetComponent<BrawlMoveComponent>();

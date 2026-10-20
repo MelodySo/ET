@@ -33,10 +33,10 @@ namespace ET.Test
 
             BrawlAmmoHelper.Initialize(unit, Skill(3, 1.6f), 10000);
             BrawlAmmoHelper.TryConsume(unit, 10000);
-            cast.Launches = new BrawlProjectileLaunch[6];
+            cast.Plan = new BrawlSkillPlan();
             BrawlAmmoHelper.Tick(unit, 10800);
             if (Ammo(unit) != 0) return Fail(101009, "Ammo must not reload during a burst.");
-            cast.Launches = null;
+            cast.Plan = null;
             BrawlAmmoHelper.ResetClock(unit, 10800);
             for (long now = 10850; now <= 12400; now += 50) BrawlAmmoHelper.Tick(unit, now);
             if (Ammo(unit) != 1) return Fail(101010, "Colt must finish a reload exactly 1.6 seconds after its last shot.");
@@ -66,10 +66,10 @@ namespace ET.Test
             properties.Set(PropertyId.Ammo, 2.4);
             if (!BrawlAmmoHelper.TryConsume(unit, 19000) || !Near(Ammo(unit), 1.4))
                 return Fail(101017, "Colt attack incorrectly rounded 2.4 ammo down instead of keeping 1.4.");
-            cast.Launches = new BrawlProjectileLaunch[6];
+            cast.Plan = new BrawlSkillPlan();
             BrawlAmmoHelper.Tick(unit, 19800);
             if (!Near(Ammo(unit), 1.4)) return Fail(101018, "Burst changed retained reload progress.");
-            cast.Launches = null;
+            cast.Plan = null;
             BrawlAmmoHelper.ResetClock(unit, 19800);
             BrawlAmmoHelper.Tick(unit, 20600);
             if (!Near(Ammo(unit), 1.9)) return Fail(101019, "Reload after burst did not continue from retained 40 percent progress.");

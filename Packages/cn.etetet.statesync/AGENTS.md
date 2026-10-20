@@ -1,5 +1,16 @@
 # cn.etetet.statesync
 
+## 技能步骤与桩的旋风斩（2026-10-20）
+
+- `IBrawlSkillEmitter.Build` 返回独立 `BrawlSkillPlan`；步骤含相对时间、唯一 StepId、表现标识与效果数组。`BrawlSkillSequenceHelper` 沿用服务器 Tick，`BrawlSkillEffectHelper` 执行效果。当前只实现飞行弹丸与瞬时圆形；不是行为图、连招窗口或完整技能编辑器。
+- 现有霰弹／连发算法保留，同时间的一轮弹丸组成一个步骤。`BrawlSkillCastComponent.Plan != null` 表示正在施法；冷却、装填暂停和 AI 查询共用该条件，不再读 Launches。前摇与锁向解耦，由 Plan 明确声明 FaceDirection、LockFacing。
+- `G2C_BrawlSkillUse` 的 Phase=2 为 StepExecuted，携带 StepId／PresentationId／位置／半径／表现时长／显示时序。协议、生成代码及双端必须一起更新。CastId 标识一次施法，EventId 去重，StepId 仅在本计划内标识步骤。
+- 旋风斩 0 秒纯表现、EmitterParam2 秒后执行 CirclePulse。执行时取角色当前位置，允许移动；规则组决定命中对象。瞬时逻辑弹丸调用已有零位移重叠／伤害逻辑并立即 Dispose，不进入飞行快照。配置不允许阻挡型规则提前终止圆内其他目标。
+- 桩配置：英雄501／技能与弹丸50101／Whirlwind=5／碰撞组3。可隔墙伤害敌方作战单位，排除墙、不清草。使用10101训练场验收，不扩展桩的Bot或对手配对。
+- 客户端 `BrawlSkillPresentationHelper` 独立消费步骤，按会话管理金环和释放圆形；枪械保留插值消费，桩立即消费已确认事件。不会用本地计时触发伤害或第二阶段。完成／打断清理持续金环，一次性释放效果自然结束；退出和直接停止Play共用Clear。
+- 旋风释放临时使用角色运行时Override中的空手攻击Clip映射FullHero01，加纯显示整圈旋转；不改共享Controller、Root Motion、权威位置或面向。以后换正式旋风动作，不把动画事件用作伤害时钟。
+- 验证结果和限制见本包Test.md与Book/Brawl开发交接.md最新章节。
+
 ## 地形与静态 NPC 实例化（2026-10-19）
 
 - 客户端 `BrawlTerrainRenderHelper` 使用会话持有的批次和运行时材质，以8×8格分块调用DrawMeshInstanced；地形墙／草及静态NPC共用，不改变服务器格子、碰撞、AI或共享美术资源。

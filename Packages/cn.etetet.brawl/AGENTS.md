@@ -1,5 +1,13 @@
 # cn.etetet.brawl
 
+## 桩首版配置（2026-10-20）
+
+- 新英雄501使用BasicMaleNoWeaponDefault，普攻50101；大招／特殊技能ID为0。生命3900＋390、移速3、碰撞半径0.3／高度1.2暂沿用雪莉，等级1、免费试用；不覆盖武士301。
+- 技能50101：EmitterType=5（Whirlwind），EmitterParam1=1，EmitterParam2=前摇秒数0.3，EmitterParam3=0；Circle范围半径由SkillRangeParam1=3决定。一次技能一格弹药，容量3，装填1.5秒，冷却1秒。
+- 逻辑弹丸50101：Value=1050、ValueGrowthPerLevel=105、MaxHitCount=0、Speed=0，表现路径留空；圆形半径以技能为唯一结算／显示来源，不使用飞行模型。技能步骤与执行在statesync。
+- 碰撞规则301属于组3：RequiredLayerMask=Battle(4)、ExcludedLayerMask=Tile(8)、RelationMask=Enemy(1)、BlockProjectile=false、ApplyHitEvents=true。允许隔墙命中敌人，不伤墙、不清草；木桩NPC401为Battle可正常受伤。
+- 金环／圆形释放暂复用自有BrawlSkillAimPreview材质，由客户端步骤创建并管理；未新增购买包资源或改原始动画导入。
+
 ## 范围
 
 荒野对战 Demo 的独立业务包，包编号 55。当前仅包含关卡 Excel 与关卡编辑器，不改变登录、地图进入或战斗流程。

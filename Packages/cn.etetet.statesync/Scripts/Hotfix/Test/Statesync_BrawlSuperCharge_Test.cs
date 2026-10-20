@@ -62,7 +62,7 @@ namespace ET.Test
             if (Charge(replacement) != 2) return Fail(101111, "Super charge overflowed capacity two.");
             BrawlSuperChargeHelper.Restore(replacement, 0.75);
             replacement.GetComponent<PropertyComponent>().Set(PropertyId.BaseSuperChargeRegenRate, 0.5);
-            replacement.AddComponent<BrawlSkillCastComponent>().Launches = new BrawlProjectileLaunch[6];
+            replacement.AddComponent<BrawlSkillCastComponent>().Plan = new BrawlSkillPlan();
             BrawlSuperChargeHelper.Tick(replacement, 2000);
             if (Charge(replacement) != 1.25) return Fail(101112, "Automatic charge did not run during attack sequence.");
             replacement.GetComponent<StateComponent>().AddSource(StateId.Spawning, -3);

@@ -3,7 +3,7 @@ namespace ET
     public enum BrawlSkillUsePhase
     {
         Started = 1,
-        Fired = 2,
+        StepExecuted = 2,
         Completed = 3,
         Interrupted = 4,
     }
@@ -21,6 +21,15 @@ namespace ET
         public BrawlSkillUsePhase Phase;
         public float DirectionX;
         public float DirectionZ;
-        public bool Sustained;
+        public bool LockFacing;
+        public bool FaceDirection;
+        public bool ImmediatePresentation;
+        public int StepId;
+        public int PresentationId;
+        public long DurationMilliseconds;
+        public float Radius;
+        public float PositionX;
+        public float PositionY;
+        public float PositionZ;
     }
 }

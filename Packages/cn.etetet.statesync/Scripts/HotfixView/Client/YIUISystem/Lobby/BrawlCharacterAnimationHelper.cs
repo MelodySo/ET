@@ -106,6 +106,7 @@ namespace ET.Client
 
         private static void ClearActionLayers(BrawlCharacterAnimationView view)
         {
+            StopFullAction(view);
             Animator animator = view.Animator;
             animator.SetLayerWeight(1, 0);
             animator.SetLayerWeight(2, 0);
@@ -132,6 +133,8 @@ namespace ET.Client
             BrawlCharacterAnimationView view = unit.Animation;
             if (view == null || view.Animator == null || !view.Animator.isActiveAndEnabled) return;
             Animator animator = view.Animator;
+            if (view.FullActionPlaying && Time.unscaledTime - view.FullActionStartedAt >= view.FullActionDuration)
+                StopFullAction(view);
             bool dead = unit.DisplayDead;
             bool spawning = !dead && unit.DisplaySpawning;
             if (!view.LifeInitialized || view.Dead != dead || view.Spawning != spawning)
@@ -188,7 +191,9 @@ namespace ET.Client
             if (view == null || !view.LifeInitialized || view.Dead || view.Spawning || notice.CastId <= view.LastCastId) return;
             view.LastCastId = notice.CastId;
             view.ActiveCastId = notice.CastId;
-            SetFacing(view, new Vector3(notice.DirectionX, 0, notice.DirectionZ), notice.Sustained);
+            view.FacingLocked = notice.LockFacing;
+            if (notice.FaceDirection)
+                SetFacing(view, new Vector3(notice.DirectionX, 0, notice.DirectionZ), notice.LockFacing);
         }
 
         public static void EndCast(BrawlCharacterAnimationView view, long castId, bool interrupted)
@@ -198,6 +203,7 @@ namespace ET.Client
             view.FacingLocked = false;
             if (interrupted && view.Animator != null)
             {
+                StopFullAction(view);
                 view.Animator.SetLayerWeight(1, 0);
                 foreach (AnimatorControllerParameter parameter in view.Animator.parameters)
                     if (parameter.type == AnimatorControllerParameterType.Trigger) view.Animator.ResetTrigger(parameter.nameHash);
@@ -205,6 +211,47 @@ namespace ET.Client
                 view.UpperActionPlaying = false;
             }
             RestoreMovementFacing(view);
+        }
+
+        /// <summary>临时旋风动作：原空手攻击 Clip + 显示旋转，不修改根位移或权威面向。</summary>
+        public static void PlayWhirlwind(BrawlCharacterAnimationView view, float duration)
+        {
+            if (view == null || view.Animator == null || !view.Animator.isActiveAndEnabled ||
+                !view.LifeInitialized || view.Dead || view.Spawning) return;
+            if (!view.WhirlwindMapped)
+            {
+                List<KeyValuePair<AnimationClip, AnimationClip>> pairs = new();
+                view.RuntimeController.GetOverrides(pairs);
+                AnimationClip attack = null;
+                foreach (var pair in pairs)
+                    if (pair.Key.name == "BrawlSlot_UpperNormalAttack") attack = pair.Value;
+                if (attack == null) return;
+                for (int i = 0; i < pairs.Count; ++i)
+                    if (pairs[i].Key.name == "BrawlSlot_FullHero01")
+                        pairs[i] = new KeyValuePair<AnimationClip, AnimationClip>(pairs[i].Key, attack);
+                view.RuntimeController.ApplyOverrides(pairs);
+                view.WhirlwindClipLength = attack.length;
+                view.WhirlwindMapped = true;
+            }
+            ClearActionLayers(view);
+            view.FullActionPlaying = true;
+            view.FullActionStartedAt = Time.unscaledTime;
+            view.FullActionDuration = duration;
+            view.FullActionBaseRotation = view.Model.transform.rotation;
+            view.Animator.SetFloat("FullBodyActionSpeed", view.WhirlwindClipLength / duration);
+            view.Animator.SetLayerWeight(2, 1);
+            view.Animator.Play("FullBody.FullHero01", 2, 0);
+        }
+
+        private static void StopFullAction(BrawlCharacterAnimationView view)
+        {
+            if (!view.FullActionPlaying) return;
+            view.FullActionPlaying = false;
+            if (view.Model != null) view.Model.transform.rotation = view.FullActionBaseRotation;
+            if (view.Animator == null) return;
+            view.Animator.SetLayerWeight(2, 0);
+            view.Animator.SetFloat("FullBodyActionSpeed", 1);
+            if (view.Animator.isActiveAndEnabled) view.Animator.Play("FullBody.Empty", 2, 0);
         }
 
         private static void RestoreMovementFacing(BrawlCharacterAnimationView view)
@@ -251,7 +298,7 @@ namespace ET.Client
             bool moving = !view.Dead && !view.Spawning && speed > IdleSpeed;
             if (moving && !view.FacingLocked) view.FacingDirection = velocity / speed;
             Quaternion facing = Quaternion.LookRotation(view.FacingDirection, Vector3.up);
-            view.Model.transform.rotation = Quaternion.RotateTowards(view.Model.transform.rotation,
+            view.Model.transform.rotation = Quaternion.RotateTowards(view.FullActionPlaying ? view.FullActionBaseRotation : view.Model.transform.rotation,
                 facing * view.ModelRotationOffset, TurnSpeed * delta);
             // 去掉美术模型原始旋转偏移，得到逻辑朝向坐标系。
             Quaternion displayFacing = view.Model.transform.rotation * Quaternion.Inverse(view.ModelRotationOffset);
@@ -261,6 +308,12 @@ namespace ET.Client
             view.NativeMoveSpeed = moving ? GetNativeMoveSpeed(view, local) : 0;
             view.PlaybackSpeed = moving && view.NativeMoveSpeed > IdleSpeed ? speed / view.NativeMoveSpeed : 1;
             view.Animator.SetFloat("LocomotionSpeed", view.PlaybackSpeed);
+            if (view.FullActionPlaying)
+            {
+                view.FullActionBaseRotation = view.Model.transform.rotation;
+                float progress = Mathf.Clamp01((Time.unscaledTime - view.FullActionStartedAt) / view.FullActionDuration);
+                view.Model.transform.rotation = displayFacing * Quaternion.Euler(0, progress * 360, 0) * view.ModelRotationOffset;
+            }
         }
 
         private static float GetNativeMoveSpeed(BrawlCharacterAnimationView view, Vector3 direction)

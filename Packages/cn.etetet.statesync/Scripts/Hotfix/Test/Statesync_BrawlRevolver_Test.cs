@@ -12,7 +12,7 @@ namespace ET.Test
             await ETTask.CompletedTask;
             BrawlSkillConfig skill = new(40101, 40101, 6, 2, 1, 0, 0.16f, 3, 1.6f, 0.8f, 1, 1, 9, 0.7f, 0, 0, 0);
             BrawlProjectileConfig config = new(40101, 0.04f, 1, 0, 10, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f, 1);
-            IBrawlSkillEmitter emitter = BrawlSkillEmitterHelper.Create(BrawlEmitterType.Revolver);
+            BrawlRevolverEmitter emitter = (BrawlRevolverEmitter)BrawlSkillEmitterHelper.Create(BrawlEmitterType.Revolver);
             BrawlProjectileLaunch[] launches = emitter.Emit(skill, config, 2);
             if (launches.Length != 6) return Fail(100901, "Revolver count must come from config.");
             for (int i = 0; i < launches.Length; ++i)
@@ -53,7 +53,7 @@ namespace ET.Test
                 BrawlSkillSequenceHelper.Start(owner, launches, config.Id, new float2(1, 0), 0.6f, 1000, 800, skillId: skill.Id);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1000);
                 if (projectiles.SkillNotices.Count != 2 || projectiles.SkillNotices[0].Phase != BrawlSkillUsePhase.Started ||
-                    projectiles.SkillNotices[1].Phase != BrawlSkillUsePhase.Fired || !projectiles.SkillNotices[0].Sustained ||
+                    projectiles.SkillNotices[1].Phase != BrawlSkillUsePhase.StepExecuted || !projectiles.SkillNotices[0].LockFacing ||
                     projectiles.SkillNotices[0].CastId != projectiles.SkillNotices[1].CastId)
                     return Fail(100913, "Burst start and first fire notices are missing or mismatched.");
                 if (projectiles.Children.Count != 1 || BrawlSkillSequenceHelper.CanStart(cast, 1000))
@@ -83,7 +83,7 @@ namespace ET.Test
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 1800);
                 states.AddSource(StateId.Dead, -2);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 2000);
-                if (projectiles.Children.Count != 7 || cast.Launches != null)
+                if (projectiles.Children.Count != 7 || cast.Plan != null)
                     return Fail(100909, "Death must cancel unfired shots without deleting existing projectiles.");
                 states.RemoveSource(StateId.Dead, -2);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 3000);
@@ -96,8 +96,8 @@ namespace ET.Test
                 BrawlSkillSequenceHelper.Start(owner, new[] { pellet, pellet, pellet }, config.Id, new float2(0, 1),
                     0.6f, 3000, 0, skillId: skill.Id);
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 3000);
-                if (projectiles.SkillNotices.Count != 3 || projectiles.SkillNotices[0].Sustained ||
-                    projectiles.SkillNotices[1].Phase != BrawlSkillUsePhase.Fired || projectiles.Children.Count != 10)
+                if (projectiles.SkillNotices.Count != 3 || projectiles.SkillNotices[0].LockFacing ||
+                    projectiles.SkillNotices[1].Phase != BrawlSkillUsePhase.StepExecuted || projectiles.Children.Count != 10)
                     return Fail(100916, "Simultaneous pellets must share one fire notice without changing projectile count.");
 
                 // Exercise the real cast entry after all simultaneous pellets have already fired.
@@ -110,7 +110,7 @@ namespace ET.Test
                 BrawlSkillSequenceHelper.Tick(owner, level, 1, 10000);
                 int noticeCount = projectiles.SkillNotices.Count;
                 int projectileCount = projectiles.Children.Count;
-                if (cast.Launches != null || cast.NextNormalCastAt != 11000 || properties.GetDouble(PropertyId.Ammo) != 2)
+                if (cast.Plan != null || cast.NextNormalCastAt != 11000 || properties.GetDouble(PropertyId.Ammo) != 2)
                     return Fail(100918, "Shotgun cooldown must survive completion of its simultaneous volley.");
                 foreach (long now in new long[] { 10000, 10001, 10500, 10999 })
                 {

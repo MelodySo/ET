@@ -6,5 +6,6 @@ namespace ET
         Revolver = 2,
         Knife = 3,
         Boomerang = 4,
+        Whirlwind = 5,
     }
 }

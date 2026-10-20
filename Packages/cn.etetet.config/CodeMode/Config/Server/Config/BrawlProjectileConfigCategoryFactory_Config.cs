@@ -29,7 +29,8 @@ public sealed class BrawlProjectileConfigCategoryFactory_Config : IConfigFactory
             [ 100101 ] = new ET.BrawlProjectileConfig(100101, 1f, 0, 0f, 6f, 820, 82, 1, 0, 0, 0, 0, 0, 0f, 0),
             [ 30101 ] = new ET.BrawlProjectileConfig(30101, 0.3f, 0, 1f, 0f, 0, 0, 1, 0, 0, 0, 0, 0, 0f, 0),
             [ 40101 ] = new ET.BrawlProjectileConfig(40101, 0.04f, 1, 0f, 10f, 360, 36, 1, 0, 0, 0, 0, 0, 0.1f, 1),
-            [ 40102 ] = new ET.BrawlProjectileConfig(40102, 0.06f, 0, 0f, 10f, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f, 2)
+            [ 40102 ] = new ET.BrawlProjectileConfig(40102, 0.06f, 0, 0f, 10f, 320, 32, 1, 0, 0, 0, 0, 0, 0.1f, 2),
+            [ 50101 ] = new ET.BrawlProjectileConfig(50101, 3f, 0, 0f, 0f, 1050, 105, 1, 0, 0, 0, 0, 0, 0f, 3)
         });
     }
 }

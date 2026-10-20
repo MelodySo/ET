@@ -39,7 +39,7 @@ namespace ET.Server
             long from = ammoState.LastUpdateAt;
             ammoState.LastUpdateAt = now;
             StateComponent states = unit.GetComponent<StateComponent>();
-            if (states.Has(StateId.Dead) || states.Has(StateId.Spawning) || unit.GetComponent<BrawlSkillCastComponent>().Launches != null) return;
+            if (states.Has(StateId.Dead) || states.Has(StateId.Spawning) || unit.GetComponent<BrawlSkillCastComponent>().Plan != null) return;
             // 出生完成所在Tick不能计入此前仍在出生阶段的时间。
             from = Math.Max(from, unit.GetComponent<BrawlSpawnComponent>().CompleteAt);
             if (now <= from) return;

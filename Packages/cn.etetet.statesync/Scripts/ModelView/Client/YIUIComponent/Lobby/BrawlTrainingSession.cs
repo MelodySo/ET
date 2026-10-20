@@ -33,6 +33,9 @@ namespace ET.Client
         public long LastProjectileEventId;
         public long LastSkillUseEventId;
         public readonly List<BrawlSkillUseNotice> PendingSkillUseEvents = new();
+        public readonly Dictionary<long, BrawlSkillCastView> SkillCasts = new();
+        public readonly List<long> RemovedSkillCasters = new();
+        public readonly List<BrawlSkillEffectVisual> SkillEffects = new();
         public IBrawlProjectilePresentation ProjectilePresentation;
         public GameObject ProjectileTemplateRoot;
         public readonly Dictionary<string, GameObject> ProjectileTemplates = new();

@@ -43,13 +43,22 @@ namespace ET.Server
             IBrawlSkillEmitter emitter = BrawlSkillEmitterHelper.Create((BrawlEmitterType)skill.EmitterType);
             if (emitter == null) return false;
             PropertyComponent properties = unit.GetComponent<PropertyComponent>();
-            BrawlProjectileLaunch[] launches;
+            BrawlSkillPlan plan;
             BrawlCollisionRuleConfig[] rules;
             try
             {
                 if (!math.isfinite(config.Lifetime) || config.Lifetime < 0) throw new ArgumentException("Projectile lifetime is invalid.");
                 rules = BrawlCollisionRuleHelper.Resolve(unit.Fiber().GetSingleton<BrawlCollisionRuleConfigCategory>(), config.CollisionRuleGroupId);
-                launches = emitter.Emit(skill, config, properties.GetInt(PropertyId.Level));
+                plan = emitter.Build(skill, config, properties.GetInt(PropertyId.Level));
+                BrawlSkillPlanHelper.Validate(plan);
+                foreach (BrawlSkillStep step in plan.Steps)
+                foreach (BrawlSkillEffect effect in step.Effects)
+                {
+                    if (effect.Kind != BrawlSkillEffectKind.CirclePulse) continue;
+                    foreach (BrawlCollisionRuleConfig rule in rules)
+                        if (rule.BlockProjectile)
+                            throw new ArgumentException("Circle pulses require non-blocking collision rules.");
+                }
             }
             catch (Exception exception) when (exception is ArgumentException || exception is NotSupportedException)
             {
@@ -65,7 +74,7 @@ namespace ET.Server
             catch (ArgumentException exception) { Log.Warning(exception.Message); return false; }
             bool consumed = slot == BrawlSkillSlot.Super ? BrawlSuperChargeHelper.TryConsume(unit) : BrawlAmmoHelper.TryConsume(unit, now);
             if (!consumed) return false;
-            BrawlSkillSequenceHelper.Start(unit, launches, config.Id, math.normalizesafe(direction), height, now, cooldown, slot, rules, skill.Id);
+            BrawlSkillSequenceHelper.Start(unit, plan, config.Id, math.normalizesafe(direction), height, now, cooldown, slot, rules, skill.Id);
             return true;
         }
 

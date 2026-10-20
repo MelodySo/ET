@@ -253,5 +253,14 @@ message BrawlSkillUseEvent
     int32 Phase = 7;
     float DirectionX = 8;
     float DirectionZ = 9;
-    bool Sustained = 10;
+    bool LockFacing = 10;
+    bool FaceDirection = 11;
+    bool ImmediatePresentation = 12;
+    int32 StepId = 13;
+    int32 PresentationId = 14;
+    int64 DurationMilliseconds = 15;
+    float Radius = 16;
+    float PositionX = 17;
+    float PositionY = 18;
+    float PositionZ = 19;
 }
